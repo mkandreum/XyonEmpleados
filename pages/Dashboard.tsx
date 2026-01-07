@@ -1,15 +1,38 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { mockNotifications, mockVacations } from '../services/mockData';
+import { notificationService, vacationService } from '../services/api';
+import { Notification, VacationRequest } from '../types';
 import { Calendar, CheckCircle2, Clock, Briefcase } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const pendingTasks = 3;
-  
-  // Calculate vacation days left (Mock logic)
+  const pendingTasks = 3; // Placeholder until tasks API exists
+
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [vacations, setVacations] = useState<VacationRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [notifs, vacs] = await Promise.all([
+          notificationService.getAll(),
+          vacationService.getAll()
+        ]);
+        setNotifications(notifs);
+        setVacations(vacs);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Calculate vacation days left
   const totalVacationDays = 22;
-  const takenDays = mockVacations
+  const takenDays = vacations
     .filter(v => v.status === 'APPROVED' && v.type === 'VACATION')
     .reduce((acc, curr) => acc + curr.days, 0);
   const remainingDays = totalVacationDays - takenDays;
@@ -63,8 +86,8 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
-        
-         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-green-50 text-green-600 rounded-lg">
               <Calendar size={24} />
@@ -86,19 +109,19 @@ export const Dashboard: React.FC = () => {
               <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">Ver todas</button>
             </div>
             <div className="divide-y divide-slate-100">
-              {mockNotifications.map(notif => (
+              {loading ? <div className="p-4 text-center">Cargando...</div> : notifications.map(notif => (
                 <div key={notif.id} className={`p-4 hover:bg-slate-50 transition-colors flex items-start gap-4 ${!notif.read ? 'bg-blue-50/30' : ''}`}>
                   <div className={`mt-1 w-2 h-2 rounded-full ${!notif.read ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
                       <h3 className="text-sm font-semibold text-slate-900">{notif.title}</h3>
-                      <span className="text-xs text-slate-400">{notif.date}</span>
+                      <span className="text-xs text-slate-400">{new Date(notif.date).toLocaleDateString()}</span>
                     </div>
                     <p className="text-sm text-slate-600 mt-1">{notif.message}</p>
                   </div>
                 </div>
               ))}
-              {mockNotifications.length === 0 && (
+              {!loading && notifications.length === 0 && (
                 <div className="p-6 text-center text-slate-500">No tienes notificaciones nuevas.</div>
               )}
             </div>
@@ -145,22 +168,22 @@ export const Dashboard: React.FC = () => {
             <h2 className="font-semibold text-slate-900 mb-4">Eventos Próximos</h2>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                 <div className="bg-indigo-100 text-indigo-700 font-bold px-3 py-1 rounded text-xs text-center min-w-[50px]">
-                    JUN<br/><span className="text-lg">20</span>
-                 </div>
-                 <div>
-                    <p className="text-sm font-semibold text-slate-800">Reunión Trimestral</p>
-                    <p className="text-xs text-slate-500">10:00 AM - Sala A</p>
-                 </div>
+                <div className="bg-indigo-100 text-indigo-700 font-bold px-3 py-1 rounded text-xs text-center min-w-[50px]">
+                  JUN<br /><span className="text-lg">20</span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Reunión Trimestral</p>
+                  <p className="text-xs text-slate-500">10:00 AM - Sala A</p>
+                </div>
               </div>
               <div className="flex items-center gap-3">
-                 <div className="bg-pink-100 text-pink-700 font-bold px-3 py-1 rounded text-xs text-center min-w-[50px]">
-                    JUN<br/><span className="text-lg">28</span>
-                 </div>
-                 <div>
-                    <p className="text-sm font-semibold text-slate-800">Cumpleaños de Laura</p>
-                    <p className="text-xs text-slate-500">Cafetería</p>
-                 </div>
+                <div className="bg-pink-100 text-pink-700 font-bold px-3 py-1 rounded text-xs text-center min-w-[50px]">
+                  JUN<br /><span className="text-lg">28</span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Cumpleaños de Laura</p>
+                  <p className="text-xs text-slate-500">Cafetería</p>
+                </div>
               </div>
             </div>
           </div>

@@ -9,14 +9,16 @@ export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('alejandro.ruiz@velilla.com');
   const [password, setPassword] = useState('demo1234');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate network delay
-    setTimeout(() => {
-      login();
+    try {
+      await login(email, password);
+      // Login success handled by AuthContext/redirect usually, or component unmounts
+    } catch (error) {
+      alert("Error al iniciar sesión. Verifica tus credenciales.");
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -31,7 +33,7 @@ export const LoginPage: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-xl rounded-xl sm:px-10 border border-slate-100">
-          
+
           {/* Demo Alert */}
           <div className="mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4 flex gap-3">
             <Info className="text-blue-600 shrink-0" size={20} />
@@ -115,20 +117,20 @@ export const LoginPage: React.FC = () => {
                 className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 transition-all ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
                 {isLoading ? (
-                    <span className="flex items-center gap-2">
-                         <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Accediendo...
-                    </span>
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Accediendo...
+                  </span>
                 ) : 'Iniciar Sesión'}
               </button>
             </div>
           </form>
         </div>
         <p className="mt-6 text-center text-xs text-slate-500">
-            &copy; 2024 Velilla Corporate. Todos los derechos reservados.
+          &copy; 2024 Velilla Corporate. Todos los derechos reservados.
         </p>
       </div>
     </div>

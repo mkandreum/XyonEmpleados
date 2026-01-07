@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  EMPLOYEE
+  MANAGER
+  ADMIN
+}
+
+enum VacationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NewsCategory {
+  CORPORATE
+  EVENT
+  URGENT
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String 
+  name        String
+  role        Role     @default(EMPLOYEE)
+  department  String
+  position    String
+  avatarUrl   String?
+  joinDate    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  vacations   VacationRequest[]
+  payrolls    Payroll[]
+  notifications Notification[]
+}
+
+model Payroll {
+  id        String   @id @default(uuid())
+  month     String
+  year      Int
+  amount    Float
+  pdfUrl    String
+  status    String   @default("PAID") // 'PAID' | 'PENDING'
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model VacationRequest {
+  id        String         @id @default(uuid())
+  startDate DateTime
+  endDate   DateTime
+  days      Int
+  status    VacationStatus @default(PENDING)
+  type      String         // 'VACATION' | 'PERSONAL' | 'SICK_LEAVE'
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  createdAt DateTime       @default(now())
+}
+
+model NewsItem {
+  id        String       @id @default(uuid())
+  title     String
+  summary   String
+  content   String       @db.Text
+  date      DateTime     @default(now())
+  category  NewsCategory
+  imageUrl  String?
+  createdAt DateTime     @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  date      DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}
