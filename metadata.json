@@ -1,0 +1,5 @@
+{
+  "name": "VelillaEmpleados Portal",
+  "description": "A comprehensive Employee Portal for Velilla featuring dashboard, payroll management, vacation tracking, and internal communication.",
+  "requestFramePermissions": []
+}
