@@ -21,7 +21,7 @@ const createNotification = async (userId, title, message) => {
 
 const getNotifications = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user.userId;
         const notifications = await prisma.notification.findMany({
             where: { userId },
             orderBy: { date: 'desc' },
@@ -43,7 +43,7 @@ const getNotifications = async (req, res) => {
 const markAsRead = async (req, res) => {
     try {
         const { id } = req.params;
-        const userId = req.user.id;
+        const userId = req.user.userId;
 
         await prisma.notification.update({
             where: { id },
@@ -59,7 +59,7 @@ const markAsRead = async (req, res) => {
 
 const markAllAsRead = async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user.userId;
         await prisma.notification.updateMany({
             where: { userId, read: false },
             data: { read: true }
@@ -74,7 +74,7 @@ const markAllAsRead = async (req, res) => {
 const deleteNotification = async (req, res) => {
     try {
         const { id } = req.params;
-        const userId = req.user.id;
+        const userId = req.user.userId;
 
         // Ensure user owns the notification
         const notification = await prisma.notification.findUnique({ where: { id } });
