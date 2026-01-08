@@ -112,7 +112,7 @@ export const VacationsPage: React.FC = () => {
     const totalDays = deptBenefits?.vacationDays || 22;
     const takenDays = userBenefits?.vacationDaysUsed || 0;
     const pendingDays = vacations
-        .filter(v => v.status === VacationStatus.PENDING && v.type === 'VACATION')
+        .filter(v => (v.status === VacationStatus.PENDING || v.status === VacationStatus.PENDING_MANAGER || v.status === VacationStatus.PENDING_ADMIN) && v.type === 'VACATION')
         .reduce((acc, curr) => acc + curr.days, 0);
     const remainingDays = totalDays - takenDays - pendingDays;
 
@@ -331,7 +331,10 @@ export const VacationsPage: React.FC = () => {
                                             <td className="px-6 py-4 text-slate-600">{getTypeLabel(vac.type)}</td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(vac.status)}`}>
-                                                    {vac.status === 'APPROVED' ? 'Aprobado' : vac.status === 'PENDING' ? 'Pendiente' : 'Rechazado'}
+                                                    {vac.status === VacationStatus.APPROVED ? 'Aprobado' :
+                                                        vac.status === VacationStatus.PENDING_MANAGER ? 'Pendiente Manager' :
+                                                            vac.status === VacationStatus.PENDING_ADMIN ? 'Pendiente Admin' :
+                                                                vac.status === VacationStatus.PENDING ? 'Pendiente' : 'Rechazado'}
                                                 </span>
                                             </td>
                                         </tr>

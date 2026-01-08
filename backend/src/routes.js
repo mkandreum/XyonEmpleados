@@ -68,6 +68,11 @@ router.get('/payrolls', payrollController.getAllPayrolls);
 router.get('/vacations', vacationController.getAllVacations);
 router.post('/vacations', vacationController.createVacation);
 
+// Manager routes (protected - requires MANAGER role)
+router.get('/manager/team-vacations', vacationController.getTeamVacations);
+router.patch('/manager/vacations/:id/approve', vacationController.managerApproveVacation);
+router.patch('/manager/vacations/:id/reject', vacationController.managerRejectVacation);
+
 // News
 router.get('/news', commonController.getAllNews);
 

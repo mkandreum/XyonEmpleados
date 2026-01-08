@@ -28,7 +28,9 @@ export interface Payroll {
 }
 
 export enum VacationStatus {
-  PENDING = 'PENDING',
+  PENDING = 'PENDING',                   // Legacy
+  PENDING_MANAGER = 'PENDING_MANAGER',   // Awaiting Manager approval
+  PENDING_ADMIN = 'PENDING_ADMIN',       // Awaiting Admin approval
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED'
 }

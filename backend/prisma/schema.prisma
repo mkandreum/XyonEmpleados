@@ -14,9 +14,11 @@ enum Role {
 }
 
 enum VacationStatus {
-  PENDING
-  APPROVED
-  REJECTED
+  PENDING          // Legacy status, will be deprecated
+  PENDING_MANAGER  // Employee submitted, awaiting Manager approval
+  PENDING_ADMIN    // Manager approved, awaiting Admin approval
+  APPROVED         // Final approval
+  REJECTED         // Rejected by Manager or Admin
 }
 
 enum NewsCategory {
