@@ -185,23 +185,6 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Survey - Only for non-admin users and if active survey exists */}
-          {user?.role !== 'ADMIN' && activeSurvey && (
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-6 text-white">
-              <h3 className="text-xl font-bold mb-2">{activeSurvey.title}</h3>
-              <p className="text-blue-100 mb-4">{activeSurvey.description}</p>
-              <a
-                href={activeSurvey.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block bg-white text-blue-600 px-6 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
-              >
-                Participar Ahora
-              </a>
-            </div>
-          )}
-        </div>
-
         {/* Quick Access */}
         <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
