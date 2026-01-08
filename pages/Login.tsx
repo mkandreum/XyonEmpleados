@@ -45,7 +45,7 @@ export const LoginPage: React.FC = () => {
     <div className="min-h-screen bg-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         {logoUrl ? (
-          <img src={logoUrl} alt={companyName} className="h-12 w-auto mx-auto mb-4" />
+          <img src={logoUrl} alt={companyName} className="h-32 w-auto mx-auto mb-6" />
         ) : (
           <h1 className="text-4xl font-bold tracking-tight text-slate-900">{companyName}<span className="text-blue-600">Emp</span></h1>
         )}

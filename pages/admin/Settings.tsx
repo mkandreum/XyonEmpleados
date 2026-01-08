@@ -75,7 +75,7 @@ export const AdminSettings: React.FC = () => {
                                 </label>
                                 <div className="flex items-center gap-4">
                                     {settings.logoUrl && (
-                                        <img src={settings.logoUrl} alt="Logo Portal" className="h-10 w-auto border border-slate-200 rounded" />
+                                        <img src={settings.logoUrl} alt="Logo Portal" className="h-24 w-auto border border-slate-200 rounded p-1" />
                                     )}
                                     <div className="flex-1">
                                         <input
@@ -111,7 +111,7 @@ export const AdminSettings: React.FC = () => {
                                 </label>
                                 <div className="flex items-center gap-4">
                                     {settings.adminLogoUrl && (
-                                        <img src={settings.adminLogoUrl} alt="Logo Admin" className="h-10 w-auto border border-slate-200 rounded" />
+                                        <img src={settings.adminLogoUrl} alt="Logo Admin" className="h-24 w-auto border border-slate-200 rounded p-1" />
                                     )}
                                     <div className="flex-1">
                                         <input
