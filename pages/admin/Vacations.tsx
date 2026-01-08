@@ -30,6 +30,18 @@ export const AdminVacations: React.FC = () => {
         }
     };
 
+    // Helper function to translate status
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case 'PENDING': return 'Pendiente';
+            case 'PENDING_MANAGER': return 'Pendiente Manager';
+            case 'PENDING_ADMIN': return 'Pendiente Admin';
+            case 'APPROVED': return 'Aprobada';
+            case 'REJECTED': return 'Rechazada';
+            default: return status;
+        }
+    };
+
     if (isLoading) return <div className="p-8 text-center text-slate-500">Cargando solicitudes...</div>;
 
     return (
@@ -86,9 +98,7 @@ export const AdminVacations: React.FC = () => {
                                                         req.status === 'PENDING_ADMIN' ? 'bg-blue-100 text-blue-800' :
                                                             'bg-slate-100 text-slate-800'}
                                     `}>
-                                            {req.status === 'PENDING_MANAGER' ? 'Pendiente Manager' :
-                                                req.status === 'PENDING_ADMIN' ? 'Pendiente Admin' :
-                                                    req.status}
+                                            {getStatusLabel(req.status)}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
