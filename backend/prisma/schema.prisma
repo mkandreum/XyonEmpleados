@@ -66,6 +66,7 @@ model VacationRequest {
   startDate DateTime
   endDate   DateTime
   days      Int
+  quantity  Float?         // For hours-based requests
   status    VacationStatus @default(PENDING)
   type      String         // 'VACATION' | 'PERSONAL' | 'SICK_LEAVE'
   justificationUrl String?
@@ -123,7 +124,7 @@ model DepartmentBenefits {
   department            String @unique
   vacationDays          Int    @default(22)
   overtimeHoursBank     Int    @default(40)
-  sickLeaveDays         Int    @default(15)
+  sickLeaveHours        Int    @default(120) // Changed from days (15 * 8)
   paidAbsenceHours      Int    @default(20)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
@@ -133,10 +134,10 @@ model UserBenefitsBalance {
   id                    String @id @default(uuid())
   userId                String @unique
   user                  User   @relation(fields: [userId], references: [id])
-  vacationDaysUsed      Int    @default(0)
-  overtimeHoursUsed     Int    @default(0)
-  sickLeaveDaysUsed     Int    @default(0)
-  paidAbsenceHoursUsed  Int    @default(0)
+  vacationDaysUsed      Int    @default(0) // Keep as Int or Float? Let's keep Int for days.
+  overtimeHoursUsed     Float  @default(0) // Changed to Float
+  sickLeaveHoursUsed    Float  @default(0) // Changed from daysUsed
+  paidAbsenceHoursUsed  Float  @default(0) // Changed to Float
   year                  Int
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt

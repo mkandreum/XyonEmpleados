@@ -40,51 +40,21 @@ export interface VacationRequest {
   startDate: string;
   endDate: string;
   days: number;
+  quantity?: number; // Hours
   status: VacationStatus;
   type: 'VACATION' | 'PERSONAL' | 'SICK_LEAVE';
   justificationUrl?: string;
   user?: User;
 }
 
-export interface NewsItem {
-  id: string;
-  title: string;
-  summary: string;
-  content: string;
-  date: string;
-  category: 'CORPORATE' | 'EVENT' | 'URGENT';
-  imageUrl?: string;
-}
-
-export interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  read: boolean;
-  date: string;
-}
-
-export interface Event {
-  id: string;
-  title: string;
-  description?: string;
-  date: string;
-  location?: string;
-}
-
-export interface Holiday {
-  id: string;
-  name: string;
-  date: string;
-  year: number;
-}
+// ...
 
 export interface DepartmentBenefits {
   id: string;
   department: string;
   vacationDays: number;
   overtimeHoursBank: number;
-  sickLeaveDays: number;
+  sickLeaveHours: number;
   paidAbsenceHours: number;
 }
 
@@ -93,7 +63,7 @@ export interface UserBenefitsBalance {
   userId: string;
   vacationDaysUsed: number;
   overtimeHoursUsed: number;
-  sickLeaveDaysUsed: number;
+  sickLeaveHoursUsed: number;
   paidAbsenceHoursUsed: number;
   year: number;
 }

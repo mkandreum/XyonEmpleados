@@ -18,7 +18,7 @@ exports.getAllVacations = async (req, res) => {
 // Create vacation request (with role-based status)
 exports.createVacation = async (req, res) => {
     try {
-        const { startDate, endDate, days, type, justificationUrl } = req.body;
+        const { startDate, endDate, days, type, justificationUrl, quantity } = req.body;
 
         // Fetch user to determine initial status
         const user = await prisma.user.findUnique({
@@ -39,6 +39,7 @@ exports.createVacation = async (req, res) => {
                 startDate: new Date(startDate),
                 endDate: new Date(endDate),
                 days,
+                quantity: quantity ? parseFloat(quantity) : null,
                 type,
                 justificationUrl: justificationUrl || null,
                 userId: req.user.userId,

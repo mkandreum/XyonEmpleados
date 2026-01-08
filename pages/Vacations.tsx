@@ -26,7 +26,9 @@ export const VacationsPage: React.FC = () => {
         startDate: today,
         endDate: today,
         type: 'VACATION',
-        justificationUrl: ''
+        justificationUrl: '',
+        hours: 0,
+        minutes: 0
     });
 
     const fetchVacations = async () => {
@@ -112,10 +114,22 @@ export const VacationsPage: React.FC = () => {
                 return;
             }
 
+            // Calculate quantity for hours-based types
+            let quantity = 0;
+            if (formData.type !== 'VACATION') {
+                quantity = formData.hours + (formData.minutes / 60);
+                if (quantity <= 0) {
+                    showAlert('Debes especificar una duración válida (horas/minutos)', 'warning');
+                    setSubmitting(false);
+                    return;
+                }
+            }
+
             await vacationService.create({
                 startDate: formData.startDate,
                 endDate: formData.endDate,
-                days: businessDays,
+                days: formData.type === 'VACATION' ? businessDays : 0, // 0 days for hours-based? or 1? Backend handles it.
+                quantity: formData.type !== 'VACATION' ? quantity : undefined,
                 type: formData.type as any,
                 status: VacationStatus.PENDING,
                 justificationUrl: formData.justificationUrl || undefined
@@ -123,7 +137,7 @@ export const VacationsPage: React.FC = () => {
 
             await fetchVacations(); // Refresh list
             setShowRequestForm(false);
-            setFormData({ startDate: today, endDate: today, type: 'VACATION', justificationUrl: '' }); // Reset form
+            setFormData({ startDate: today, endDate: today, type: 'VACATION', justificationUrl: '', hours: 0, minutes: 0 }); // Reset form
             showAlert('Solicitud enviada correctamente', 'success');
         } catch (error) {
             console.error("Error creating vacation:", error);
@@ -234,17 +248,6 @@ export const VacationsPage: React.FC = () => {
                         <div className="p-6 bg-blue-50 border-b border-blue-100">
                             <h3 className="font-semibold text-blue-900 mb-4">Nueva Solicitud</h3>
                             <form className="space-y-4" onSubmit={handleCreate}>
-                                {/* Date Range Picker */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Selecciona el Rango de Fechas</label>
-                                    <DateRangePicker
-                                        startDate={formData.startDate}
-                                        endDate={formData.endDate}
-                                        onChange={(start, end) => setFormData({ ...formData, startDate: start, endDate: end })}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
                                         <select
@@ -257,6 +260,53 @@ export const VacationsPage: React.FC = () => {
                                             <option value="SICK_LEAVE">Horas médicas</option>
                                         </select>
                                     </div>
+
+                                    {formData.type === 'VACATION' ? (
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Selecciona el Rango de Fechas</label>
+                                            <DateRangePicker
+                                                startDate={formData.startDate}
+                                                endDate={formData.endDate}
+                                                onChange={(start, end) => setFormData({ ...formData, startDate: start, endDate: end })}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 mb-1">Fecha</label>
+                                                <input
+                                                    type="date"
+                                                    value={formData.startDate}
+                                                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value, endDate: e.target.value })}
+                                                    className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 mb-1">Horas</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        max="23"
+                                                        value={formData.hours}
+                                                        onChange={(e) => setFormData({ ...formData, hours: parseInt(e.target.value) || 0 })}
+                                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-slate-700 mb-1">Minutos</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        max="59"
+                                                        value={formData.minutes}
+                                                        onChange={(e) => setFormData({ ...formData, minutes: parseInt(e.target.value) || 0 })}
+                                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                     <div className="md:col-span-2">
                                         <label className="block text-sm font-medium text-slate-700 mb-1">Justificante (PDF/Imagen)</label>
                                         <div className="flex items-center gap-2">
@@ -290,107 +340,107 @@ export const VacationsPage: React.FC = () => {
                                     </button>
                                 </div>
                             </form>
-                        </div>
+            </div>
                     )}
 
-                    {/* Stats Summary Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 border-b border-slate-100 bg-slate-50">
-                        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><FileText size={16} /></span>
-                                <h3 className="font-semibold text-slate-700 text-sm">Exceso Jornada</h3>
-                            </div>
-                            <p className="text-2xl font-bold text-slate-900">
-                                {deptBenefits?.overtimeHoursBank ? (deptBenefits.overtimeHoursBank - (userBenefits?.overtimeHoursUsed || 0)) : 0}h
-                            </p>
-                            <p className="text-xs text-slate-400">Restantes de {deptBenefits?.overtimeHoursBank || 0}h</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="p-1.5 bg-red-100 text-red-600 rounded-lg"><AlertCircle size={16} /></span>
-                                <h3 className="font-semibold text-slate-700 text-sm">Bajas Médicas</h3>
-                            </div>
-                            <p className="text-2xl font-bold text-slate-900">
-                                {deptBenefits?.sickLeaveDays ? (deptBenefits.sickLeaveDays - (userBenefits?.sickLeaveDaysUsed || 0)) : 0}
-                            </p>
-                            <p className="text-xs text-slate-400">Días restantes de {deptBenefits?.sickLeaveDays || 0}</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="p-1.5 bg-green-100 text-green-600 rounded-lg"><Calendar size={16} /></span>
-                                <h3 className="font-semibold text-slate-700 text-sm">Ausencias Retrib.</h3>
-                            </div>
-                            <p className="text-2xl font-bold text-slate-900">
-                                {deptBenefits?.paidAbsenceHours ? (deptBenefits.paidAbsenceHours - (userBenefits?.paidAbsenceHoursUsed || 0)) : 0}h
-                            </p>
-                            <p className="text-xs text-slate-400">Restantes de {deptBenefits?.paidAbsenceHours || 0}h</p>
-                        </div>
+            {/* Stats Summary Section */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 border-b border-slate-100 bg-slate-50">
+                <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><FileText size={16} /></span>
+                        <h3 className="font-semibold text-slate-700 text-sm">Exceso Jornada</h3>
                     </div>
+                    <p className="text-2xl font-bold text-slate-900">
+                        {deptBenefits?.overtimeHoursBank ? (deptBenefits.overtimeHoursBank - (userBenefits?.overtimeHoursUsed || 0)) : 0}h
+                    </p>
+                    <p className="text-xs text-slate-400">Restantes de {deptBenefits?.overtimeHoursBank || 0}h</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="p-1.5 bg-red-100 text-red-600 rounded-lg"><AlertCircle size={16} /></span>
+                        <h3 className="font-semibold text-slate-700 text-sm">Bajas Médicas</h3>
+                    </div>
+                    <p className="text-2xl font-bold text-slate-900">
+                        {deptBenefits?.sickLeaveDays ? (deptBenefits.sickLeaveDays - (userBenefits?.sickLeaveDaysUsed || 0)) : 0}
+                    </p>
+                    <p className="text-xs text-slate-400">Días restantes de {deptBenefits?.sickLeaveDays || 0}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="p-1.5 bg-green-100 text-green-600 rounded-lg"><Calendar size={16} /></span>
+                        <h3 className="font-semibold text-slate-700 text-sm">Ausencias Retrib.</h3>
+                    </div>
+                    <p className="text-2xl font-bold text-slate-900">
+                        {deptBenefits?.paidAbsenceHours ? (deptBenefits.paidAbsenceHours - (userBenefits?.paidAbsenceHoursUsed || 0)) : 0}h
+                    </p>
+                    <p className="text-xs text-slate-400">Restantes de {deptBenefits?.paidAbsenceHours || 0}h</p>
+                </div>
+            </div>
 
-                    <div className="flex-1 overflow-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="text-xs text-slate-500 uppercase bg-slate-50">
-                                <tr>
-                                    <th className="px-6 py-3">Fechas</th>
-                                    <th className="px-6 py-3">Duración</th>
-                                    <th className="px-6 py-3">Tipo</th>
-                                    <th className="px-6 py-3">Estado</th>
+            <div className="flex-1 overflow-auto">
+                <table className="w-full text-sm text-left">
+                    <thead className="text-xs text-slate-500 uppercase bg-slate-50">
+                        <tr>
+                            <th className="px-6 py-3">Fechas</th>
+                            <th className="px-6 py-3">Duración</th>
+                            <th className="px-6 py-3">Tipo</th>
+                            <th className="px-6 py-3">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {loading ? (
+                            <tr>
+                                <td colSpan={4} className="px-6 py-4 text-center text-slate-500">Cargando...</td>
+                            </tr>
+                        ) : vacations.length === 0 ? (
+                            <tr>
+                                <td colSpan={4} className="px-6 py-4 text-center text-slate-500">No hay solicitudes registradas.</td>
+                            </tr>
+                        ) : (
+                            vacations.map(vac => (
+                                <tr key={vac.id} className="hover:bg-slate-50">
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col">
+                                            <span className="font-medium text-slate-900">{new Date(vac.startDate).toLocaleDateString()}</span>
+                                            <span className="text-slate-500 text-xs">hasta {new Date(vac.endDate).toLocaleDateString()}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-slate-600">{vac.days} días</td>
+                                    <td className="px-6 py-4 text-slate-600">{getTypeLabel(vac.type)}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(vac.status)}`}>
+                                            {vac.status === VacationStatus.APPROVED ? 'Aprobado' :
+                                                vac.status === VacationStatus.PENDING_MANAGER ? 'Pendiente Manager' :
+                                                    vac.status === VacationStatus.PENDING_ADMIN ? 'Pendiente Admin' :
+                                                        vac.status === VacationStatus.PENDING ? 'Pendiente' : 'Rechazado'}
+                                        </span>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan={4} className="px-6 py-4 text-center text-slate-500">Cargando...</td>
-                                    </tr>
-                                ) : vacations.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={4} className="px-6 py-4 text-center text-slate-500">No hay solicitudes registradas.</td>
-                                    </tr>
-                                ) : (
-                                    vacations.map(vac => (
-                                        <tr key={vac.id} className="hover:bg-slate-50">
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium text-slate-900">{new Date(vac.startDate).toLocaleDateString()}</span>
-                                                    <span className="text-slate-500 text-xs">hasta {new Date(vac.endDate).toLocaleDateString()}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-slate-600">{vac.days} días</td>
-                                            <td className="px-6 py-4 text-slate-600">{getTypeLabel(vac.type)}</td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(vac.status)}`}>
-                                                    {vac.status === VacationStatus.APPROVED ? 'Aprobado' :
-                                                        vac.status === VacationStatus.PENDING_MANAGER ? 'Pendiente Manager' :
-                                                            vac.status === VacationStatus.PENDING_ADMIN ? 'Pendiente Admin' :
-                                                                vac.status === VacationStatus.PENDING ? 'Pendiente' : 'Rechazado'}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
-
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-                <AlertCircle className="text-amber-600 mt-0.5" size={20} />
-                <div>
-                    <h4 className="font-semibold text-amber-800 text-sm">Política de Vacaciones</h4>
-                    <p className="text-amber-700 text-sm mt-1">Recuerda solicitar tus vacaciones con al menos 15 días de antelación. Los días no disfrutados antes del 31 de Enero del año siguiente expirarán.</p>
-                </div>
-            </div>
-
-            {/* Custom Modal */}
-            <Modal
-                isOpen={modalState.isOpen}
-                onClose={closeModal}
-                title={modalState.title}
-                message={modalState.message}
-                type={modalState.type}
-                onConfirm={modalState.onConfirm}
-            />
         </div>
+            </div >
+
+    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+        <AlertCircle className="text-amber-600 mt-0.5" size={20} />
+        <div>
+            <h4 className="font-semibold text-amber-800 text-sm">Política de Vacaciones</h4>
+            <p className="text-amber-700 text-sm mt-1">Recuerda solicitar tus vacaciones con al menos 15 días de antelación. Los días no disfrutados antes del 31 de Enero del año siguiente expirarán.</p>
+        </div>
+    </div>
+
+{/* Custom Modal */ }
+<Modal
+    isOpen={modalState.isOpen}
+    onClose={closeModal}
+    title={modalState.title}
+    message={modalState.message}
+    type={modalState.type}
+    onConfirm={modalState.onConfirm}
+/>
+        </div >
     );
 };
