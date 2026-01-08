@@ -102,7 +102,34 @@ exports.getUserBenefitsBalance = async (req, res) => {
             paidAbsenceHours: 20
         };
 
-        const benefits = deptBenefits || defaultBenefits;
+        const deptBenefitsData = deptBenefits || defaultBenefits;
+
+        // --- Proration Logic ---
+        let vacationEntitlement = deptBenefitsData.vacationDays;
+
+        if (user.joinDate) {
+            const joinDate = new Date(user.joinDate);
+            const joinYear = joinDate.getFullYear();
+
+            if (joinYear === currentYear) {
+                const startOfYear = new Date(currentYear, 0, 1);
+                const endOfYear = new Date(currentYear, 11, 31);
+                const totalDaysInYear = (endOfYear - startOfYear) / (1000 * 60 * 60 * 24) + 1;
+
+                // Days active in the year (from join date to end of year)
+                let daysActive = (endOfYear - joinDate) / (1000 * 60 * 60 * 24) + 1;
+                if (daysActive < 0) daysActive = 0;
+
+                const ratio = Math.min(1, Math.max(0, daysActive / totalDaysInYear));
+                vacationEntitlement = Math.round(deptBenefitsData.vacationDays * ratio);
+            }
+        }
+
+        const benefits = {
+            ...deptBenefitsData,
+            vacationDays: vacationEntitlement, // Override with prorated value
+            originalVacationDays: deptBenefitsData.vacationDays // Keep original for reference if needed
+        };
 
         res.json({
             ...balance,
