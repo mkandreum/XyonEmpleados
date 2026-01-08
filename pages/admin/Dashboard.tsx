@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Users, Clock, CheckCircle, FileText, TrendingUp } from 'lucide-react';
+import { adminService } from '../../services/api';
 
 export const AdminDashboard: React.FC = () => {
     const [stats, setStats] = useState<any>(null);
@@ -12,10 +13,7 @@ export const AdminDashboard: React.FC = () => {
 
     const fetchStats = async () => {
         try {
-            const response = await fetch('/api/admin/stats', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
-            const data = await response.json();
+            const data = await adminService.getStats();
             setStats(data);
         } catch (error) {
             console.error('Error fetching stats:', error);

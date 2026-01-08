@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User, Payroll, VacationRequest, NewsItem, Notification } from '../types';
+import { User, Payroll, VacationRequest, NewsItem, Notification, Event, Holiday, DepartmentBenefits, UserBenefitsBalance, GlobalSettings, AdminStats } from '../types';
 
 // The API URL will depend on where the backend is served. 
 // In development, Vite proxy can handle /api.
@@ -86,6 +86,18 @@ export const newsService = {
     getAll: async () => {
         const response = await api.get<NewsItem[]>('/news');
         return response.data;
+    },
+    create: async (data: Partial<NewsItem>) => {
+        const response = await api.post<NewsItem>('/admin/news', data);
+        return response.data;
+    },
+    update: async (id: string, data: Partial<NewsItem>) => {
+        const response = await api.put<NewsItem>(`/admin/news/${id}`, data);
+        return response.data;
+    },
+    delete: async (id: string) => {
+        const response = await api.delete(`/admin/news/${id}`);
+        return response.data;
     }
 };
 
@@ -96,6 +108,128 @@ export const notificationService = {
     },
     markAsRead: async (id: string) => {
         const response = await api.put(`/notifications/${id}/read`);
+        return response.data;
+    }
+};
+
+export const eventsService = {
+    getAll: async () => {
+        const response = await api.get<Event[]>('/events');
+        return response.data;
+    },
+    create: async (data: Partial<Event>) => {
+        const response = await api.post<Event>('/admin/events', data);
+        return response.data;
+    },
+    update: async (id: string, data: Partial<Event>) => {
+        const response = await api.put<Event>(`/admin/events/${id}`, data);
+        return response.data;
+    },
+    delete: async (id: string) => {
+        const response = await api.delete(`/admin/events/${id}`);
+        return response.data;
+    }
+};
+
+export const holidayService = {
+    getNext: async () => {
+        const response = await api.get<Holiday>('/holidays/next');
+        return response.data;
+    }
+};
+
+export const benefitsService = {
+    getUserBalance: async () => {
+        const response = await api.get<UserBenefitsBalance>('/benefits/user');
+        return response.data;
+    },
+    getDepartmentBenefits: async (department?: string) => {
+        const url = department
+            ? `/benefits/department/${department}`
+            : '/admin/benefits';
+        const response = await api.get<DepartmentBenefits | DepartmentBenefits[]>(url);
+        return response.data;
+    },
+    upsertDepartmentBenefits: async (data: Partial<DepartmentBenefits>) => {
+        const response = await api.post<DepartmentBenefits>('/admin/benefits', data);
+        return response.data;
+    },
+    updateUserBalance: async (data: any) => {
+        const response = await api.put<UserBenefitsBalance>('/admin/benefits/balance', data);
+        return response.data;
+    }
+};
+
+export const uploadService = {
+    uploadAvatar: async (formData: FormData) => {
+        const response = await api.post('/upload/avatar', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
+    uploadJustification: async (formData: FormData) => {
+        const response = await api.post('/upload/justification', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
+    uploadPayroll: async (formData: FormData) => {
+        const response = await api.post('/upload/payroll', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
+    uploadLogo: async (formData: FormData) => {
+        const response = await api.post('/upload/logo', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
+    deleteFile: async (fileUrl: string) => {
+        const response = await api.delete('/upload/file', { data: { fileUrl } });
+        return response.data;
+    }
+};
+
+export const adminService = {
+    getStats: async () => {
+        const response = await api.get<AdminStats>('/admin/stats');
+        return response.data;
+    },
+    getUsers: async () => {
+        const response = await api.get<User[]>('/admin/users');
+        return response.data;
+    },
+    createUser: async (data: Partial<User>) => {
+        const response = await api.post<User>('/admin/users', data);
+        return response.data;
+    },
+    updateUser: async (id: string, data: Partial<User>) => {
+        const response = await api.put<User>(`/admin/users/${id}`, data);
+        return response.data;
+    },
+    deleteUser: async (id: string) => {
+        const response = await api.delete(`/admin/users/${id}`);
+        return response.data;
+    },
+    getAllVacations: async () => {
+        const response = await api.get<VacationRequest[]>('/admin/vacations');
+        return response.data;
+    },
+    updateVacationStatus: async (id: string, status: string) => {
+        const response = await api.put<VacationRequest>(`/admin/vacations/${id}/status`, { status });
+        return response.data;
+    },
+    getSettings: async () => {
+        const response = await api.get<GlobalSettings>('/admin/settings');
+        return response.data;
+    },
+    updateSettings: async (settings: any) => {
+        const response = await api.put('/admin/settings', settings);
+        return response.data;
+    },
+    createPayroll: async (data: any) => {
+        const response = await api.post('/admin/payrolls', data);
         return response.data;
     }
 };

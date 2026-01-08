@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { eventsService } from '../../services/api';
 import { Plus, Edit, Trash2, X, Calendar } from 'lucide-react';
+import { Event } from '../../types';
 
 interface EventFormData {
     title: string;
@@ -9,10 +11,10 @@ interface EventFormData {
 }
 
 export const AdminEvents: React.FC = () => {
-    const [events, setEvents] = useState<any[]>([]);
+    const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const [editingEvent, setEditingEvent] = useState<any | null>(null);
+    const [editingEvent, setEditingEvent] = useState<Event | null>(null);
     const [formData, setFormData] = useState<EventFormData>({
         title: '',
         description: '',
@@ -22,10 +24,7 @@ export const AdminEvents: React.FC = () => {
 
     const fetchEvents = async () => {
         try {
-            const response = await fetch('/api/events', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
-            const data = await response.json();
+            const data = await eventsService.getAll();
             setEvents(data);
         } catch (error) {
             console.error("Error fetching events:", error);
@@ -41,17 +40,17 @@ export const AdminEvents: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await fetch('/api/admin/events', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(formData)
-            });
+            if (editingEvent) {
+                // Update
+                await eventsService.update(editingEvent.id, formData);
+            } else {
+                // Create
+                await eventsService.create(formData);
+            }
             await fetchEvents();
             setShowModal(false);
             setFormData({ title: '', description: '', date: '', location: '' });
+            setEditingEvent(null);
         } catch (error) {
             console.error("Error saving event:", error);
             alert("Error al guardar el evento");
@@ -61,10 +60,7 @@ export const AdminEvents: React.FC = () => {
     const handleDelete = async (id: string) => {
         if (!confirm('¿Estás seguro de eliminar este evento?')) return;
         try {
-            await fetch(`/api/admin/events/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
+            await eventsService.delete(id);
             await fetchEvents();
         } catch (error) {
             console.error("Error deleting event:", error);

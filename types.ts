@@ -61,3 +61,50 @@ export interface Notification {
   read: boolean;
   date: string;
 }
+
+export interface Event {
+  id: string;
+  title: string;
+  description?: string;
+  date: string;
+  location?: string;
+}
+
+export interface Holiday {
+  id: string;
+  name: string;
+  date: string;
+  year: number;
+}
+
+export interface DepartmentBenefits {
+  id: string;
+  department: string;
+  vacationDays: number;
+  overtimeHoursBank: number;
+  sickLeaveDays: number;
+  paidAbsenceHours: number;
+}
+
+export interface UserBenefitsBalance {
+  id: string;
+  userId: string;
+  vacationDaysUsed: number;
+  overtimeHoursUsed: number;
+  sickLeaveDaysUsed: number;
+  paidAbsenceHoursUsed: number;
+  year: number;
+}
+
+export interface GlobalSettings {
+  id: string;
+  key: string;
+  value: string;
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  activeUsers: number; // Users active in last 30 days or similar
+  pendingVacations: number;
+  totalPayrollAmount: number; // For current month
+}

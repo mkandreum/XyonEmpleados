@@ -52,17 +52,7 @@ export const ProfilePage: React.FC = () => {
             return;
         }
         try {
-            await fetch('/api/users/change-password', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({
-                    currentPassword: passwordData.currentPassword,
-                    newPassword: passwordData.newPassword
-                })
-            });
+            await userService.changePassword(passwordData.currentPassword, passwordData.newPassword);
             alert("Contraseña cambiada correctamente");
             setShowPasswordModal(false);
             setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });

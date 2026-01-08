@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { notificationService, vacationService } from '../services/api';
-import { Notification, VacationRequest } from '../types';
+import { notificationService, vacationService, eventsService, holidayService, benefitsService } from '../services/api';
+import { Notification, VacationRequest, Event, Holiday, UserBenefitsBalance, DepartmentBenefits } from '../types';
 import { Calendar, CheckCircle2, Clock, Briefcase, AlertCircle, Plane, FileText, Info, Upload, X } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
@@ -11,8 +11,10 @@ export const Dashboard: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [vacations, setVacations] = useState<VacationRequest[]>([]);
   const [pendingVacations, setPendingVacations] = useState<VacationRequest[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
-  const [nextHoliday, setNextHoliday] = useState<any>(null);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [nextHoliday, setNextHoliday] = useState<Holiday | null>(null);
+  const [benefits, setBenefits] = useState<UserBenefitsBalance | null>(null);
+  const [deptBenefits, setDeptBenefits] = useState<DepartmentBenefits | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Quick access modal state
@@ -27,25 +29,40 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [notifs, vacs, evts, holiday] = await Promise.all([
+        const promises: Promise<any>[] = [
           notificationService.getAll(),
           vacationService.getAll(),
-          fetch('/api/events', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }).then(r => r.json()),
-          fetch('/api/holidays/next', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }).then(r => r.json())
-        ]);
+          eventsService.getAll(),
+          holidayService.getNext(),
+          benefitsService.getUserBalance()
+        ];
+
+        if (user?.department) {
+          promises.push(benefitsService.getDepartmentBenefits(user.department));
+        }
+
+        const results = await Promise.all(promises);
+        const [notifs, vacs, evts, holiday, benefitBalance] = results;
+
         setNotifications(notifs);
         setVacations(vacs);
         setPendingVacations(vacs.filter((v: VacationRequest) => v.status === 'PENDING'));
         setEvents(evts);
         setNextHoliday(holiday);
+        setBenefits(benefitBalance);
+        if (user?.department && results[5]) {
+          setDeptBenefits(results[5] as DepartmentBenefits);
+        }
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, []);
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
 
   const handleQuickAccess = (type: string) => {
     if (type === 'info') {
@@ -88,6 +105,10 @@ export const Dashboard: React.FC = () => {
 
   if (loading) return <div className="flex items-center justify-center h-screen"><div className="text-slate-500">Cargando...</div></div>;
 
+  const vacationLimit = deptBenefits?.vacationDays || 22;
+  const vacationUsed = benefits?.vacationDaysUsed || 0;
+  const remainingVacations = vacationLimit - vacationUsed;
+
   return (
     <div className="space-y-6">
       <div>
@@ -103,7 +124,7 @@ export const Dashboard: React.FC = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500">Días de Vacaciones</p>
-              <p className="text-2xl font-bold text-slate-900">{22 - vacations.filter(v => v.status === 'APPROVED' && v.type === 'VACATION').reduce((acc, v) => acc + v.days, 0)}</p>
+              <p className="text-2xl font-bold text-slate-900">{remainingVacations}</p>
             </div>
           </div>
         </div>

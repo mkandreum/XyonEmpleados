@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { adminService } from '../../services/adminService';
+import { newsService } from '../../services/api';
 import { Plus, Edit, Trash2, X } from 'lucide-react';
+import { NewsItem } from '../../types';
 
 interface NewsFormData {
     title: string;
@@ -11,10 +12,10 @@ interface NewsFormData {
 }
 
 export const AdminNews: React.FC = () => {
-    const [news, setNews] = useState<any[]>([]);
+    const [news, setNews] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const [editingNews, setEditingNews] = useState<any | null>(null);
+    const [editingNews, setEditingNews] = useState<NewsItem | null>(null);
     const [formData, setFormData] = useState<NewsFormData>({
         title: '',
         summary: '',
@@ -25,8 +26,7 @@ export const AdminNews: React.FC = () => {
 
     const fetchNews = async () => {
         try {
-            const response = await fetch('/api/news');
-            const data = await response.json();
+            const data = await newsService.getAll();
             setNews(data);
         } catch (error) {
             console.error("Error fetching news:", error);
@@ -43,17 +43,9 @@ export const AdminNews: React.FC = () => {
         e.preventDefault();
         try {
             if (editingNews) {
-                await fetch(`/api/admin/news/${editingNews.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                    body: JSON.stringify(formData)
-                });
+                await newsService.update(editingNews.id, formData);
             } else {
-                await fetch('/api/admin/news', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                    body: JSON.stringify(formData)
-                });
+                await newsService.create(formData);
             }
             await fetchNews();
             setShowModal(false);
@@ -68,10 +60,7 @@ export const AdminNews: React.FC = () => {
     const handleDelete = async (id: string) => {
         if (!confirm('¿Estás seguro de eliminar esta noticia?')) return;
         try {
-            await fetch(`/api/admin/news/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
+            await newsService.delete(id);
             await fetchNews();
         } catch (error) {
             console.error("Error deleting news:", error);

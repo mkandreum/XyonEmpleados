@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { adminService } from '../../services/adminService';
+import { adminService, uploadService } from '../../services/api';
 
 export const AdminSettings: React.FC = () => {
     const [settings, setSettings] = useState<{ [key: string]: string }>({});
@@ -71,34 +71,78 @@ export const AdminSettings: React.FC = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    URL del Logo (Portal Empleados)
+                                    Logo del Portal Empleados
                                 </label>
-                                <input
-                                    type="text"
-                                    name="logoUrl"
-                                    value={settings.logoUrl || ''}
-                                    onChange={handleChange}
-                                    placeholder="https://ejemplo.com/logo.png"
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                />
+                                <div className="flex items-center gap-4">
+                                    {settings.logoUrl && (
+                                        <img src={settings.logoUrl} alt="Logo Portal" className="h-10 w-auto border border-slate-200 rounded" />
+                                    )}
+                                    <div className="flex-1">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                try {
+                                                    const formData = new FormData();
+                                                    formData.append('file', file);
+                                                    const result = await uploadService.uploadLogo(formData);
+                                                    setSettings({ ...settings, logoUrl: result.url });
+                                                } catch (error) {
+                                                    console.error("Error uploading logo:", error);
+                                                    alert("Error al subir el logo");
+                                                }
+                                            }}
+                                            className="block w-full text-sm text-slate-500
+                                                file:mr-4 file:py-2 file:px-4
+                                                file:rounded-full file:border-0
+                                                file:text-sm file:font-semibold
+                                                file:bg-blue-50 file:text-blue-700
+                                                hover:file:bg-blue-100"
+                                        />
+                                    </div>
+                                </div>
                                 <p className="mt-1 text-xs text-slate-500">
-                                    Logo que se mostrará en el portal de empleados. Deja vacío para usar el nombre.
+                                    Logo que se mostrará en el portal de empleados.
                                 </p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    URL del Logo (Panel Admin)
+                                    Logo del Panel Admin
                                 </label>
-                                <input
-                                    type="text"
-                                    name="adminLogoUrl"
-                                    value={settings.adminLogoUrl || ''}
-                                    onChange={handleChange}
-                                    placeholder="https://ejemplo.com/admin-logo.png"
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                />
+                                <div className="flex items-center gap-4">
+                                    {settings.adminLogoUrl && (
+                                        <img src={settings.adminLogoUrl} alt="Logo Admin" className="h-10 w-auto border border-slate-200 rounded" />
+                                    )}
+                                    <div className="flex-1">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                try {
+                                                    const formData = new FormData();
+                                                    formData.append('file', file);
+                                                    const result = await uploadService.uploadLogo(formData);
+                                                    setSettings({ ...settings, adminLogoUrl: result.url });
+                                                } catch (error) {
+                                                    console.error("Error uploading logo:", error);
+                                                    alert("Error al subir el logo");
+                                                }
+                                            }}
+                                            className="block w-full text-sm text-slate-500
+                                                file:mr-4 file:py-2 file:px-4
+                                                file:rounded-full file:border-0
+                                                file:text-sm file:font-semibold
+                                                file:bg-blue-50 file:text-blue-700
+                                                hover:file:bg-blue-100"
+                                        />
+                                    </div>
+                                </div>
                                 <p className="mt-1 text-xs text-slate-500">
-                                    Logo que se mostrará en el panel de administración. Deja vacío para usar el nombre.
+                                    Logo que se mostrará en el panel de administración.
                                 </p>
                             </div>
                         </div>

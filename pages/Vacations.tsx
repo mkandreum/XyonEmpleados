@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { vacationService } from '../services/api';
-import { uploadService } from '../services/uploadService';
-import { VacationRequest, VacationStatus } from '../types';
+import { vacationService, uploadService, benefitsService } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { VacationRequest, VacationStatus, DepartmentBenefits, UserBenefitsBalance } from '../types';
 import { Plus, Calendar, AlertCircle, Upload, FileText } from 'lucide-react';
 
 export const VacationsPage: React.FC = () => {
+    const { user } = useAuth();
     const [showRequestForm, setShowRequestForm] = useState(false);
     const [vacations, setVacations] = useState<VacationRequest[]>([]);
+    const [deptBenefits, setDeptBenefits] = useState<DepartmentBenefits | null>(null);
+    const [userBenefits, setUserBenefits] = useState<UserBenefitsBalance | null>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -23,18 +26,29 @@ export const VacationsPage: React.FC = () => {
 
     const fetchVacations = async () => {
         try {
-            const data = await vacationService.getAll();
-            setVacations(data);
+            const [vacs, balance] = await Promise.all([
+                vacationService.getAll(),
+                benefitsService.getUserBalance()
+            ]);
+            setVacations(vacs);
+            setUserBenefits(balance);
+
+            if (user?.department) {
+                const dept = await benefitsService.getDepartmentBenefits(user.department);
+                setDeptBenefits(dept as DepartmentBenefits);
+            }
         } catch (error) {
-            console.error("Error fetching vacations:", error);
+            console.error("Error fetching data:", error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchVacations();
-    }, []);
+        if (user) {
+            fetchVacations();
+        }
+    }, [user]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -95,10 +109,8 @@ export const VacationsPage: React.FC = () => {
     const requiresJustification = formData.type === 'SICK_LEAVE' || formData.type === 'PERSONAL';
 
     // Data for chart
-    const totalDays = 22;
-    const takenDays = vacations
-        .filter(v => v.status === VacationStatus.APPROVED && v.type === 'VACATION')
-        .reduce((acc, curr) => acc + curr.days, 0);
+    const totalDays = deptBenefits?.vacationDays || 22;
+    const takenDays = userBenefits?.vacationDaysUsed || 0;
     const pendingDays = vacations
         .filter(v => v.status === VacationStatus.PENDING && v.type === 'VACATION')
         .reduce((acc, curr) => acc + curr.days, 0);
@@ -220,20 +232,30 @@ export const VacationsPage: React.FC = () => {
                                     </select>
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Enlace a Justificante (Opcional)</label>
-                                    <input
-                                        type="url"
-                                        placeholder="https://..."
-                                        value={formData.justificationUrl || ''}
-                                        onChange={(e) => setFormData({ ...formData, justificationUrl: e.target.value })}
-                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                    />
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Justificante (PDF/Imagen)</label>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="file"
+                                            accept=".pdf,.jpg,.jpeg,.png"
+                                            onChange={handleFileUpload}
+                                            disabled={uploading}
+                                            className="block w-full text-sm text-slate-500
+                                                file:mr-4 file:py-2 file:px-4
+                                                file:rounded-full file:border-0
+                                                file:text-sm file:font-semibold
+                                                file:bg-blue-50 file:text-blue-700
+                                                hover:file:bg-blue-100"
+                                        />
+                                        {uploading && <span className="text-sm text-blue-600">Subiendo...</span>}
+                                        {formData.justificationUrl && <span className="text-sm text-green-600 font-medium">¡Archivo listo!</span>}
+                                    </div>
+                                    <input type="hidden" value={formData.justificationUrl} />
                                 </div>
                                 <div className="md:col-span-2 flex justify-end gap-3 mt-2">
                                     <button type="button" onClick={() => setShowRequestForm(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg">Cancelar</button>
                                     <button
                                         type="submit"
-                                        disabled={submitting}
+                                        disabled={submitting || (requiresJustification && !formData.justificationUrl)}
                                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                                     >
                                         {submitting ? 'Enviando...' : 'Enviar Solicitud'}
@@ -242,6 +264,40 @@ export const VacationsPage: React.FC = () => {
                             </form>
                         </div>
                     )}
+
+                    {/* Stats Summary Section */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 border-b border-slate-100 bg-slate-50">
+                        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><FileText size={16} /></span>
+                                <h3 className="font-semibold text-slate-700 text-sm">Exceso Jornada</h3>
+                            </div>
+                            <p className="text-2xl font-bold text-slate-900">
+                                {deptBenefits?.overtimeHoursBank ? (deptBenefits.overtimeHoursBank - (userBenefits?.overtimeHoursUsed || 0)) : 0}h
+                            </p>
+                            <p className="text-xs text-slate-400">Restantes de {deptBenefits?.overtimeHoursBank || 0}h</p>
+                        </div>
+                        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="p-1.5 bg-red-100 text-red-600 rounded-lg"><AlertCircle size={16} /></span>
+                                <h3 className="font-semibold text-slate-700 text-sm">Bajas Médicas</h3>
+                            </div>
+                            <p className="text-2xl font-bold text-slate-900">
+                                {deptBenefits?.sickLeaveDays ? (deptBenefits.sickLeaveDays - (userBenefits?.sickLeaveDaysUsed || 0)) : 0}
+                            </p>
+                            <p className="text-xs text-slate-400">Días restantes de {deptBenefits?.sickLeaveDays || 0}</p>
+                        </div>
+                        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="p-1.5 bg-green-100 text-green-600 rounded-lg"><Calendar size={16} /></span>
+                                <h3 className="font-semibold text-slate-700 text-sm">Ausencias Retrib.</h3>
+                            </div>
+                            <p className="text-2xl font-bold text-slate-900">
+                                {deptBenefits?.paidAbsenceHours ? (deptBenefits.paidAbsenceHours - (userBenefits?.paidAbsenceHoursUsed || 0)) : 0}h
+                            </p>
+                            <p className="text-xs text-slate-400">Restantes de {deptBenefits?.paidAbsenceHours || 0}h</p>
+                        </div>
+                    </div>
 
                     <div className="flex-1 overflow-auto">
                         <table className="w-full text-sm text-left">

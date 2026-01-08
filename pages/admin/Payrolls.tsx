@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { adminService } from '../../services/api';
 import { Upload, X, FileText } from 'lucide-react';
 
 interface PayrollFormData {
@@ -25,10 +26,7 @@ export const AdminPayrolls: React.FC = () => {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await fetch('/api/admin/users', {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                });
-                const data = await response.json();
+                const data = await adminService.getUsers();
                 setUsers(data.filter((u: any) => u.role !== 'ADMIN'));
             } catch (error) {
                 console.error("Error fetching users:", error);
@@ -40,14 +38,7 @@ export const AdminPayrolls: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await fetch('/api/admin/payrolls', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(formData)
-            });
+            await adminService.createPayroll(formData);
             setShowModal(false);
             setFormData({ userId: '', month: 'Enero', year: new Date().getFullYear(), amount: 0, pdfUrl: '' });
             alert('Nómina creada correctamente');

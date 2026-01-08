@@ -18,8 +18,8 @@ const SidebarItem = ({ to, icon: Icon, label, active }: { to: string; icon: any;
   <Link
     to={to}
     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${active
-        ? 'bg-blue-600 text-white shadow-md'
-        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+      ? 'bg-blue-600 text-white shadow-md'
+      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
       }`}
   >
     <Icon size={20} />
@@ -36,7 +36,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const menuItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/payroll', label: 'Mi Nómina', icon: FileText },
-    { path: '/vacations', label: 'Vacaciones', icon: CalendarDays },
+    { path: '/vacations', label: 'Vacaciones/Ausencias', icon: CalendarDays },
     { path: '/news', label: 'Comunicación', icon: Newspaper },
     { path: '/profile', label: 'Mi Perfil', icon: UserCircle },
   ];

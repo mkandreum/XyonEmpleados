@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { benefitsService } from '../../services/api';
+import { DepartmentBenefits } from '../../types';
 import { Save, Edit2 } from 'lucide-react';
-
-interface DepartmentBenefits {
-    id?: string;
-    department: string;
-    vacationDays: number;
-    overtimeHoursBank: number;
-    sickLeaveDays: number;
-    paidAbsenceHours: number;
-}
 
 const DEPARTMENTS = ['IT', 'RRHH', 'Ventas', 'Marketing', 'Operaciones', 'Finanzas'];
 
@@ -30,11 +23,10 @@ export const AdminBenefits: React.FC = () => {
 
     const fetchBenefits = async () => {
         try {
-            const response = await fetch('/api/admin/benefits', {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
-            const data = await response.json();
-            setBenefits(data);
+            const data = await benefitsService.getDepartmentBenefits();
+            if (Array.isArray(data)) {
+                setBenefits(data);
+            }
         } catch (error) {
             console.error('Error fetching benefits:', error);
         } finally {
@@ -60,14 +52,7 @@ export const AdminBenefits: React.FC = () => {
 
     const handleSave = async () => {
         try {
-            await fetch('/api/admin/benefits', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(formData)
-            });
+            await benefitsService.upsertDepartmentBenefits(formData);
             fetchBenefits();
             setEditingDept(null);
             alert('Beneficios actualizados correctamente');
