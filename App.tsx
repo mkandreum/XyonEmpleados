@@ -18,7 +18,6 @@ import { AdminSettings } from './pages/admin/Settings';
 import { AdminNews } from './pages/admin/News';
 import { AdminEvents } from './pages/admin/Events';
 import { AdminPayrolls } from './pages/admin/Payrolls';
-import { AdminSurveys } from './pages/admin/Surveys';
 import { AdminBenefits } from './pages/admin/Benefits';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -82,11 +81,6 @@ const AppRoutes = () => {
             <Route path="/admin/payrolls" element={
                 <AdminRoute>
                     <AdminPayrolls />
-                </AdminRoute>
-            } />
-            <Route path="/admin/surveys" element={
-                <AdminRoute>
-                    <AdminSurveys />
                 </AdminRoute>
             } />
             <Route path="/admin/benefits" element={

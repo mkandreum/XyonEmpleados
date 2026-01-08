@@ -14,7 +14,6 @@ export const Dashboard: React.FC = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [nextHoliday, setNextHoliday] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeSurvey, setActiveSurvey] = useState<any>(null);
 
   // Quick access modal state
   const [showQuickAccessModal, setShowQuickAccessModal] = useState<string | null>(null);
@@ -28,19 +27,17 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [notifs, vacs, evts, holiday, survey] = await Promise.all([
+        const [notifs, vacs, evts, holiday] = await Promise.all([
           notificationService.getAll(),
           vacationService.getAll(),
           fetch('/api/events', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }).then(r => r.json()),
-          fetch('/api/holidays/next', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }).then(r => r.json()),
-          fetch('/api/survey/active', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }).then(r => r.json()).catch(() => null)
+          fetch('/api/holidays/next', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }).then(r => r.json())
         ]);
         setNotifications(notifs);
         setVacations(vacs);
         setPendingVacations(vacs.filter((v: VacationRequest) => v.status === 'PENDING'));
         setEvents(evts);
         setNextHoliday(holiday);
-        setActiveSurvey(survey);
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       } finally {
