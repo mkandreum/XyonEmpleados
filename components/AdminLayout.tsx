@@ -43,7 +43,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                     <div className="p-6 border-b border-slate-700 flex items-center justify-between">
                         <Link to="/admin" className="text-xl font-bold tracking-wider">
                             {adminLogoUrl ? (
-                                <img src={adminLogoUrl} alt={`${companyName} Admin`} className="h-8 w-auto" />
+                                <img src={adminLogoUrl} alt={`${companyName} Admin`} className="w-auto h-auto object-contain max-w-full" />
                             ) : (
                                 <>{companyName}<span className="text-purple-500">Admin</span></>
                             )}
