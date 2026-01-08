@@ -79,3 +79,24 @@ exports.getProfile = async (req, res) => {
         res.status(500).json({ error: 'Error fetching profile' });
     }
 };
+
+exports.updateProfile = async (req, res) => {
+    try {
+        const { phone, address, emergencyContact } = req.body;
+
+        const user = await prisma.user.update({
+            where: { id: req.user.userId },
+            data: {
+                phone,
+                address,
+                emergencyContact
+            }
+        });
+
+        const { password: _, ...userNoPass } = user;
+        res.json(userNoPass);
+    } catch (error) {
+        console.error("Update profile error:", error);
+        res.status(500).json({ error: 'Failed to update profile' });
+    }
+};

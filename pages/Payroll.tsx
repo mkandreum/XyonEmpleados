@@ -1,15 +1,35 @@
-import React, { useState } from 'react';
-import { mockPayrolls } from '../services/mockData';
-import { Download, Filter, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { payrollService } from '../services/api';
+import { Payroll } from '../types';
+import { Download, Filter } from 'lucide-react';
 
 export const PayrollPage: React.FC = () => {
-  const [yearFilter, setYearFilter] = useState<number>(2024);
+  const currentYear = new Date().getFullYear();
+  const [yearFilter, setYearFilter] = useState<number>(currentYear);
+  const [payrolls, setPayrolls] = useState<Payroll[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredPayrolls = mockPayrolls.filter(p => p.year === yearFilter);
+  useEffect(() => {
+    const fetchPayrolls = async () => {
+      try {
+        const data = await payrollService.getAll();
+        setPayrolls(data);
+      } catch (error) {
+        console.error("Error fetching payrolls:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPayrolls();
+  }, []);
+
+  const filteredPayrolls = payrolls.filter(p => p.year === yearFilter);
 
   const handleDownload = (id: string) => {
-    alert(`Iniciando descarga de nómina ${id}... (Simulación PDF)`);
+    alert(`Descarga de nómina ${id} no implementada (Requiere almacenamiento de archivos).`);
   };
+
+  const lastPayroll = payrolls.length > 0 ? payrolls[0] : null;
 
   return (
     <div className="space-y-6">
@@ -19,64 +39,68 @@ export const PayrollPage: React.FC = () => {
           <p className="text-slate-500">Histórico de pagos y retenciones.</p>
         </div>
         <div className="flex gap-2">
-           <button className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-50">
-             <Filter size={18} />
-             <span>Filtros</span>
-           </button>
-           <button className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 shadow-sm">
-             <Download size={18} />
-             <span>Certificado Retenciones</span>
-           </button>
+          <button className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-slate-50">
+            <Filter size={18} />
+            <span>Filtros</span>
+          </button>
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 shadow-sm">
+            <Download size={18} />
+            <span>Certificado Retenciones</span>
+          </button>
         </div>
       </div>
 
       {/* Summary Card */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 col-span-2">
-            <h3 className="text-sm font-semibold text-slate-500 mb-2">Última Nómina (Mayo 2024)</h3>
-            <div className="flex items-baseline gap-2">
-               <span className="text-3xl font-bold text-slate-900">2.450,00 €</span>
-               <span className="text-sm text-green-600 font-medium">+0% vs mes anterior</span>
+          {lastPayroll ? (
+            <>
+              <h3 className="text-sm font-semibold text-slate-500 mb-2">Última Nómina ({lastPayroll.month} {lastPayroll.year})</h3>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-slate-900">{lastPayroll.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+              </div>
+              <div className="mt-4 pt-4 border-t border-slate-100 flex gap-6 text-sm">
+                {/* Placeholder values since we only have net amount in simple model */}
+                <div>
+                  <p className="text-slate-500">Bruto (Est.)</p>
+                  <p className="font-semibold">{(lastPayroll.amount * 1.25).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500">Retenciones (Est.)</p>
+                  <p className="font-semibold">{(lastPayroll.amount * 0.25).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</p>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex h-full items-center justify-center text-slate-500">
+              No hay datos de nómina disponibles.
             </div>
-             <div className="mt-4 pt-4 border-t border-slate-100 flex gap-6 text-sm">
-                <div>
-                    <p className="text-slate-500">Bruto</p>
-                    <p className="font-semibold">3.100,00 €</p>
-                </div>
-                <div>
-                    <p className="text-slate-500">IRPF</p>
-                    <p className="font-semibold">450,00 € (14.5%)</p>
-                </div>
-                <div>
-                    <p className="text-slate-500">Seg. Social</p>
-                    <p className="font-semibold">200,00 €</p>
-                </div>
-             </div>
+          )}
         </div>
         <div className="bg-slate-900 text-white p-6 rounded-xl shadow-md flex flex-col justify-between">
-           <div>
-               <h3 className="font-semibold mb-1">Datos Bancarios</h3>
-               <p className="text-slate-400 text-sm">Cuenta principal</p>
-           </div>
-           <div>
-               <p className="text-2xl font-mono tracking-wider">**** 4829</p>
-               <p className="text-xs text-slate-400 mt-2">ES45 2038 2930 2039 2392 4829</p>
-           </div>
+          <div>
+            <h3 className="font-semibold mb-1">Datos Bancarios</h3>
+            <p className="text-slate-400 text-sm">Cuenta principal</p>
+          </div>
+          <div>
+            <p className="text-2xl font-mono tracking-wider">**** 4829</p>
+            <p className="text-xs text-slate-400 mt-2">ES45 2038 2930 2039 2392 4829</p>
+          </div>
         </div>
       </div>
 
       {/* List Container */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-            <h2 className="font-semibold text-slate-900">Histórico de Nóminas</h2>
-            <select 
-                value={yearFilter}
-                onChange={(e) => setYearFilter(Number(e.target.value))}
-                className="bg-white border border-slate-300 rounded-md text-sm py-1 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-                <option value={2024}>2024</option>
-                <option value={2023}>2023</option>
-            </select>
+          <h2 className="font-semibold text-slate-900">Histórico de Nóminas</h2>
+          <select
+            value={yearFilter}
+            onChange={(e) => setYearFilter(Number(e.target.value))}
+            className="bg-white border border-slate-300 rounded-md text-sm py-1 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value={currentYear}>{currentYear}</option>
+            <option value={currentYear - 1}>{currentYear - 1}</option>
+          </select>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
@@ -90,41 +114,46 @@ export const PayrollPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredPayrolls.map((payroll) => (
-                <tr key={payroll.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-slate-900">
-                    {payroll.month} {payroll.year}
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">
-                    30 {payroll.month} {payroll.year}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Pagado
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right font-medium text-slate-900">
-                    {payroll.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <button 
-                      onClick={() => handleDownload(payroll.id)}
-                      className="text-blue-600 hover:text-blue-900 font-medium hover:bg-blue-50 p-2 rounded-lg transition-colors"
-                      title="Descargar PDF"
-                    >
-                      <Download size={18} />
-                    </button>
-                  </td>
+              {loading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 text-center text-slate-500">Cargando...</td>
                 </tr>
-              ))}
+              ) : filteredPayrolls.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 text-center text-slate-500">No hay nóminas para este año.</td>
+                </tr>
+              ) : (
+                filteredPayrolls.map((payroll) => (
+                  <tr key={payroll.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 font-medium text-slate-900">
+                      {payroll.month} {payroll.year}
+                    </td>
+                    <td className="px-6 py-4 text-slate-500">
+                      30 {payroll.month} {payroll.year}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Pagado
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right font-medium text-slate-900">
+                      {payroll.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleDownload(payroll.id)}
+                        className="text-blue-600 hover:text-blue-900 font-medium hover:bg-blue-50 p-2 rounded-lg transition-colors"
+                        title="Descargar PDF"
+                      >
+                        <Download size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
-        {filteredPayrolls.length === 0 && (
-            <div className="p-8 text-center text-slate-500">
-                No hay nóminas disponibles para este año.
-            </div>
-        )}
       </div>
     </div>
   );

@@ -16,6 +16,7 @@ router.use(authenticateToken);
 
 // User
 router.get('/users/profile', authController.getProfile);
+router.put('/users/profile', authController.updateProfile);
 
 // Payrolls
 router.get('/payrolls', payrollController.getAllPayrolls);

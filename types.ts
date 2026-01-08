@@ -12,6 +12,9 @@ export interface User {
   department: string;
   position: string;
   avatarUrl?: string;
+  phone?: string;
+  address?: string;
+  emergencyContact?: string;
   joinDate: string;
 }
 
