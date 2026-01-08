@@ -135,7 +135,7 @@ exports.getUserBenefitsBalance = async (req, res) => {
             ...balance,
             vacationDaysRemaining: benefits.vacationDays - balance.vacationDaysUsed,
             overtimeHoursRemaining: benefits.overtimeHoursBank - balance.overtimeHoursUsed,
-            sickLeaveDaysRemaining: benefits.sickLeaveDays - balance.sickLeaveDaysUsed,
+            sickLeaveHoursRemaining: benefits.sickLeaveHours - balance.sickLeaveHoursUsed,
             paidAbsenceHoursRemaining: benefits.paidAbsenceHours - balance.paidAbsenceHoursUsed,
             totalBenefits: benefits
         });
