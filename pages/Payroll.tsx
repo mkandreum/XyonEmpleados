@@ -98,8 +98,9 @@ export const PayrollPage: React.FC = () => {
             onChange={(e) => setYearFilter(Number(e.target.value))}
             className="bg-white border border-slate-300 rounded-md text-sm py-1 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value={currentYear}>{currentYear}</option>
-            <option value={currentYear - 1}>{currentYear - 1}</option>
+            {Array.from({ length: 5 }, (_, i) => currentYear - i).map(year => (
+              <option key={year} value={year}>{year}</option>
+            ))}
           </select>
         </div>
         <div className="overflow-x-auto">

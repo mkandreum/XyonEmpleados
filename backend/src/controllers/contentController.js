@@ -85,6 +85,17 @@ exports.createEvent = async (req, res) => {
     }
 };
 
+exports.deleteEvent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.event.delete({ where: { id } });
+        res.json({ message: 'Event deleted successfully' });
+    } catch (error) {
+        console.error("Delete event error:", error);
+        res.status(500).json({ error: 'Failed to delete event' });
+    }
+};
+
 // Holidays Management
 exports.getNextHoliday = async (req, res) => {
     try {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Users, Calendar, Settings, LogOut, Menu, X, Bell, Newspaper } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Settings, LogOut, Menu, X, Bell, Newspaper, CalendarDays, FileText } from 'lucide-react';
 
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user, logout } = useAuth();
@@ -18,7 +18,9 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
         { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
         { name: 'Usuarios', href: '/admin/users', icon: Users },
         { name: 'Vacaciones', href: '/admin/vacations', icon: Calendar },
+        { name: 'Nóminas', href: '/admin/payrolls', icon: FileText },
         { name: 'Noticias', href: '/admin/news', icon: Newspaper },
+        { name: 'Eventos', href: '/admin/events', icon: CalendarDays },
         { name: 'Configuración', href: '/admin/settings', icon: Settings },
     ];
 
