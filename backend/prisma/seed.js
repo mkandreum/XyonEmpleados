@@ -7,7 +7,6 @@ async function main() {
     console.log('Start seeding ...');
 
     // Create Admin User
-    // Password: admin_password_123
     const hashedPassword = await bcrypt.hash('admin_password_123', 10);
 
     const admin = await prisma.user.upsert({
@@ -24,20 +23,60 @@ async function main() {
         },
     });
 
-    console.log(`Created user with id: ${admin.id}`);
+    console.log(`✓ Admin user: ${admin.id}`);
 
     // Create sample news
-    await prisma.newsItem.create({
-        data: {
+    await prisma.newsItem.upsert({
+        where: { id: 'news-1' },
+        update: {},
+        create: {
+            id: 'news-1',
             title: 'Bienvenido al Portal del Empleado',
             summary: 'Lanzamiento oficial de la nueva plataforma.',
-            content: 'Estamos encantados de anunciar el lanzamiento...',
+            content: 'Estamos encantados de anunciar el lanzamiento de nuestro nuevo portal del empleado. Aquí podrás gestionar tus nóminas, vacaciones y mucho más.',
             category: 'CORPORATE',
-            imageUrl: 'https://picsum.photos/400/200',
+            imageUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800',
         }
     });
 
-    console.log('Seeding finished.');
+    // Create sample holidays
+    const currentYear = new Date().getFullYear();
+    await prisma.holiday.upsert({
+        where: { id: 'holiday-1' },
+        update: {},
+        create: {
+            id: 'holiday-1',
+            name: 'Asunción de la Virgen',
+            date: new Date(currentYear, 7, 15), // 15 Agosto
+            year: currentYear
+        }
+    });
+
+    await prisma.holiday.upsert({
+        where: { id: 'holiday-2' },
+        update: {},
+        create: {
+            id: 'holiday-2',
+            name: 'Día de la Hispanidad',
+            date: new Date(currentYear, 9, 12), // 12 Octubre
+            year: currentYear
+        }
+    });
+
+    // Create sample events
+    await prisma.event.upsert({
+        where: { id: 'event-1' },
+        update: {},
+        create: {
+            id: 'event-1',
+            title: 'Reunión Trimestral',
+            description: 'Revisión de objetivos del trimestre',
+            date: new Date(currentYear, 5, 20, 10, 0), // 20 Junio 10:00
+            location: 'Sala A'
+        }
+    });
+
+    console.log('✓ Seeding finished.');
 }
 
 main()

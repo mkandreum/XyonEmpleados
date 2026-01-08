@@ -8,6 +8,7 @@ const commonController = require('./controllers/commonController');
 
 // Auth
 const adminController = require('./controllers/adminController');
+const contentController = require('./controllers/contentController');
 const { isAdmin } = require('./middleware/auth');
 
 // Auth
@@ -26,6 +27,17 @@ router.get('/admin/vacations', isAdmin, adminController.getAllVacations);
 router.put('/admin/vacations/:id/status', isAdmin, adminController.updateVacationStatus);
 router.get('/admin/settings', isAdmin, adminController.getSettings);
 router.put('/admin/settings', isAdmin, adminController.updateSettings);
+
+// Admin Content Management
+router.post('/admin/news', isAdmin, contentController.createNews);
+router.put('/admin/news/:id', isAdmin, contentController.updateNews);
+router.delete('/admin/news/:id', isAdmin, contentController.deleteNews);
+router.post('/admin/payrolls', isAdmin, contentController.createPayroll);
+router.post('/admin/events', isAdmin, contentController.createEvent);
+
+// Public/Employee Routes
+router.get('/events', contentController.getAllEvents);
+router.get('/holidays/next', contentController.getNextHoliday);
 
 // User
 router.get('/users/profile', authController.getProfile);

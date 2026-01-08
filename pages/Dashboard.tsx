@@ -6,21 +6,26 @@ import { Calendar, CheckCircle2, Clock, Briefcase } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const pendingTasks = 3; // Placeholder until tasks API exists
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [vacations, setVacations] = useState<VacationRequest[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [nextHoliday, setNextHoliday] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [notifs, vacs] = await Promise.all([
+        const [notifs, vacs, evts, holiday] = await Promise.all([
           notificationService.getAll(),
-          vacationService.getAll()
+          vacationService.getAll(),
+          fetch('/api/events').then(r => r.json()).catch(() => []),
+          fetch('/api/holidays/next').then(r => r.json()).catch(() => null)
         ]);
         setNotifications(notifs);
         setVacations(vacs);
+        setEvents(evts);
+        setNextHoliday(holiday);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       } finally {
@@ -36,6 +41,11 @@ export const Dashboard: React.FC = () => {
     .filter(v => v.status === 'APPROVED' && v.type === 'VACATION')
     .reduce((acc, curr) => acc + curr.days, 0);
   const remainingDays = totalVacationDays - takenDays;
+
+  // Calculate next payroll date (last day of current month)
+  const today = new Date();
+  const nextPayrollDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const nextPayrollStr = nextPayrollDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
 
   return (
     <div className="space-y-6">
@@ -69,8 +79,8 @@ export const Dashboard: React.FC = () => {
               <CheckCircle2 size={24} />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">Tareas Pendientes</p>
-              <p className="text-2xl font-bold text-slate-900">{pendingTasks}</p>
+              <p className="text-sm font-medium text-slate-500">Notificaciones</p>
+              <p className="text-2xl font-bold text-slate-900">{notifications.filter(n => !n.read).length}</p>
             </div>
           </div>
         </div>
@@ -82,7 +92,7 @@ export const Dashboard: React.FC = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500">Próxima Nómina</p>
-              <p className="text-lg font-bold text-slate-900">30 Junio</p>
+              <p className="text-lg font-bold text-slate-900">{nextPayrollStr}</p>
             </div>
           </div>
         </div>
@@ -94,7 +104,9 @@ export const Dashboard: React.FC = () => {
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500">Próximo Festivo</p>
-              <p className="text-lg font-bold text-slate-900">15 Agosto</p>
+              <p className="text-lg font-bold text-slate-900">
+                {nextHoliday ? new Date(nextHoliday.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' }) : 'N/A'}
+              </p>
             </div>
           </div>
         </div>
@@ -167,24 +179,22 @@ export const Dashboard: React.FC = () => {
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
             <h2 className="font-semibold text-slate-900 mb-4">Eventos Próximos</h2>
             <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-indigo-100 text-indigo-700 font-bold px-3 py-1 rounded text-xs text-center min-w-[50px]">
-                  JUN<br /><span className="text-lg">20</span>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">Reunión Trimestral</p>
-                  <p className="text-xs text-slate-500">10:00 AM - Sala A</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="bg-pink-100 text-pink-700 font-bold px-3 py-1 rounded text-xs text-center min-w-[50px]">
-                  JUN<br /><span className="text-lg">28</span>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">Cumpleaños de Laura</p>
-                  <p className="text-xs text-slate-500">Cafetería</p>
-                </div>
-              </div>
+              {events.length === 0 ? (
+                <p className="text-sm text-slate-500">No hay eventos próximos</p>
+              ) : (
+                events.slice(0, 2).map((event) => (
+                  <div key={event.id} className="flex items-center gap-3">
+                    <div className="bg-indigo-100 text-indigo-700 font-bold px-3 py-1 rounded text-xs text-center min-w-[50px]">
+                      {new Date(event.date).toLocaleDateString('es-ES', { month: 'short' }).toUpperCase()}<br />
+                      <span className="text-lg">{new Date(event.date).getDate()}</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">{event.title}</p>
+                      <p className="text-xs text-slate-500">{event.location || 'Por confirmar'}</p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

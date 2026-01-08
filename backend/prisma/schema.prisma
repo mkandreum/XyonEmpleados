@@ -98,3 +98,19 @@ model GlobalSettings {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  date        DateTime
+  location    String?
+  createdAt   DateTime @default(now())
+}
+
+model Holiday {
+  id    String   @id @default(uuid())
+  name  String
+  date  DateTime
+  year  Int
+}
