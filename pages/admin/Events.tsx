@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { eventsService } from '../../services/api';
 import { Plus, Edit, Trash2, X, Calendar } from 'lucide-react';
 import { Event } from '../../types';
+import { useModal } from '../../hooks/useModal';
+import { Modal } from '../../components/Modal';
 
 interface EventFormData {
     title: string;
@@ -21,6 +23,7 @@ export const AdminEvents: React.FC = () => {
         date: '',
         location: ''
     });
+    const { modalState, showAlert, showConfirm, closeModal } = useModal();
 
     const fetchEvents = async () => {
         try {
@@ -51,21 +54,28 @@ export const AdminEvents: React.FC = () => {
             setShowModal(false);
             setFormData({ title: '', description: '', date: '', location: '' });
             setEditingEvent(null);
+            showAlert(editingEvent ? 'Evento actualizado correctamente' : 'Evento creado correctamente', 'success');
         } catch (error) {
             console.error("Error saving event:", error);
-            alert("Error al guardar el evento");
+            showAlert("Error al guardar el evento", 'error');
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('¿Estás seguro de eliminar este evento?')) return;
-        try {
-            await eventsService.delete(id);
-            await fetchEvents();
-        } catch (error) {
-            console.error("Error deleting event:", error);
-            alert("Error al eliminar el evento");
-        }
+        showConfirm(
+            '¿Estás seguro de eliminar este evento?',
+            async () => {
+                try {
+                    await eventsService.delete(id);
+                    await fetchEvents();
+                    showAlert('Evento eliminado correctamente', 'success');
+                } catch (error) {
+                    console.error("Error deleting event:", error);
+                    showAlert("Error al eliminar el evento", 'error');
+                }
+            },
+            'Eliminar Evento'
+        );
     };
 
     return (
@@ -186,6 +196,15 @@ export const AdminEvents: React.FC = () => {
                     </div>
                 </div>
             )}
+            {/* Global Modal */}
+            <Modal
+                isOpen={modalState.isOpen}
+                onClose={closeModal}
+                title={modalState.title}
+                message={modalState.message}
+                type={modalState.type}
+                onConfirm={modalState.onConfirm}
+            />
         </div>
     );
 };

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, Mail, Briefcase, Phone, MapPin, Camera, Calendar } from 'lucide-react';
 import { userService } from '../services/api';
+import { useModal } from '../hooks/useModal';
+import { Modal } from '../components/Modal';
 
 export const ProfilePage: React.FC = () => {
     const { user, login } = useAuth();
@@ -10,6 +12,7 @@ export const ProfilePage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    const { modalState, showAlert, closeModal } = useModal();
 
     const [formData, setFormData] = useState({
         phone: user?.phone || '',
@@ -34,12 +37,14 @@ export const ProfilePage: React.FC = () => {
         try {
             const updatedUser = await userService.updateProfile(formData);
             localStorage.setItem('user', JSON.stringify(updatedUser));
-            alert("Datos guardados correctamente.");
+            const updatedUser = await userService.updateProfile(formData);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            showAlert("Datos guardados correctamente.", 'success');
             setIsEditing(false);
             window.location.reload();
         } catch (error) {
             console.error("Failed to update profile", error);
-            alert("Error al guardar los datos.");
+            showAlert("Error al guardar los datos.", 'error');
         } finally {
             setLoading(false);
         }
@@ -47,17 +52,18 @@ export const ProfilePage: React.FC = () => {
 
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
+        e.preventDefault();
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            alert("Las contraseñas no coinciden");
+            showAlert("Las contraseñas no coinciden", 'warning');
             return;
         }
         try {
             await userService.changePassword(passwordData.currentPassword, passwordData.newPassword);
-            alert("Contraseña cambiada correctamente");
+            showAlert("Contraseña cambiada correctamente", 'success');
             setShowPasswordModal(false);
             setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
         } catch (error) {
-            alert("Error al cambiar la contraseña");
+            showAlert("Error al cambiar la contraseña", 'error');
         }
     };
 
@@ -252,6 +258,15 @@ export const ProfilePage: React.FC = () => {
                     </div>
                 </div>
             )}
+            {/* Global Modal */}
+            <Modal
+                isOpen={modalState.isOpen}
+                onClose={closeModal}
+                title={modalState.title}
+                message={modalState.message}
+                type={modalState.type}
+                onConfirm={modalState.onConfirm}
+            />
         </div>
     );
 };
