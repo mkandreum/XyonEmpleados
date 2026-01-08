@@ -362,9 +362,9 @@ export const VacationsPage: React.FC = () => {
                                 <h3 className="font-semibold text-slate-700 text-sm">Bajas Médicas</h3>
                             </div>
                             <p className="text-2xl font-bold text-slate-900">
-                                {deptBenefits?.sickLeaveDays ? (deptBenefits.sickLeaveDays - (userBenefits?.sickLeaveDaysUsed || 0)) : 0}
+                                {deptBenefits?.sickLeaveHours ? (deptBenefits.sickLeaveHours - (userBenefits?.sickLeaveHoursUsed || 0)) : 0}h
                             </p>
-                            <p className="text-xs text-slate-400">Días restantes de {deptBenefits?.sickLeaveDays || 0}</p>
+                            <p className="text-xs text-slate-400">Horas restantes de {deptBenefits?.sickLeaveHours || 0}h</p>
                         </div>
                         <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
                             <div className="flex items-center gap-2 mb-2">
