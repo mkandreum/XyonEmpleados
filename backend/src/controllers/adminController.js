@@ -46,7 +46,16 @@ exports.createUser = async (req, res) => {
                 department: department || 'General',
                 position: position || 'Employee',
                 joinDate: joinDate ? new Date(joinDate) : new Date(),
-                avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`
+                avatarUrl: await (async () => {
+                    // Try to get default avatar from settings
+                    const defaultAvatarSetting = await prisma.globalSettings.findUnique({
+                        where: { key: 'defaultAvatarUrl' }
+                    });
+                    if (defaultAvatarSetting) return defaultAvatarSetting.value;
+
+                    // Fallback to UI Avatars
+                    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`;
+                })()
             }
         });
 

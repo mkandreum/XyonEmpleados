@@ -14,7 +14,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../hooks/useSettings';
 
-const SidebarItem = ({ to, icon: Icon, label, active }: { to: string; icon: any; label: string; active: boolean }) => (
+const SidebarItem: React.FC<{ to: string; icon: any; label: string; active: boolean }> = ({ to, icon: Icon, label, active }) => (
   <Link
     to={to}
     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${active

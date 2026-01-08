@@ -141,6 +141,42 @@ export const AdminSettings: React.FC = () => {
                                     Logo que se mostrará en el panel de administración.
                                 </p>
                             </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    Avatar por Defecto
+                                </label>
+                                <div className="flex items-center gap-4">
+                                    {settings.defaultAvatarUrl && (
+                                        <img src={settings.defaultAvatarUrl} alt="Default Avatar" className="h-16 w-16 rounded-full border border-slate-200 object-cover" />
+                                    )}
+                                    <div className="flex-1">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                try {
+                                                    const result = await uploadService.uploadAvatar(file);
+                                                    setSettings({ ...settings, defaultAvatarUrl: result.url });
+                                                } catch (error) {
+                                                    console.error("Error uploading avatar:", error);
+                                                    alert("Error al subir el avatar");
+                                                }
+                                            }}
+                                            className="block w-full text-sm text-slate-500
+                                                file:mr-4 file:py-2 file:px-4
+                                                file:rounded-full file:border-0
+                                                file:text-sm file:font-semibold
+                                                file:bg-blue-50 file:text-blue-700
+                                                hover:file:bg-blue-100"
+                                        />
+                                    </div>
+                                </div>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    Imagen que se asignará a los nuevos usuarios si no tienen una personalizada.
+                                </p>
+                            </div>
                         </div>
                     </div>
 
