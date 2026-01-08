@@ -71,7 +71,7 @@ export const AdminSettings: React.FC = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Logo del Portal Empleados
+                                    Logo del Portal (Empleados/Admin)
                                 </label>
                                 <div className="flex items-center gap-4">
                                     {settings.logoUrl && (
@@ -102,16 +102,16 @@ export const AdminSettings: React.FC = () => {
                                     </div>
                                 </div>
                                 <p className="mt-1 text-xs text-slate-500">
-                                    Logo que se mostrará en el portal de empleados.
+                                    Logo que se mostrará en el portal de empleados y en el panel de administración.
                                 </p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Logo del Panel Admin
+                                    Logo del Login
                                 </label>
                                 <div className="flex items-center gap-4">
-                                    {settings.adminLogoUrl && (
-                                        <img src={settings.adminLogoUrl} alt="Logo Admin" className="h-24 w-auto border border-slate-200 rounded p-1" />
+                                    {settings.loginLogoUrl && (
+                                        <img src={settings.loginLogoUrl} alt="Logo Login" className="h-24 w-auto border border-slate-200 rounded p-1" />
                                     )}
                                     <div className="flex-1">
                                         <input
@@ -122,7 +122,7 @@ export const AdminSettings: React.FC = () => {
                                                 if (!file) return;
                                                 try {
                                                     const result = await uploadService.uploadLogo(file);
-                                                    setSettings({ ...settings, adminLogoUrl: result.url });
+                                                    setSettings({ ...settings, loginLogoUrl: result.url });
                                                 } catch (error) {
                                                     console.error("Error uploading logo:", error);
                                                     alert("Error al subir el logo");
@@ -138,7 +138,7 @@ export const AdminSettings: React.FC = () => {
                                     </div>
                                 </div>
                                 <p className="mt-1 text-xs text-slate-500">
-                                    Logo que se mostrará en el panel de administración.
+                                    Logo que se mostrará en la página de inicio de sesión (tamaño automático).
                                 </p>
                             </div>
                             <div>
