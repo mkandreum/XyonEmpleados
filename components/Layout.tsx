@@ -12,6 +12,7 @@ import {
   Bell
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { NotificationDropdown } from './NotificationDropdown';
 import { useSettings } from '../hooks/useSettings';
 
 const SidebarItem: React.FC<{ to: string; icon: any; label: string; active: boolean; onClick?: () => void }> = ({ to, icon: Icon, label, active, onClick }) => (
