@@ -5,6 +5,44 @@ const jwt = require('jsonwebtoken');
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
 
+exports.register = async (req, res) => {
+    try {
+        const { name, email, password, department, position } = req.body;
+
+        // Basic validation
+        if (!email || !password || !name) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const existingUser = await prisma.user.findUnique({ where: { email } });
+        if (existingUser) {
+            return res.status(400).json({ error: 'User already exists' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = await prisma.user.create({
+            data: {
+                name,
+                email,
+                password: hashedPassword,
+                department: department || 'General',
+                position: position || 'Employee',
+                role: 'EMPLOYEE',
+                avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`
+            }
+        });
+
+        const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
+        const { password: _, ...userWithoutPassword } = user;
+
+        res.status(201).json({ token, user: userWithoutPassword });
+    } catch (error) {
+        console.error("Register error:", error);
+        res.status(500).json({ error: 'Registration failed' });
+    }
+};
+
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;

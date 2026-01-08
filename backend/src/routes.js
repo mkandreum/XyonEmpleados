@@ -7,6 +7,8 @@ const vacationController = require('./controllers/vacationController');
 const commonController = require('./controllers/commonController');
 
 // Auth
+// Auth
+router.post('/auth/register', authController.register);
 router.post('/auth/login', authController.login);
 
 // Protected Routes

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Lock, User, Info } from 'lucide-react';
 
@@ -6,8 +7,8 @@ export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   // Pre-fill credentials for demo purposes
-  const [email, setEmail] = useState('alejandro.ruiz@velilla.com');
-  const [password, setPassword] = useState('demo1234');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,17 +34,6 @@ export const LoginPage: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-xl rounded-xl sm:px-10 border border-slate-100">
-
-          {/* Demo Alert */}
-          <div className="mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4 flex gap-3">
-            <Info className="text-blue-600 shrink-0" size={20} />
-            <div>
-              <h3 className="text-sm font-semibold text-blue-900">Modo Demostración</h3>
-              <p className="text-xs text-blue-700 mt-1">
-                Las credenciales de prueba han sido pre-cargadas para tu comodidad. Solo pulsa "Iniciar Sesión".
-              </p>
-            </div>
-          </div>
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
@@ -129,6 +119,14 @@ export const LoginPage: React.FC = () => {
             </div>
           </form>
         </div>
+
+        <div className="mt-6 text-center text-sm">
+          <span className="text-slate-600">¿No tienes cuenta? </span>
+          <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+            Regístrate aquí
+          </Link>
+        </div>
+
         <p className="mt-6 text-center text-xs text-slate-500">
           &copy; 2024 Velilla Corporate. Todos los derechos reservados.
         </p>
@@ -136,3 +134,4 @@ export const LoginPage: React.FC = () => {
     </div>
   );
 };
+```

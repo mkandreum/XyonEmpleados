@@ -3,6 +3,7 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/Login';
+import { RegisterPage } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { PayrollPage } from './pages/Payroll';
 import { VacationsPage } from './pages/Vacations';
@@ -10,11 +11,11 @@ import { NewsPage } from './pages/News';
 import { ProfilePage } from './pages/Profile';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  return <Layout>{children}</Layout>;
+    const { isAuthenticated } = useAuth();
+    if (!isAuthenticated) {
+        return <Navigate to="/login" replace />;
+    }
+    return <Layout>{children}</Layout>;
 };
 
 const AppRoutes = () => {
@@ -23,7 +24,8 @@ const AppRoutes = () => {
     return (
         <Routes>
             <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />} />
-            
+            <Route path="/register" element={isAuthenticated ? <Navigate to="/" /> : <RegisterPage />} />
+
             <Route path="/" element={
                 <ProtectedRoute>
                     <Dashboard />
@@ -44,25 +46,25 @@ const AppRoutes = () => {
                     <NewsPage />
                 </ProtectedRoute>
             } />
-             <Route path="/profile" element={
+            <Route path="/profile" element={
                 <ProtectedRoute>
                     <ProfilePage />
                 </ProtectedRoute>
             } />
-            
+
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );
 }
 
 function App() {
-  return (
-    <AuthProvider>
-      <Router>
-        <AppRoutes />
-      </Router>
-    </AuthProvider>
-  );
+    return (
+        <AuthProvider>
+            <Router>
+                <AppRoutes />
+            </Router>
+        </AuthProvider>
+    );
 }
 
 export default App;
