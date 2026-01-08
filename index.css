@@ -5,3 +5,42 @@
 body {
   @apply bg-slate-50 text-slate-900;
 }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400;
+}
+
+/* Dark sidebar scrollbar specific override if needed, 
+   but usually transparent track + light grey thumb works well on dark too 
+   (it will be a light grey bar on dark blue background).
+   Let's check if we want a darker thumb for the light mode? 
+   Actually slate-300 is visible on slate-900 too.
+   To be perfect for dark backgrounds, we might want a darker "track" or specific styling.
+   But let's start with this clean look.
+*/
+
+/* For elements with dark background, we might want a different scrollbar?
+   Tailwind doesn't support scoped scrollbars easily without plugins or strict CSS selectors.
+   The user complaint "es muy fea" usually refers to the fat defaulting Windows scrollbar.
+   A thin customized one is usually the fix.
+*/
+.dark-scrollbar ::-webkit-scrollbar-thumb {
+  @apply bg-slate-600;
+}
+.dark-scrollbar ::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-500;
+}
