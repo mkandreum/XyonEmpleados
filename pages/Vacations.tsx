@@ -6,6 +6,7 @@ import { VacationRequest, VacationStatus, DepartmentBenefits, UserBenefitsBalanc
 import { Plus, Calendar, AlertCircle, Upload, FileText } from 'lucide-react';
 import { useModal } from '../hooks/useModal';
 import { Modal } from '../components/Modal';
+import { DateRangePicker } from '../components/DateRangePicker';
 
 export const VacationsPage: React.FC = () => {
     const { user } = useAuth();
@@ -225,60 +226,53 @@ export const VacationsPage: React.FC = () => {
                     {showRequestForm && (
                         <div className="p-6 bg-blue-50 border-b border-blue-100">
                             <h3 className="font-semibold text-blue-900 mb-4">Nueva Solicitud</h3>
-                            <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleCreate}>
+                            <form className="space-y-4" onSubmit={handleCreate}>
+                                {/* Date Range Picker */}
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Inicio</label>
-                                    <input
-                                        type="date"
-                                        value={formData.startDate}
-                                        onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                        required
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Selecciona el Rango de Fechas</label>
+                                    <DateRangePicker
+                                        startDate={formData.startDate}
+                                        endDate={formData.endDate}
+                                        onChange={(start, end) => setFormData({ ...formData, startDate: start, endDate: end })}
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Fin</label>
-                                    <input
-                                        type="date"
-                                        value={formData.endDate}
-                                        onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
-                                    <select
-                                        value={formData.type}
-                                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                    >
-                                        <option value="VACATION">Vacaciones</option>
-                                        <option value="PERSONAL">Asuntos Propios</option>
-                                        <option value="SICK_LEAVE">Médico</option>
-                                    </select>
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Justificante (PDF/Imagen)</label>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="file"
-                                            accept=".pdf,.jpg,.jpeg,.png"
-                                            onChange={handleFileUpload}
-                                            disabled={uploading}
-                                            className="block w-full text-sm text-slate-500
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
+                                        <select
+                                            value={formData.type}
+                                            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                            className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        >
+                                            <option value="VACATION">Vacaciones</option>
+                                            <option value="PERSONAL">Asuntos Propios</option>
+                                            <option value="SICK_LEAVE">Médico</option>
+                                        </select>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Justificante (PDF/Imagen)</label>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="file"
+                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                onChange={handleFileUpload}
+                                                disabled={uploading}
+                                                className="block w-full text-sm text-slate-500
                                                 file:mr-4 file:py-2 file:px-4
                                                 file:rounded-full file:border-0
                                                 file:text-sm file:font-semibold
                                                 file:bg-blue-50 file:text-blue-700
                                                 hover:file:bg-blue-100"
-                                        />
-                                        {uploading && <span className="text-sm text-blue-600">Subiendo...</span>}
-                                        {formData.justificationUrl && <span className="text-sm text-green-600 font-medium">¡Archivo listo!</span>}
+                                            />
+                                            {uploading && <span className="text-sm text-blue-600">Subiendo...</span>}
+                                            {formData.justificationUrl && <span className="text-sm text-green-600 font-medium">¡Archivo listo!</span>}
+                                        </div>
+                                        <input type="hidden" value={formData.justificationUrl} />
                                     </div>
-                                    <input type="hidden" value={formData.justificationUrl} />
                                 </div>
-                                <div className="md:col-span-2 flex justify-end gap-3 mt-2">
+
+                                <div className="flex justify-end gap-3 mt-2">
                                     <button type="button" onClick={() => setShowRequestForm(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg">Cancelar</button>
                                     <button
                                         type="submit"
