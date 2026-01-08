@@ -148,7 +148,7 @@ exports.getUserBenefitsBalance = async (req, res) => {
 // Update user balance (called when vacation is approved)
 exports.updateUserBalance = async (req, res) => {
     try {
-        const { userId, type, days } = req.body;
+        const { userId, type, days, quantity } = req.body;
         const currentYear = new Date().getFullYear();
 
         const balance = await prisma.userBenefitsBalance.findUnique({
@@ -163,9 +163,13 @@ exports.updateUserBalance = async (req, res) => {
         if (type === 'VACATION') {
             updateData.vacationDaysUsed = balance.vacationDaysUsed + days;
         } else if (type === 'SICK_LEAVE') {
-            updateData.sickLeaveDaysUsed = balance.sickLeaveDaysUsed + days;
+            // Use quantity (hours) if provided, otherwise convert days to hours (8h/day)
+            const hoursToAdd = quantity !== undefined ? parseFloat(quantity) : (days * 8);
+            updateData.sickLeaveHoursUsed = (balance.sickLeaveHoursUsed || 0) + hoursToAdd;
         } else if (type === 'PERSONAL') {
-            updateData.paidAbsenceHoursUsed = balance.paidAbsenceHoursUsed + (days * 8); // Convert days to hours
+            // Use quantity (hours) if provided, otherwise convert days to hours (8h/day)
+            const hoursToAdd = quantity !== undefined ? parseFloat(quantity) : (days * 8);
+            updateData.paidAbsenceHoursUsed = (balance.paidAbsenceHoursUsed || 0) + hoursToAdd;
         }
 
         const updated = await prisma.userBenefitsBalance.update({
