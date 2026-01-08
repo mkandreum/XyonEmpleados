@@ -103,8 +103,9 @@ export const newsService = {
 
 export const notificationService = {
     getAll: async () => {
-        const response = await api.get<Notification[]>('/notifications');
-        return response.data;
+        const response = await api.get<any>('/notifications');
+        // Backend returns { notifications: [], unreadCount: 0 }
+        return response.data.notifications || (Array.isArray(response.data) ? response.data : []);
     },
     markAsRead: async (id: string) => {
         const response = await api.put(`/notifications/${id}/read`);
