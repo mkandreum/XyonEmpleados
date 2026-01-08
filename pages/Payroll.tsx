@@ -25,8 +25,13 @@ export const PayrollPage: React.FC = () => {
 
   const filteredPayrolls = payrolls.filter(p => p.year === yearFilter);
 
-  const handleDownload = (id: string) => {
-    alert(`Descarga de nómina ${id} no implementada (Requiere almacenamiento de archivos).`);
+  const handleDownload = (payroll: Payroll) => {
+    if (payroll.pdfUrl) {
+      // Open PDF in new tab
+      window.open(payroll.pdfUrl, '_blank');
+    } else {
+      alert('PDF no disponible para esta nómina');
+    }
   };
 
   const lastPayroll = payrolls.length > 0 ? payrolls[0] : null;
@@ -142,7 +147,7 @@ export const PayrollPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <button
-                        onClick={() => handleDownload(payroll.id)}
+                        onClick={() => handleDownload(payroll)}
                         className="text-blue-600 hover:text-blue-900 font-medium hover:bg-blue-50 p-2 rounded-lg transition-colors"
                         title="Descargar PDF"
                       >

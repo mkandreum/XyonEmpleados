@@ -55,8 +55,10 @@ export const VacationsPage: React.FC = () => {
 
             await fetchVacations(); // Refresh list
             setShowRequestForm(false);
-            setFormData({ ...formData, startDate: today, endDate: today }); // Reset form
+            setFormData({ startDate: today, endDate: today, type: 'VACATION', justificationUrl: '' }); // Reset form
+            alert('Solicitud enviada correctamente');
         } catch (error) {
+            console.error("Error creating vacation:", error);
             alert("Error al crear la solicitud");
         } finally {
             setSubmitting(false);
