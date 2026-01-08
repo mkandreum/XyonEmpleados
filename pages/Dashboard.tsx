@@ -121,7 +121,7 @@ export const Dashboard: React.FC = () => {
         <p className="text-slate-500 mt-1">{new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
@@ -158,203 +158,211 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-green-50 text-green-600 rounded-lg">
-              <Calendar size={24} />
+      </div>
+    </div>
+      </div >
+
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    {/* Notifications Column */}
+    <div className="lg:col-span-2 space-y-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+          <h2 className="font-semibold text-slate-900">Notificaciones Recientes</h2>
+          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">Ver todas</button>
+        </div>
+        <div className="divide-y divide-slate-100">
+          {loading ? <div className="p-4 text-center">Cargando...</div> : notifications.slice(0, 5).map(notif => (
+            <div
+              key={notif.id}
+              className={`p-4 hover:bg-slate-50 transition-colors flex items-start gap-4 cursor-pointer ${!notif.read ? 'bg-blue-50/30' : ''}`}
+              onClick={async () => {
+                if (!notif.read) {
+                  try {
+                    await notificationService.markAsRead(notif.id);
+                    setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+                  } catch (error) {
+                    console.error("Failed to mark notification as read", error);
+                  }
+                }
+              }}
+            >
+              <div className={`mt-1 w-2 h-2 rounded-full ${!notif.read ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
+              <div className="flex-1">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-sm font-semibold text-slate-900">{notif.title}</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400">{new Date(notif.date).toLocaleDateString()}</span>
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          await notificationService.delete(notif.id);
+                          setNotifications(prev => prev.filter(n => n.id !== notif.id));
+                        } catch (error) {
+                          console.error("Failed to delete notification", error);
+                        }
+                      }}
+                      className="text-slate-400 hover:text-red-500 p-1 rounded-full hover:bg-slate-200 transition-colors"
+                      title="Eliminar"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-sm text-slate-600 mt-1">{notif.message}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-slate-500">Próximo Festivo</p>
-              <p className="text-lg font-bold text-slate-900">
-                {nextHoliday ? new Date(nextHoliday.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' }) : 'N/A'}
-              </p>
-            </div>
-          </div>
+          ))}
+          {notifications.length === 0 && <div className="p-8 text-center text-slate-400">No tienes notificaciones nuevas</div>}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Notifications Column */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="font-semibold text-slate-900">Notificaciones Recientes</h2>
-              <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">Ver todas</button>
-            </div>
-            <div className="divide-y divide-slate-100">
-              {loading ? <div className="p-4 text-center">Cargando...</div> : notifications.slice(0, 5).map(notif => (
-                <div
-                  key={notif.id}
-                  className={`p-4 hover:bg-slate-50 transition-colors flex items-start gap-4 cursor-pointer ${!notif.read ? 'bg-blue-50/30' : ''}`}
-                  onClick={async () => {
-                    if (!notif.read) {
-                      try {
-                        await notificationService.markAsRead(notif.id);
-                        setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
-                      } catch (error) {
-                        console.error("Failed to mark notification as read", error);
-                      }
-                    }
-                  }}
-                >
-                  <div className={`mt-1 w-2 h-2 rounded-full ${!notif.read ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
+      {/* Quick Access */}
+      <div className="space-y-6">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+          <h2 className="font-semibold text-slate-900 mb-4">Accesos Rápidos</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => handleQuickAccess('vacation')}
+              className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-all group"
+            >
+              <div className="p-3 bg-blue-100 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <Plane size={24} />
+              </div>
+              <span className="text-sm font-medium text-slate-700">Vacaciones</span>
+            </button>
+
+            <button
+              onClick={() => handleQuickAccess('sick')}
+              className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-slate-200 hover:border-red-500 hover:bg-red-50 transition-all group"
+            >
+              <div className="p-3 bg-red-100 text-red-600 rounded-lg group-hover:bg-red-600 group-hover:text-white transition-colors">
+                <FileText size={24} />
+              </div>
+              <span className="text-sm font-medium text-slate-700">Horas médicas</span>
+            </button>
+
+            <button
+              onClick={() => handleQuickAccess('absence')}
+              className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-slate-200 hover:border-yellow-500 hover:bg-yellow-50 transition-all group"
+            >
+              <div className="p-3 bg-yellow-100 text-yellow-600 rounded-lg group-hover:bg-yellow-600 group-hover:text-white transition-colors">
+                <Calendar size={24} />
+              </div>
+              <span className="text-sm font-medium text-slate-700">Asuntos Propios</span>
+            </button>
+
+            <button
+              onClick={() => handleQuickAccess('info')}
+              className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-slate-200 hover:border-green-500 hover:bg-green-50 transition-all group"
+            >
+              <div className="p-3 bg-green-100 text-green-600 rounded-lg group-hover:bg-green-600 group-hover:text-white transition-colors">
+                <Info size={24} />
+              </div>
+              <span className="text-sm font-medium text-slate-700">Horas Libres</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Upcoming Events */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+          <h2 className="font-semibold text-slate-900 mb-4">Eventos Próximos</h2>
+          {events.length > 0 ? (
+            <div className="space-y-3">
+              {events.slice(0, 3).map(event => (
+                <div key={event.id} className="flex gap-3 p-3 bg-slate-50 rounded-lg">
+                  <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex flex-col items-center justify-center">
+                    <span className="text-xs text-blue-600 font-semibold">{new Date(event.date).toLocaleDateString('es-ES', { month: 'short' }).toUpperCase()}</span>
+                    <span className="text-lg font-bold text-blue-600">{new Date(event.date).getDate()}</span>
+                  </div>
                   <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <h3 className="text-sm font-semibold text-slate-900">{notif.title}</h3>
-                      <span className="text-xs text-slate-400">{new Date(notif.date).toLocaleDateString()}</span>
-                    </div>
-                    <p className="text-sm text-slate-600 mt-1">{notif.message}</p>
+                    <h4 className="font-semibold text-slate-900 text-sm">{event.title}</h4>
+                    <p className="text-xs text-slate-500">{event.location || 'Por confirmar'}</p>
                   </div>
                 </div>
               ))}
-              {notifications.length === 0 && <div className="p-8 text-center text-slate-400">No tienes notificaciones nuevas</div>}
             </div>
-          </div>
-
-          {/* Quick Access */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-              <h2 className="font-semibold text-slate-900 mb-4">Accesos Rápidos</h2>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => handleQuickAccess('vacation')}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-all group"
-                >
-                  <div className="p-3 bg-blue-100 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <Plane size={24} />
-                  </div>
-                  <span className="text-sm font-medium text-slate-700">Vacaciones</span>
-                </button>
-
-                <button
-                  onClick={() => handleQuickAccess('sick')}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-slate-200 hover:border-red-500 hover:bg-red-50 transition-all group"
-                >
-                  <div className="p-3 bg-red-100 text-red-600 rounded-lg group-hover:bg-red-600 group-hover:text-white transition-colors">
-                    <FileText size={24} />
-                  </div>
-                  <span className="text-sm font-medium text-slate-700">Horas médicas</span>
-                </button>
-
-                <button
-                  onClick={() => handleQuickAccess('absence')}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-slate-200 hover:border-yellow-500 hover:bg-yellow-50 transition-all group"
-                >
-                  <div className="p-3 bg-yellow-100 text-yellow-600 rounded-lg group-hover:bg-yellow-600 group-hover:text-white transition-colors">
-                    <Calendar size={24} />
-                  </div>
-                  <span className="text-sm font-medium text-slate-700">Asuntos Propios</span>
-                </button>
-
-                <button
-                  onClick={() => handleQuickAccess('info')}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-slate-200 hover:border-green-500 hover:bg-green-50 transition-all group"
-                >
-                  <div className="p-3 bg-green-100 text-green-600 rounded-lg group-hover:bg-green-600 group-hover:text-white transition-colors">
-                    <Info size={24} />
-                  </div>
-                  <span className="text-sm font-medium text-slate-700">Horas Libres</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Upcoming Events */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-              <h2 className="font-semibold text-slate-900 mb-4">Eventos Próximos</h2>
-              {events.length > 0 ? (
-                <div className="space-y-3">
-                  {events.slice(0, 3).map(event => (
-                    <div key={event.id} className="flex gap-3 p-3 bg-slate-50 rounded-lg">
-                      <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex flex-col items-center justify-center">
-                        <span className="text-xs text-blue-600 font-semibold">{new Date(event.date).toLocaleDateString('es-ES', { month: 'short' }).toUpperCase()}</span>
-                        <span className="text-lg font-bold text-blue-600">{new Date(event.date).getDate()}</span>
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-slate-900 text-sm">{event.title}</h4>
-                        <p className="text-xs text-slate-500">{event.location || 'Por confirmar'}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-slate-400 text-sm text-center py-4">No hay eventos próximos</p>
-              )}
-            </div>
-          </div>
+          ) : (
+            <p className="text-slate-400 text-sm text-center py-4">No hay eventos próximos</p>
+          )}
         </div>
       </div>
-
-      {/* Quick Access Modal */}
-      {showQuickAccessModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowQuickAccessModal(null)}>
-          <div className="bg-white rounded-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="border-b border-slate-200 p-4 flex justify-between items-center">
-              <h2 className="text-xl font-bold">
-                {showQuickAccessModal === 'vacation' && 'Solicitar Vacaciones'}
-                {showQuickAccessModal === 'sick' && 'Solicitar Baja Médica'}
-                {showQuickAccessModal === 'absence' && 'Solicitar Ausencia'}
-              </h2>
-              <button onClick={() => setShowQuickAccessModal(null)} className="p-2 hover:bg-slate-100 rounded-lg">
-                <X size={20} />
-              </button>
-            </div>
-            <form onSubmit={handleQuickAccessSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Inicio</label>
-                <input
-                  type="date"
-                  value={quickAccessForm.startDate}
-                  onChange={(e) => setQuickAccessForm({ ...quickAccessForm, startDate: e.target.value })}
-                  className="w-full border border-slate-300 rounded-lg p-2"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Fin</label>
-                <input
-                  type="date"
-                  value={quickAccessForm.endDate}
-                  onChange={(e) => setQuickAccessForm({ ...quickAccessForm, endDate: e.target.value })}
-                  className="w-full border border-slate-300 rounded-lg p-2"
-                  required
-                />
-              </div>
-              {(showQuickAccessModal === 'sick' || showQuickAccessModal === 'absence') && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Justificante <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={quickAccessForm.justificationUrl}
-                    onChange={(e) => setQuickAccessForm({ ...quickAccessForm, justificationUrl: e.target.value })}
-                    className="w-full border border-slate-300 rounded-lg p-2"
-                    placeholder="URL del justificante"
-                    required
-                  />
-                </div>
-              )}
-              <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={() => setShowQuickAccessModal(null)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">
-                  Cancelar
-                </button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  Enviar Solicitud
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-      {/* Global Modal */}
-      <Modal
-        isOpen={modalState.isOpen}
-        onClose={closeModal}
-        title={modalState.title}
-        message={modalState.message}
-        type={modalState.type}
-        onConfirm={modalState.onConfirm}
-      />
     </div>
+  </div>
+
+{/* Quick Access Modal */ }
+{
+  showQuickAccessModal && (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowQuickAccessModal(null)}>
+      <div className="bg-white rounded-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+        <div className="border-b border-slate-200 p-4 flex justify-between items-center">
+          <h2 className="text-xl font-bold">
+            {showQuickAccessModal === 'vacation' && 'Solicitar Vacaciones'}
+            {showQuickAccessModal === 'sick' && 'Solicitar Baja Médica'}
+            {showQuickAccessModal === 'absence' && 'Solicitar Ausencia'}
+          </h2>
+          <button onClick={() => setShowQuickAccessModal(null)} className="p-2 hover:bg-slate-100 rounded-lg">
+            <X size={20} />
+          </button>
+        </div>
+        <form onSubmit={handleQuickAccessSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Inicio</label>
+            <input
+              type="date"
+              value={quickAccessForm.startDate}
+              onChange={(e) => setQuickAccessForm({ ...quickAccessForm, startDate: e.target.value })}
+              className="w-full border border-slate-300 rounded-lg p-2"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Fin</label>
+            <input
+              type="date"
+              value={quickAccessForm.endDate}
+              onChange={(e) => setQuickAccessForm({ ...quickAccessForm, endDate: e.target.value })}
+              className="w-full border border-slate-300 rounded-lg p-2"
+              required
+            />
+          </div>
+          {(showQuickAccessModal === 'sick' || showQuickAccessModal === 'absence') && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Justificante <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={quickAccessForm.justificationUrl}
+                onChange={(e) => setQuickAccessForm({ ...quickAccessForm, justificationUrl: e.target.value })}
+                className="w-full border border-slate-300 rounded-lg p-2"
+                placeholder="URL del justificante"
+                required
+              />
+            </div>
+          )}
+          <div className="flex justify-end gap-3 pt-4">
+            <button type="button" onClick={() => setShowQuickAccessModal(null)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+              Cancelar
+            </button>
+            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              Enviar Solicitud
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+{/* Global Modal */ }
+<Modal
+  isOpen={modalState.isOpen}
+  onClose={closeModal}
+  title={modalState.title}
+  message={modalState.message}
+  type={modalState.type}
+  onConfirm={modalState.onConfirm}
+/>
+    </div >
   );
 };

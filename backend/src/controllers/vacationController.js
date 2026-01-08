@@ -47,6 +47,9 @@ exports.createVacation = async (req, res) => {
         });
 
         // NOTIFICATION LOGIC
+        const formattedStart = new Date(startDate).toLocaleDateString();
+        const formattedEnd = new Date(endDate).toLocaleDateString();
+
         if (initialStatus === 'PENDING_MANAGER') {
             // Notify managers of the same department
             const managers = await prisma.user.findMany({
@@ -60,7 +63,7 @@ exports.createVacation = async (req, res) => {
                 await createNotification(
                     manager.id,
                     'Nueva Solicitud de Vacaciones',
-                    `El empleado ${user.name} ha solicitado días.`
+                    `El empleado ${user.name} ha solicitado días desde el ${formattedStart} al ${formattedEnd}.`
                 );
             }
         } else if (initialStatus === 'PENDING_ADMIN') {
@@ -70,7 +73,7 @@ exports.createVacation = async (req, res) => {
                 await createNotification(
                     admin.id,
                     'Nueva Solicitud Pendiente',
-                    `El usuario ${user.name} ha solicitado vacaciones (Aprobado por Manager o directo).`
+                    `El usuario ${user.name} ha solicitado vacaciones del ${formattedStart} al ${formattedEnd} (Aprobado por Manager o directo).`
                 );
             }
         }

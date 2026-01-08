@@ -71,9 +71,29 @@ const markAllAsRead = async (req, res) => {
     }
 };
 
+const deleteNotification = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        // Ensure user owns the notification
+        const notification = await prisma.notification.findUnique({ where: { id } });
+        if (!notification || notification.userId !== userId) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+
+        await prisma.notification.delete({ where: { id } });
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting notification:', error);
+        res.status(500).json({ error: 'Error deleting notification' });
+    }
+};
+
 module.exports = {
     createNotification, // Exported for internal use
     getNotifications,
     markAsRead,
-    markAllAsRead
+    markAllAsRead,
+    deleteNotification
 };

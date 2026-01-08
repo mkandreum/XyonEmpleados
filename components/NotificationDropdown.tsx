@@ -55,6 +55,21 @@ export const NotificationDropdown: React.FC = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const handleDelete = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await api.delete(`/notifications/${id}`);
+            setNotifications(prev => prev.filter(n => n.id !== id));
+            // If it was unread, decrement unread count
+            const wasUnread = notifications.find(n => n.id === id)?.read === false;
+            if (wasUnread) {
+                setUnreadCount(prev => Math.max(0, prev - 1));
+            }
+        } catch (error) {
+            console.error('Error deleting notification:', error);
+        }
+    };
+
     const handleMarkAsRead = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         try {
@@ -127,15 +142,24 @@ export const NotificationDropdown: React.FC = () => {
                                                     {new Date(notification.date).toLocaleDateString()} {new Date(notification.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                             </div>
-                                            {!notification.read && (
+                                            <div className="flex flex-col gap-1">
+                                                {!notification.read && (
+                                                    <button
+                                                        onClick={(e) => handleMarkAsRead(notification.id, e)}
+                                                        className="text-slate-400 hover:text-blue-600 p-1 hover:bg-white rounded-full transition-all"
+                                                        title="Marcar como leída"
+                                                    >
+                                                        <Check size={14} />
+                                                    </button>
+                                                )}
                                                 <button
-                                                    onClick={(e) => handleMarkAsRead(notification.id, e)}
-                                                    className="text-slate-400 hover:text-blue-600 p-1 hover:bg-white rounded-full transition-all"
-                                                    title="Marcar como leída"
+                                                    onClick={(e) => handleDelete(notification.id, e)}
+                                                    className="text-slate-400 hover:text-red-500 p-1 hover:bg-white rounded-full transition-all"
+                                                    title="Eliminar"
                                                 >
-                                                    <Check size={14} />
+                                                    <X size={14} />
                                                 </button>
-                                            )}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

@@ -82,6 +82,7 @@ router.get('/news', commonController.getAllNews);
 // Notifications
 router.get('/notifications', notificationController.getNotifications);
 router.put('/notifications/:id/read', notificationController.markAsRead);
+router.delete('/notifications/:id', notificationController.deleteNotification);
 router.put('/notifications/read-all', notificationController.markAllAsRead);
 
 module.exports = router;
