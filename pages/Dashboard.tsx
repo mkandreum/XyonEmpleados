@@ -14,6 +14,7 @@ export const Dashboard: React.FC = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [nextHoliday, setNextHoliday] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeSurvey, setActiveSurvey] = useState<any>(null);
 
   // Quick access modal state
   const [showQuickAccessModal, setShowQuickAccessModal] = useState<string | null>(null);
@@ -27,17 +28,19 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [notifs, vacs, evts, holiday] = await Promise.all([
+        const [notifs, vacs, evts, holiday, survey] = await Promise.all([
           notificationService.getAll(),
           vacationService.getAll(),
           fetch('/api/events', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }).then(r => r.json()),
-          fetch('/api/holidays/next', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }).then(r => r.json())
+          fetch('/api/holidays/next', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }).then(r => r.json()),
+          fetch('/api/survey/active', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }).then(r => r.json()).catch(() => null)
         ]);
         setNotifications(notifs);
         setVacations(vacs);
         setPendingVacations(vacs.filter((v: VacationRequest) => v.status === 'PENDING'));
         setEvents(evts);
         setNextHoliday(holiday);
+        setActiveSurvey(survey);
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       } finally {
@@ -185,16 +188,19 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Survey - Only for non-admin users */}
-          {user?.role !== 'ADMIN' && (
+          {/* Survey - Only for non-admin users and if active survey exists */}
+          {user?.role !== 'ADMIN' && activeSurvey && (
             <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-lg p-6 text-white">
-              <h3 className="text-xl font-bold mb-2">Encuesta de Clima Laboral 2024</h3>
-              <p className="text-blue-100 mb-4">
-                Tu opinión es fundamental para seguir mejorando nuestro entorno de trabajo. Participa en la encuesta anual, es totalmente anónima.
-              </p>
-              <button className="bg-white text-blue-600 px-6 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors">
+              <h3 className="text-xl font-bold mb-2">{activeSurvey.title}</h3>
+              <p className="text-blue-100 mb-4">{activeSurvey.description}</p>
+              <a
+                href={activeSurvey.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block bg-white text-blue-600 px-6 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              >
                 Participar Ahora
-              </button>
+              </a>
             </div>
           )}
         </div>

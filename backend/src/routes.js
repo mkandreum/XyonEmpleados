@@ -9,6 +9,7 @@ const adminController = require('./controllers/adminController');
 const contentController = require('./controllers/contentController');
 const uploadController = require('./controllers/uploadController');
 const benefitsController = require('./controllers/benefitsController');
+const surveyController = require('./controllers/surveyController');
 const { isAdmin } = require('./middleware/auth');
 
 // Public Routes (NO AUTH REQUIRED)
@@ -20,6 +21,13 @@ router.get('/holidays/next', contentController.getNextHoliday);
 
 // Protected Routes (AUTH REQUIRED)
 router.use(authenticateToken);
+
+// Survey Routes
+router.get('/survey/active', surveyController.getActiveSurvey);
+router.get('/admin/surveys', isAdmin, surveyController.getAllSurveys);
+router.post('/admin/surveys', isAdmin, surveyController.createSurvey);
+router.put('/admin/surveys/:id', isAdmin, surveyController.updateSurvey);
+router.delete('/admin/surveys/:id', isAdmin, surveyController.deleteSurvey);
 
 // Upload Routes
 router.post('/upload/logo', isAdmin, uploadController.uploadLogo, uploadController.handleUpload);

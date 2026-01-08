@@ -140,3 +140,16 @@ model UserBenefitsBalance {
   updatedAt             DateTime @updatedAt
 }
 
+model Survey {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @db.Text
+  url         String
+  isActive    Boolean  @default(true)
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+
