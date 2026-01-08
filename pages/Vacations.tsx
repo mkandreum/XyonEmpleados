@@ -3,7 +3,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 import { vacationService, uploadService, benefitsService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { VacationRequest, VacationStatus, DepartmentBenefits, UserBenefitsBalance } from '../types';
-import { Plus, Calendar, AlertCircle, Upload, FileText } from 'lucide-react';
+import { Plus, Calendar, AlertCircle, Upload, FileText, X } from 'lucide-react';
 import { useModal } from '../hooks/useModal';
 import { Modal } from '../components/Modal';
 import { DateRangePicker } from '../components/DateRangePicker';
