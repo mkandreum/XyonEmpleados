@@ -179,10 +179,10 @@ export const VacationsPage: React.FC = () => {
                 </div>
                 <button
                     onClick={() => setShowRequestForm(!showRequestForm)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 shadow-sm transition-colors"
+                    className="hidden md:flex bg-blue-600 text-white px-4 py-2 rounded-lg items-center gap-2 hover:bg-blue-700 shadow-sm transition-colors"
                 >
                     <Plus size={18} />
-                    <span>Solicitar Días</span>
+                    <span>{showRequestForm ? 'Cancelar' : 'Solicitar Días'}</span>
                 </button>
             </div>
 
@@ -211,6 +211,13 @@ export const VacationsPage: React.FC = () => {
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
+                    {/* Mobile Button - Visible only on mobile below chart info */}
+                    <button
+                        onClick={() => setShowRequestForm(!showRequestForm)}
+                        className="md:hidden w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
+                    >
+                        {showRequestForm ? <><X size={20} /> Cancelar</> : <><Plus size={20} /> Solicitar Días</>}
+                    </button>
                     <div className="text-center mt-2">
                         <p className="text-3xl font-bold text-blue-600">{remainingDays}</p>
                         <p className="text-sm text-slate-500">Días Disponibles</p>
