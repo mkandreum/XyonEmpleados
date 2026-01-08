@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Layout } from './components/Layout';
 import { AdminLayout } from './components/AdminLayout';
@@ -31,11 +31,15 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AppRoutes = () => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
 
     return (
         <Routes>
-            <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />} />
+            <Route path="/login" element={
+                isAuthenticated ? (
+                    user?.role === 'ADMIN' ? <Navigate to="/admin" /> : <Navigate to="/" />
+                ) : <LoginPage />
+            } />
             <Route path="/register" element={isAuthenticated ? <Navigate to="/" /> : <RegisterPage />} />
 
             {/* Admin Routes */}
@@ -60,9 +64,10 @@ const AppRoutes = () => {
                 </AdminRoute>
             } />
 
+
             <Route path="/" element={
                 <ProtectedRoute>
-                    <Dashboard />
+                    {user?.role === 'ADMIN' ? <Navigate to="/admin" replace /> : <Dashboard />}
                 </ProtectedRoute>
             } />
             <Route path="/payroll" element={

@@ -33,7 +33,6 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// Database client
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
@@ -41,28 +40,27 @@ const prisma = new PrismaClient();
 async function ensureAdminExists() {
     try {
         const adminEmail = 'admin@velilla.com';
-        const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
+        const hashedPassword = await bcrypt.hash('admin_password_123', 10);
 
-        if (!existingAdmin) {
-            console.log('Admin user not found. Creating default admin...');
-            const hashedPassword = await bcrypt.hash('admin_password_123', 10);
-            await prisma.user.create({
-                data: {
-                    email: adminEmail,
-                    name: 'Admin User',
-                    password: hashedPassword,
-                    role: 'ADMIN',
-                    department: 'IT',
-                    position: 'System Administrator',
-                    joinDate: new Date(),
-                }
-            });
-            console.log('Default admin created.');
-        } else {
-            console.log('Admin user already exists.');
-        }
+        await prisma.user.upsert({
+            where: { email: adminEmail },
+            update: {
+                password: hashedPassword,
+                role: 'ADMIN'
+            },
+            create: {
+                email: adminEmail,
+                name: 'Admin User',
+                password: hashedPassword,
+                role: 'ADMIN',
+                department: 'IT',
+                position: 'System Administrator',
+                joinDate: new Date(),
+            }
+        });
+        console.log('✓ Admin user verified/updated');
     } catch (error) {
-        console.error('Error checking/creating admin user:', error);
+        console.error('Error ensuring admin exists:', error);
     }
 }
 
