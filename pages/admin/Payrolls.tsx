@@ -20,7 +20,6 @@ export const AdminPayrolls: React.FC = () => {
         month: 'Enero',
         year: new Date().getFullYear(),
         amount: 0,
-        amount: 0,
         pdfUrl: ''
     });
     const { modalState, showAlert, closeModal } = useModal();
@@ -34,6 +33,7 @@ export const AdminPayrolls: React.FC = () => {
                 setUsers(data.filter((u: any) => u.role !== 'ADMIN'));
             } catch (error) {
                 console.error("Error fetching users:", error);
+                showAlert("Error al obtener usuarios", 'error');
             }
         };
         fetchUsers();
@@ -44,7 +44,6 @@ export const AdminPayrolls: React.FC = () => {
         try {
             await adminService.createPayroll(formData);
             setShowModal(false);
-            setFormData({ userId: '', month: 'Enero', year: new Date().getFullYear(), amount: 0, pdfUrl: '' });
             setFormData({ userId: '', month: 'Enero', year: new Date().getFullYear(), amount: 0, pdfUrl: '' });
             showAlert('Nómina creada correctamente', 'success');
         } catch (error) {
@@ -162,19 +161,16 @@ export const AdminPayrolls: React.FC = () => {
                     </div>
                 </div>
             )}
-        </div>
-                </div >
-            )}
 
-{/* Global Modal */ }
-<Modal
-    isOpen={modalState.isOpen}
-    onClose={closeModal}
-    title={modalState.title}
-    message={modalState.message}
-    type={modalState.type}
-    onConfirm={modalState.onConfirm}
-/>
-        </div >
+            {/* Global Modal */}
+            <Modal
+                isOpen={modalState.isOpen}
+                onClose={closeModal}
+                title={modalState.title}
+                message={modalState.message}
+                type={modalState.type}
+                onConfirm={modalState.onConfirm}
+            />
+        </div>
     );
 };

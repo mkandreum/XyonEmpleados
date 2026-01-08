@@ -23,7 +23,6 @@ export const AdminNews: React.FC = () => {
         summary: '',
         content: '',
         category: 'CORPORATE',
-        category: 'CORPORATE',
         imageUrl: ''
     });
     const { modalState, showAlert, showConfirm, closeModal } = useModal();
@@ -34,6 +33,7 @@ export const AdminNews: React.FC = () => {
             setNews(data);
         } catch (error) {
             console.error("Error fetching news:", error);
+            showAlert("Error al obtener noticias", 'error');
         } finally {
             setLoading(false);
         }
@@ -54,9 +54,6 @@ export const AdminNews: React.FC = () => {
             await fetchNews();
             setShowModal(false);
             setEditingNews(null);
-            setFormData({ title: '', summary: '', content: '', category: 'CORPORATE', imageUrl: '' });
-        } catch (error) {
-            console.error("Error saving news:", error);
             setFormData({ title: '', summary: '', content: '', category: 'CORPORATE', imageUrl: '' });
             showAlert('Noticia guardada correctamente', 'success');
         } catch (error) {
@@ -225,6 +222,7 @@ export const AdminNews: React.FC = () => {
                     </div>
                 </div>
             )}
+
             {/* Global Modal */}
             <Modal
                 isOpen={modalState.isOpen}
