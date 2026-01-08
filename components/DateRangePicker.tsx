@@ -168,9 +168,11 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
                 </button>
             </div>
 
-            <div className="flex gap-6">
+            <div className="flex flex-col md:flex-row gap-6">
                 {renderMonth(0)}
-                {renderMonth(1)}
+                <div className="hidden md:block flex-1">
+                    {renderMonth(1)}
+                </div>
             </div>
         </div>
     );
