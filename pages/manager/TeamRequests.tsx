@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { VacationRequest, VacationStatus } from '../../types';
+import { managerService } from '../../services/api';
 import { CheckCircle, XCircle, Calendar, Clock, User as UserIcon } from 'lucide-react';
 
 export const TeamRequests: React.FC = () => {
@@ -8,12 +9,7 @@ export const TeamRequests: React.FC = () => {
 
     const fetchTeamRequests = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('/api/manager/team-vacations', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('Failed to fetch team requests');
-            const data = await response.json();
+            const data = await managerService.getTeamVacations();
             setRequests(data);
         } catch (error) {
             console.error('Error fetching team requests:', error);
@@ -29,12 +25,7 @@ export const TeamRequests: React.FC = () => {
 
     const handleApprove = async (id: string) => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`/api/manager/vacations/${id}/approve`, {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('Failed to approve');
+            await managerService.approveVacation(id);
             alert('Solicitud aprobada y enviada a Admin');
             fetchTeamRequests(); // Reload
         } catch (error) {
@@ -46,12 +37,7 @@ export const TeamRequests: React.FC = () => {
     const handleReject = async (id: string) => {
         if (!confirm('¿Estás seguro de rechazar esta solicitud?')) return;
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`/api/manager/vacations/${id}/reject`, {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('Failed to reject');
+            await managerService.rejectVacation(id);
             alert('Solicitud rechazada');
             fetchTeamRequests(); // Reload
         } catch (error) {

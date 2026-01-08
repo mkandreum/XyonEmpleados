@@ -237,8 +237,27 @@ export const adminService = {
         return response.data;
     },
     createPayroll: async (data: any) => {
-        const response = await api.post('/admin/payrolls', data);
-        return response.data;
+        const res = await api.post('/admin/payrolls', data);
+        return res.data;
+    },
+    getVacations: async (): Promise<VacationRequest[]> => {
+        const res = await api.get('/admin/vacations');
+        return res.data;
+    }
+};
+
+export const managerService = {
+    getTeamVacations: async (): Promise<VacationRequest[]> => {
+        const res = await api.get('/manager/team-vacations');
+        return res.data;
+    },
+    approveVacation: async (id: string): Promise<VacationRequest> => {
+        const res = await api.patch(`/manager/vacations/${id}/approve`);
+        return res.data;
+    },
+    rejectVacation: async (id: string): Promise<VacationRequest> => {
+        const res = await api.patch(`/manager/vacations/${id}/reject`);
+        return res.data;
     }
 };
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { adminService } from '../../services/adminService';
+import { adminService } from '../../services/api';
 import { Check, X } from 'lucide-react';
 
 export const AdminVacations: React.FC = () => {
@@ -8,7 +8,7 @@ export const AdminVacations: React.FC = () => {
 
     const fetchVacations = async () => {
         try {
-            const data = await adminService.getVacations();
+            const data = await adminService.getAllVacations();
             setVacations(data);
         } catch (error) {
             console.error("Error fetching vacations:", error);
@@ -79,16 +79,20 @@ export const AdminVacations: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`
-                                            px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                            ${req.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                                        px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                        ${req.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
                                                 req.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                                                    'bg-yellow-100 text-yellow-800'}
-                                        `}>
-                                            {req.status}
+                                                    req.status === 'PENDING_MANAGER' ? 'bg-yellow-100 text-yellow-800' :
+                                                        req.status === 'PENDING_ADMIN' ? 'bg-blue-100 text-blue-800' :
+                                                            'bg-slate-100 text-slate-800'}
+                                    `}>
+                                            {req.status === 'PENDING_MANAGER' ? 'Pendiente Manager' :
+                                                req.status === 'PENDING_ADMIN' ? 'Pendiente Admin' :
+                                                    req.status}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        {req.status === 'PENDING' && (
+                                        {(req.status === 'PENDING' || req.status === 'PENDING_ADMIN' || req.status === 'PENDING_MANAGER') && (
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={() => handleStatusUpdate(req.id, 'APPROVED')}
