@@ -44,6 +44,7 @@ model User {
   vacations   VacationRequest[]
   payrolls    Payroll[]
   notifications Notification[]
+  benefitsBalance UserBenefitsBalance?
 }
 
 model Payroll {
@@ -114,3 +115,28 @@ model Holiday {
   date  DateTime
   year  Int
 }
+
+model DepartmentBenefits {
+  id                    String @id @default(uuid())
+  department            String @unique
+  vacationDays          Int    @default(22)
+  overtimeHoursBank     Int    @default(40)
+  sickLeaveDays         Int    @default(15)
+  paidAbsenceHours      Int    @default(20)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model UserBenefitsBalance {
+  id                    String @id @default(uuid())
+  userId                String @unique
+  user                  User   @relation(fields: [userId], references: [id])
+  vacationDaysUsed      Int    @default(0)
+  overtimeHoursUsed     Int    @default(0)
+  sickLeaveDaysUsed     Int    @default(0)
+  paidAbsenceHoursUsed  Int    @default(0)
+  year                  Int
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+

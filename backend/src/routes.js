@@ -8,6 +8,7 @@ const commonController = require('./controllers/commonController');
 const adminController = require('./controllers/adminController');
 const contentController = require('./controllers/contentController');
 const uploadController = require('./controllers/uploadController');
+const benefitsController = require('./controllers/benefitsController');
 const { isAdmin } = require('./middleware/auth');
 
 // Public Routes (NO AUTH REQUIRED)
@@ -26,6 +27,13 @@ router.post('/upload/payroll', isAdmin, uploadController.uploadPayroll, uploadCo
 router.post('/upload/justification', uploadController.uploadJustification, uploadController.handleUpload);
 router.post('/upload/avatar', uploadController.uploadAvatar, uploadController.handleUpload);
 router.delete('/upload/file', uploadController.deleteFile);
+
+// Benefits Routes
+router.get('/benefits/user', benefitsController.getUserBenefitsBalance);
+router.get('/benefits/department/:department', benefitsController.getBenefitsByDepartment);
+router.get('/admin/benefits', isAdmin, benefitsController.getDepartmentBenefits);
+router.post('/admin/benefits', isAdmin, benefitsController.upsertDepartmentBenefits);
+router.put('/admin/benefits/balance', isAdmin, benefitsController.updateUserBalance);
 
 // Admin Routes
 router.get('/admin/users', isAdmin, adminController.getUsers);
