@@ -95,3 +95,5 @@ export const notificationService = {
         return response.data;
     }
 };
+
+export default api;

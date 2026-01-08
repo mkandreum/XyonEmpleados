@@ -65,6 +65,7 @@ model VacationRequest {
   days      Int
   status    VacationStatus @default(PENDING)
   type      String         // 'VACATION' | 'PERSONAL' | 'SICK_LEAVE'
+  justificationUrl String?
   userId    String
   user      User           @relation(fields: [userId], references: [id])
   createdAt DateTime       @default(now())
@@ -89,4 +90,11 @@ model Notification {
   date      DateTime @default(now())
   userId    String
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model GlobalSettings {
+  id        String   @id @default(uuid())
+  key       String   @unique // e.g., 'logoUrl', 'companyName'
+  value     String
+  updatedAt DateTime @updatedAt
 }

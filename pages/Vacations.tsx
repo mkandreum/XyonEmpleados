@@ -15,7 +15,8 @@ export const VacationsPage: React.FC = () => {
     const [formData, setFormData] = useState({
         startDate: today,
         endDate: today,
-        type: 'VACATION'
+        type: 'VACATION',
+        justificationUrl: ''
     });
 
     const fetchVacations = async () => {
@@ -48,7 +49,8 @@ export const VacationsPage: React.FC = () => {
                 endDate: formData.endDate,
                 days: diffDays,
                 type: formData.type as any,
-                status: VacationStatus.PENDING
+                status: VacationStatus.PENDING,
+                justificationUrl: formData.justificationUrl
             });
 
             await fetchVacations(); // Refresh list
@@ -185,6 +187,16 @@ export const VacationsPage: React.FC = () => {
                                         <option value="PERSONAL">Asuntos Propios</option>
                                         <option value="SICK_LEAVE">Médico</option>
                                     </select>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Enlace a Justificante (Opcional)</label>
+                                    <input
+                                        type="url"
+                                        placeholder="https://..."
+                                        value={formData.justificationUrl || ''}
+                                        onChange={(e) => setFormData({ ...formData, justificationUrl: e.target.value })}
+                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    />
                                 </div>
                                 <div className="md:col-span-2 flex justify-end gap-3 mt-2">
                                     <button type="button" onClick={() => setShowRequestForm(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg">Cancelar</button>

@@ -2,6 +2,7 @@ import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Layout } from './components/Layout';
+import { AdminLayout } from './components/AdminLayout';
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
@@ -9,6 +10,10 @@ import { PayrollPage } from './pages/Payroll';
 import { VacationsPage } from './pages/Vacations';
 import { NewsPage } from './pages/News';
 import { ProfilePage } from './pages/Profile';
+import { AdminDashboard } from './pages/admin/Dashboard';
+import { AdminUsers } from './pages/admin/Users';
+import { AdminVacations } from './pages/admin/Vacations';
+import { AdminSettings } from './pages/admin/Settings';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated } = useAuth();
@@ -18,6 +23,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Layout>{children}</Layout>;
 };
 
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+    const { user, isAuthenticated } = useAuth();
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    if (user?.role !== 'ADMIN') return <Navigate to="/" replace />;
+    return <AdminLayout>{children}</AdminLayout>;
+};
+
 const AppRoutes = () => {
     const { isAuthenticated } = useAuth();
 
@@ -25,6 +37,28 @@ const AppRoutes = () => {
         <Routes>
             <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />} />
             <Route path="/register" element={isAuthenticated ? <Navigate to="/" /> : <RegisterPage />} />
+
+            {/* Admin Routes */}
+            <Route path="/admin" element={
+                <AdminRoute>
+                    <AdminDashboard />
+                </AdminRoute>
+            } />
+            <Route path="/admin/users" element={
+                <AdminRoute>
+                    <AdminUsers />
+                </AdminRoute>
+            } />
+            <Route path="/admin/vacations" element={
+                <AdminRoute>
+                    <AdminVacations />
+                </AdminRoute>
+            } />
+            <Route path="/admin/settings" element={
+                <AdminRoute>
+                    <AdminSettings />
+                </AdminRoute>
+            } />
 
             <Route path="/" element={
                 <ProtectedRoute>

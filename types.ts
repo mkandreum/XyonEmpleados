@@ -40,6 +40,8 @@ export interface VacationRequest {
   days: number;
   status: VacationStatus;
   type: 'VACATION' | 'PERSONAL' | 'SICK_LEAVE';
+  justificationUrl?: string;
+  user?: User;
 }
 
 export interface NewsItem {
