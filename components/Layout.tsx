@@ -108,11 +108,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
           <div className="flex-1"></div>
 
+
           <div className="flex items-center gap-6">
-            <button className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
-              <Bell size={20} />
-              <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-            </button>
+            <NotificationDropdown />
             <Link to="/profile" className="flex items-center gap-3 pl-6 border-l border-slate-200 hover:bg-slate-50 rounded-lg px-3 py-2 -ml-3 transition-colors">
               <div className="text-right hidden md:block">
                 <p className="text-sm font-semibold text-slate-800">{user?.name}</p>

@@ -23,7 +23,7 @@ exports.createVacation = async (req, res) => {
         // Fetch user to determine initial status
         const user = await prisma.user.findUnique({
             where: { id: req.user.userId },
-            select: { role: true }
+            select: { role: true, department: true, name: true }
         });
 
         // Determine initial status based on role
@@ -75,42 +75,11 @@ exports.createVacation = async (req, res) => {
             }
         }
 
-    });
-
-    // NOTIFICATION LOGIC
-    if (initialStatus === 'PENDING_MANAGER') {
-        // Notify managers of the same department
-        const managers = await prisma.user.findMany({
-            where: {
-                department: user.department,
-                role: 'MANAGER',
-                NOT: { id: req.user.userId } // Don't notify self if manager requests
-            }
-        });
-        for (const manager of managers) {
-            await createNotification(
-                manager.id,
-                'Nueva Solicitud de Vacaciones',
-                `El empleado ${user.name} ha solicitado días.`
-            );
-        }
-    } else if (initialStatus === 'PENDING_ADMIN') {
-        // Notify all ADMINS
-        const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
-        for (const admin of admins) {
-            await createNotification(
-                admin.id,
-                'Nueva Solicitud Pendiente',
-                `El usuario ${user.name} ha solicitado vacaciones (Aprobado por Manager o directo).`
-            );
-        }
+        res.json(request);
+    } catch (error) {
+        console.error("Create vacation error:", error);
+        res.status(500).json({ error: 'Failed to create vacation request' });
     }
-
-    res.json(request);
-} catch (error) {
-    console.error("Create vacation error:", error);
-    res.status(500).json({ error: 'Failed to create vacation request' });
-}
 };
 
 // Manager: Get team vacation requests (same department, PENDING_MANAGER)
@@ -167,7 +136,7 @@ exports.managerApproveVacation = async (req, res) => {
         // Verify the request belongs to the same department
         const request = await prisma.vacationRequest.findUnique({
             where: { id },
-            include: { user: { select: { department: true } } }
+            include: { user: { select: { department: true, name: true } } }
         });
 
         if (!request) {
@@ -184,6 +153,23 @@ exports.managerApproveVacation = async (req, res) => {
             data: { status: 'PENDING_ADMIN' }
         });
 
+        // Notify Admins
+        const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
+        for (const admin of admins) {
+            await createNotification(
+                admin.id,
+                'Solicitud Aprobada por Manager',
+                `El manager ha aprobado la solicitud de ${request.user.name}. Requiere tu revisión.`
+            );
+        }
+
+        // Notify User
+        await createNotification(
+            request.userId,
+            'Solicitud Actualizada',
+            'Tu manager ha aprobado tu solicitud. Ahora está pendiente de RRHH/Admin.'
+        );
+
         res.json(updated);
     } catch (error) {
         console.error("Manager approve error:", error);
@@ -196,7 +182,7 @@ exports.managerRejectVacation = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Verify manager role and department (same logic as approve)
+        // Verify manager role
         const manager = await prisma.user.findUnique({
             where: { id: req.user.userId },
             select: { role: true, department: true }
@@ -219,6 +205,13 @@ exports.managerRejectVacation = async (req, res) => {
             where: { id },
             data: { status: 'REJECTED' }
         });
+
+        // Notify User
+        await createNotification(
+            request.userId,
+            'Solicitud Rechazada',
+            'Tu manager ha rechazado tu solicitud de vacaciones.'
+        );
 
         res.json(updated);
     } catch (error) {
