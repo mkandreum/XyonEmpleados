@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { notificationService, vacationService } from '../services/api';
 import { Notification, VacationRequest } from '../types';
-import { Calendar, CheckCircle2, Clock, Briefcase } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, Briefcase, AlertCircle } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [vacations, setVacations] = useState<VacationRequest[]>([]);
+  const [pendingVacations, setPendingVacations] = useState<VacationRequest[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [nextHoliday, setNextHoliday] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -24,6 +25,7 @@ export const Dashboard: React.FC = () => {
         ]);
         setNotifications(notifs);
         setVacations(vacs);
+        setPendingVacations(vacs.filter((v: VacationRequest) => v.status === 'PENDING'));
         setEvents(evts);
         setNextHoliday(holiday);
       } catch (error) {
@@ -75,12 +77,12 @@ export const Dashboard: React.FC = () => {
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
-              <CheckCircle2 size={24} />
+            <div className="p-3 bg-yellow-50 text-yellow-600 rounded-lg">
+              <Clock size={24} />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">Notificaciones</p>
-              <p className="text-2xl font-bold text-slate-900">{notifications.filter(n => !n.read).length}</p>
+              <p className="text-sm font-medium text-slate-500">Solicitudes Pendientes</p>
+              <p className="text-2xl font-bold text-slate-900">{pendingVacations.length}</p>
             </div>
           </div>
         </div>
