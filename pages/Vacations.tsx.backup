@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { vacationService, uploadService, benefitsService } from '../services/api';
+import React, { useEffect, useState, useMemo } from 'react';
+import { vacationService, benefitsService, uploadService } from '../services/api';
+import { VacationRequest, VacationStatus, UserBenefitsBalance, DepartmentBenefits } from '../types';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { Calendar, Upload, AlertCircle, FileText, Plus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { VacationRequest, VacationStatus, DepartmentBenefits, UserBenefitsBalance } from '../types';
-import { Plus, Calendar, AlertCircle, Upload, FileText } from 'lucide-react';
 import { useModal } from '../hooks/useModal';
 import { Modal } from '../components/Modal';
 
@@ -14,18 +14,14 @@ export const VacationsPage: React.FC = () => {
     const [deptBenefits, setDeptBenefits] = useState<DepartmentBenefits | null>(null);
     const [userBenefits, setUserBenefits] = useState<UserBenefitsBalance | null>(null);
     const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const { modalState, showAlert, closeModal } = useModal();
-
 
     // Form state
     const today = new Date().toISOString().split('T')[0];
-    const [formData, setFormData] = useState({
-        startDate: today,
-        endDate: today,
-        type: 'VACATION',
-        justificationUrl: ''
+    const [formData, setFormData] = useState<{ startDate: string, endDate: string, type: string, justificationUrl: string }>({
+        startDate: today, endDate: today, type: 'VACATION', justificationUrl: ''
     });
 
     const fetchVacations = async () => {
@@ -60,8 +56,8 @@ export const VacationsPage: React.FC = () => {
 
         setUploading(true);
         try {
-            const result = await uploadService.uploadJustification(file);
-            setFormData({ ...formData, justificationUrl: result.url });
+            const url = await uploadService.uploadJustification(file);
+            setFormData({ ...formData, justificationUrl: url });
             showAlert('Justificante subido correctamente', 'success');
         } catch (error) {
             console.error('Upload error:', error);
@@ -85,11 +81,11 @@ export const VacationsPage: React.FC = () => {
         return count;
     };
 
-    const handleCreate = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validate justification for non-vacation types
-        if ((formData.type === 'SICK_LEAVE' || formData.type === 'PERSONAL') && !formData.justificationUrl) {
+        // Validate justification for sick leave or personal days
+        if (requiresJustification && !formData.justificationUrl) {
             showAlert('El justificante es obligatorio para bajas médicas y ausencias justificadas', 'warning');
             return;
         }
@@ -129,6 +125,27 @@ export const VacationsPage: React.FC = () => {
             showAlert("Error al crear la solicitud", 'error');
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    // Helper functions
+    const getTypeLabel = (type: string) => {
+        switch (type) {
+            case 'VACATION': return 'Vacaciones';
+            case 'SICK_LEAVE': return 'Baja Médica';
+            case 'PERSONAL': return 'Asuntos Propios';
+            default: return type;
+        }
+    };
+
+    const getStatusColor = (status: VacationStatus) => {
+        switch (status) {
+            case VacationStatus.APPROVED: return 'bg-green-100 text-green-700';
+            case VacationStatus.REJECTED: return 'bg-red-100 text-red-700';
+            case VacationStatus.PENDING_MANAGER: return 'bg-yellow-100 text-yellow-700';
+            case VacationStatus.PENDING_ADMIN: return 'bg-blue-100 text-blue-700';
+            case VacationStatus.PENDING: return 'bg-slate-100 text-slate-700';
+            default: return 'bg-slate-100 text-slate-700';
         }
     };
 
@@ -277,21 +294,6 @@ export const VacationsPage: React.FC = () => {
                                         {formData.justificationUrl && <span className="text-sm text-green-600 font-medium">¡Archivo listo!</span>}
                                     </div>
                                     <input type="hidden" value={formData.justificationUrl} />
-                                </div>
-                                <div className="md:col-span-2 flex justify-end gap-3 mt-2">
-                                    <button type="button" onClick={() => setShowRequestForm(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg">Cancelar</button>
-                                    <button
-                                        type="submit"
-                                        disabled={submitting || (requiresJustification && !formData.justificationUrl)}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                                    >
-                                        {submitting ? 'Enviando...' : 'Enviar Solicitud'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    )}
-
                     {/* Stats Summary Section */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 border-b border-slate-100 bg-slate-50">
                         <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
@@ -380,16 +382,6 @@ export const VacationsPage: React.FC = () => {
                     <p className="text-amber-700 text-sm mt-1">Recuerda solicitar tus vacaciones con al menos 15 días de antelación. Los días no disfrutados antes del 31 de Enero del año siguiente expirarán.</p>
                 </div>
             </div>
-
-            {/* Custom Modal */}
-            <Modal
-                isOpen={modalState.isOpen}
-                onClose={closeModal}
-                title={modalState.title}
-                message={modalState.message}
-                type={modalState.type}
-                onConfirm={modalState.onConfirm}
-            />
         </div>
-    );
+                );
 };

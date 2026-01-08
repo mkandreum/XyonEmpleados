@@ -2,10 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { VacationRequest, VacationStatus } from '../../types';
 import { managerService } from '../../services/api';
 import { CheckCircle, XCircle, Calendar, Clock, User as UserIcon } from 'lucide-react';
+import { useModal } from '../../hooks/useModal';
+import { Modal } from '../../components/Modal';
 
 export const TeamRequests: React.FC = () => {
     const [requests, setRequests] = useState<VacationRequest[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { modalState, showAlert, showConfirm, closeModal } = useModal();
 
     const fetchTeamRequests = async () => {
         try {
@@ -13,7 +16,7 @@ export const TeamRequests: React.FC = () => {
             setRequests(data);
         } catch (error) {
             console.error('Error fetching team requests:', error);
-            alert('Error al cargar las solicitudes del equipo');
+            showAlert('Error al cargar las solicitudes del equipo', 'error');
         } finally {
             setIsLoading(false);
         }
@@ -26,24 +29,28 @@ export const TeamRequests: React.FC = () => {
     const handleApprove = async (id: string) => {
         try {
             await managerService.approveVacation(id);
-            alert('Solicitud aprobada y enviada a Admin');
+            showAlert('Solicitud aprobada y enviada a Admin', 'success');
             fetchTeamRequests(); // Reload
         } catch (error) {
             console.error('Error approving request:', error);
-            alert('Error al aprobar la solicitud');
+            showAlert('Error al aprobar la solicitud', 'error');
         }
     };
 
     const handleReject = async (id: string) => {
-        if (!confirm('¿Estás seguro de rechazar esta solicitud?')) return;
-        try {
-            await managerService.rejectVacation(id);
-            alert('Solicitud rechazada');
-            fetchTeamRequests(); // Reload
-        } catch (error) {
-            console.error('Error rejecting request:', error);
-            alert('Error al rechazar la solicitud');
-        }
+        showConfirm(
+            '¿Estás seguro de rechazar esta solicitud?',
+            async () => {
+                try {
+                    await managerService.rejectVacation(id);
+                    showAlert('Solicitud rechazada', 'success');
+                    fetchTeamRequests(); // Reload
+                } catch (error) {
+                    console.error('Error rejecting request:', error);
+                    showAlert('Error al rechazar la solicitud', 'error');
+                }
+            }
+        );
     };
 
     const getStatusColor = (status: VacationStatus) => {
@@ -144,6 +151,15 @@ export const TeamRequests: React.FC = () => {
                     ))}
                 </div>
             )}
+
+            <Modal
+                isOpen={modalState.isOpen}
+                onClose={closeModal}
+                title={modalState.title}
+                message={modalState.message}
+                type={modalState.type}
+                onConfirm={modalState.onConfirm}
+            />
         </div>
     );
 };
