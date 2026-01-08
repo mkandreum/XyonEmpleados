@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { createNotification } = require('./notificationController');
 
 // Get all vacations for the requesting user
 exports.getAllVacations = async (req, res) => {
@@ -44,11 +45,72 @@ exports.createVacation = async (req, res) => {
                 status: initialStatus
             }
         });
-        res.json(request);
-    } catch (error) {
-        console.error("Create vacation error:", error);
-        res.status(500).json({ error: 'Failed to create vacation request' });
+
+        // NOTIFICATION LOGIC
+        if (initialStatus === 'PENDING_MANAGER') {
+            // Notify managers of the same department
+            const managers = await prisma.user.findMany({
+                where: {
+                    department: user.department,
+                    role: 'MANAGER',
+                    NOT: { id: req.user.userId } // Don't notify self if manager requests
+                }
+            });
+            for (const manager of managers) {
+                await createNotification(
+                    manager.id,
+                    'Nueva Solicitud de Vacaciones',
+                    `El empleado ${user.name} ha solicitado días.`
+                );
+            }
+        } else if (initialStatus === 'PENDING_ADMIN') {
+            // Notify all ADMINS
+            const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
+            for (const admin of admins) {
+                await createNotification(
+                    admin.id,
+                    'Nueva Solicitud Pendiente',
+                    `El usuario ${user.name} ha solicitado vacaciones (Aprobado por Manager o directo).`
+                );
+            }
+        }
+
+    });
+
+    // NOTIFICATION LOGIC
+    if (initialStatus === 'PENDING_MANAGER') {
+        // Notify managers of the same department
+        const managers = await prisma.user.findMany({
+            where: {
+                department: user.department,
+                role: 'MANAGER',
+                NOT: { id: req.user.userId } // Don't notify self if manager requests
+            }
+        });
+        for (const manager of managers) {
+            await createNotification(
+                manager.id,
+                'Nueva Solicitud de Vacaciones',
+                `El empleado ${user.name} ha solicitado días.`
+            );
+        }
+    } else if (initialStatus === 'PENDING_ADMIN') {
+        // Notify all ADMINS
+        const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
+        for (const admin of admins) {
+            await createNotification(
+                admin.id,
+                'Nueva Solicitud Pendiente',
+                `El usuario ${user.name} ha solicitado vacaciones (Aprobado por Manager o directo).`
+            );
+        }
     }
+
+    res.json(request);
+} catch (error) {
+    console.error("Create vacation error:", error);
+    res.status(500).json({ error: 'Failed to create vacation request' });
+}
 };
 
 // Manager: Get team vacation requests (same department, PENDING_MANAGER)

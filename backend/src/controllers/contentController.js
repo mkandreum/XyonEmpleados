@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { createNotification } = require('./notificationController');
 
 // News Management
 exports.createNews = async (req, res) => {
@@ -48,6 +49,14 @@ exports.createPayroll = async (req, res) => {
         const payroll = await prisma.payroll.create({
             data: { userId, month, year, amount, pdfUrl, status: 'PAID' }
         });
+
+        // NOTIFICATION: Notify user
+        await createNotification(
+            userId,
+            'Nueva Nómina Disponible',
+            `Tu nómina de ${month}/${year} ya está disponible para descargar.`
+        );
+
         res.status(201).json(payroll);
     } catch (error) {
         console.error("Create payroll error:", error);

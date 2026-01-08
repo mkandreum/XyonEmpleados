@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const bcrypt = require('bcryptjs');
+const { createNotification } = require('./notificationController');
 
 // --- User Management ---
 
@@ -130,6 +131,17 @@ exports.updateVacationStatus = async (req, res) => {
             where: { id },
             data: { status }
         });
+
+        // NOTIFICATION: Notify User
+        let title = 'Actualización de Solicitud';
+        let message = `El estado de tu solicitud ha cambiado a: ${status === 'APPROVED' ? 'APROBADA' : 'RECHAZADA'}`;
+
+        await createNotification(
+            vacation.userId,
+            title,
+            message
+        );
+
         res.json(vacation);
     } catch (error) {
         console.error("Update vacation status error:", error);

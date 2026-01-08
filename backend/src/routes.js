@@ -10,6 +10,7 @@ const contentController = require('./controllers/contentController');
 const uploadController = require('./controllers/uploadController');
 const benefitsController = require('./controllers/benefitsController');
 const statsController = require('./controllers/statsController');
+const notificationController = require('./controllers/notificationController');
 const { isAdmin } = require('./middleware/auth');
 
 // Public Routes (NO AUTH REQUIRED)
@@ -77,7 +78,9 @@ router.patch('/manager/vacations/:id/reject', vacationController.managerRejectVa
 router.get('/news', commonController.getAllNews);
 
 // Notifications
-router.get('/notifications', commonController.getAllNotifications);
-router.put('/notifications/:id/read', commonController.markNotificationRead);
+// Notifications
+router.get('/notifications', notificationController.getNotifications);
+router.put('/notifications/:id/read', notificationController.markAsRead);
+router.put('/notifications/read-all', notificationController.markAllAsRead);
 
 module.exports = router;
