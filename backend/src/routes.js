@@ -11,11 +11,14 @@ const adminController = require('./controllers/adminController');
 const contentController = require('./controllers/contentController');
 const { isAdmin } = require('./middleware/auth');
 
-// Auth
+// Public Routes (NO AUTH REQUIRED)
 router.post('/auth/register', authController.register);
 router.post('/auth/login', authController.login);
+router.get('/admin/settings', adminController.getSettings); // Public for logo loading
+router.get('/events', contentController.getAllEvents);
+router.get('/holidays/next', contentController.getNextHoliday);
 
-// Protected Routes
+// Protected Routes (AUTH REQUIRED)
 router.use(authenticateToken);
 
 // Admin Routes
@@ -25,7 +28,6 @@ router.put('/admin/users/:id', isAdmin, adminController.updateUser);
 router.delete('/admin/users/:id', isAdmin, adminController.deleteUser);
 router.get('/admin/vacations', isAdmin, adminController.getAllVacations);
 router.put('/admin/vacations/:id/status', isAdmin, adminController.updateVacationStatus);
-router.get('/admin/settings', adminController.getSettings); // Public for logo loading
 router.put('/admin/settings', isAdmin, adminController.updateSettings);
 
 // Admin Content Management
@@ -36,15 +38,10 @@ router.post('/admin/payrolls', isAdmin, contentController.createPayroll);
 router.post('/admin/events', isAdmin, contentController.createEvent);
 router.delete('/admin/events/:id', isAdmin, contentController.deleteEvent);
 
-// Public/Employee Routes
-router.get('/events', contentController.getAllEvents);
-router.get('/holidays/next', contentController.getNextHoliday);
-
 // User
 router.get('/users/profile', authController.getProfile);
 router.put('/users/profile', authController.updateProfile);
 router.post('/users/change-password', authController.changePassword);
-
 
 // Payrolls
 router.get('/payrolls', payrollController.getAllPayrolls);
