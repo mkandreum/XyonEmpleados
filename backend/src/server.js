@@ -33,6 +33,42 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// Database client
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+const prisma = new PrismaClient();
+
+async function ensureAdminExists() {
+    try {
+        const adminEmail = 'admin@velilla.com';
+        const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
+
+        if (!existingAdmin) {
+            console.log('Admin user not found. Creating default admin...');
+            const hashedPassword = await bcrypt.hash('admin_password_123', 10);
+            await prisma.user.create({
+                data: {
+                    email: adminEmail,
+                    name: 'Admin User',
+                    password: hashedPassword,
+                    role: 'ADMIN',
+                    department: 'IT',
+                    position: 'System Administrator',
+                    joinDate: new Date(),
+                }
+            });
+            console.log('Default admin created.');
+        } else {
+            console.log('Admin user already exists.');
+        }
+    } catch (error) {
+        console.error('Error checking/creating admin user:', error);
+    }
+}
+
+// Start server
+ensureAdminExists().then(() => {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
 });
