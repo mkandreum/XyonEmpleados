@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { vacationService } from '../services/api';
+import { uploadService } from '../services/uploadService';
 import { VacationRequest, VacationStatus } from '../types';
-import { Plus, Calendar, AlertCircle } from 'lucide-react';
+import { Plus, Calendar, AlertCircle, Upload, FileText } from 'lucide-react';
 
 export const VacationsPage: React.FC = () => {
     const [showRequestForm, setShowRequestForm] = useState(false);
     const [vacations, setVacations] = useState<VacationRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
     // Form state
     const today = new Date().toISOString().split('T')[0];
@@ -34,8 +36,32 @@ export const VacationsPage: React.FC = () => {
         fetchVacations();
     }, []);
 
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        try {
+            const result = await uploadService.uploadJustification(file);
+            setFormData({ ...formData, justificationUrl: result.url });
+            alert('Justificante subido correctamente');
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Error al subir el justificante');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validate justification for non-vacation types
+        if ((formData.type === 'SICK_LEAVE' || formData.type === 'PERSONAL') && !formData.justificationUrl) {
+            alert('El justificante es obligatorio para bajas médicas y ausencias justificadas');
+            return;
+        }
+
         setSubmitting(true);
         try {
             // Calculate days diff roughly
@@ -50,7 +76,7 @@ export const VacationsPage: React.FC = () => {
                 days: diffDays,
                 type: formData.type as any,
                 status: VacationStatus.PENDING,
-                justificationUrl: formData.justificationUrl
+                justificationUrl: formData.justificationUrl || undefined
             });
 
             await fetchVacations(); // Refresh list
@@ -64,6 +90,9 @@ export const VacationsPage: React.FC = () => {
             setSubmitting(false);
         }
     };
+
+    // Check if justification is required
+    const requiresJustification = formData.type === 'SICK_LEAVE' || formData.type === 'PERSONAL';
 
     // Data for chart
     const totalDays = 22;
