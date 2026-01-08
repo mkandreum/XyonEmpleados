@@ -15,19 +15,21 @@ exports.getAllVacations = async (req, res) => {
 
 exports.createVacation = async (req, res) => {
     try {
-        const { startDate, endDate, days, type } = req.body;
+        const { startDate, endDate, days, type, justificationUrl } = req.body;
         const request = await prisma.vacationRequest.create({
             data: {
                 startDate: new Date(startDate),
                 endDate: new Date(endDate),
                 days,
                 type,
+                justificationUrl: justificationUrl || null,
                 userId: req.user.userId,
                 status: 'PENDING'
             }
         });
         res.json(request);
     } catch (error) {
+        console.error("Create vacation error:", error);
         res.status(500).json({ error: 'Failed to create vacation request' });
     }
 };

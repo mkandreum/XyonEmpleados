@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LayoutDashboard, Users, Calendar, Settings, LogOut, Menu, X, Bell, Newspaper, CalendarDays, FileText } from 'lucide-react';
+import { useSettings } from '../hooks/useSettings';
 
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const { settings } = useSettings();
 
     const handleLogout = () => {
         logout();
@@ -26,6 +28,9 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
+    const companyName = settings.companyName || 'Velilla';
+    const adminLogoUrl = settings.adminLogoUrl;
+
     return (
         <div className="min-h-screen bg-slate-100 flex">
             {/* Sidebar */}
@@ -37,7 +42,11 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                 <div className="h-full flex flex-col">
                     <div className="p-6 border-b border-slate-700 flex items-center justify-between">
                         <Link to="/admin" className="text-xl font-bold tracking-wider">
-                            Velilla<span className="text-blue-500">Admin</span>
+                            {adminLogoUrl ? (
+                                <img src={adminLogoUrl} alt={`${companyName} Admin`} className="h-8 w-auto" />
+                            ) : (
+                                <>{companyName}<span className="text-purple-500">Admin</span></>
+                            )}
                         </Link>
                         <button onClick={toggleSidebar} className="md:hidden text-slate-400 hover:text-white">
                             <X size={24} />

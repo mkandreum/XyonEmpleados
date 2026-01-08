@@ -1,31 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Lock, User, Info } from 'lucide-react';
+import { useSettings } from '../hooks/useSettings';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  // Pre-fill credentials for demo purposes
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const { settings } = useSettings();
+
+  // Load remembered email on mount
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem('rememberedEmail');
+    if (rememberedEmail) {
+      setEmail(rememberedEmail);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
+      // Save email if remember me is checked
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', email);
+      } else {
+        localStorage.removeItem('rememberedEmail');
+      }
       await login(email, password);
-      // Login success handled by AuthContext/redirect usually, or component unmounts
     } catch (error) {
       alert("Error al iniciar sesión. Verifica tus credenciales.");
       setIsLoading(false);
     }
   };
 
+  const companyName = settings.companyName || 'Velilla';
+  const logoUrl = settings.logoUrl;
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-slate-900">Velilla<span className="text-blue-600">Emp</span></h1>
+        {logoUrl ? (
+          <img src={logoUrl} alt={companyName} className="h-12 w-auto mx-auto mb-4" />
+        ) : (
+          <h1 className="text-4xl font-bold tracking-tight text-slate-900">{companyName}<span className="text-blue-600">Emp</span></h1>
+        )}
         <h2 className="mt-6 text-2xl font-bold tracking-tight text-slate-900">Portal del Empleado</h2>
         <p className="mt-2 text-sm text-slate-600">
           Inicia sesión para acceder a tu espacio personal
@@ -86,6 +109,8 @@ export const LoginPage: React.FC = () => {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-900">
