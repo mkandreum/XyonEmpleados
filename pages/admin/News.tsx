@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { newsService } from '../../services/api';
 import { Plus, Edit, Trash2, X } from 'lucide-react';
 import { NewsItem } from '../../types';
+import { useModal } from '../../hooks/useModal';
+import { Modal } from '../../components/Modal';
 
 interface NewsFormData {
     title: string;
@@ -21,8 +23,10 @@ export const AdminNews: React.FC = () => {
         summary: '',
         content: '',
         category: 'CORPORATE',
+        category: 'CORPORATE',
         imageUrl: ''
     });
+    const { modalState, showAlert, showConfirm, closeModal } = useModal();
 
     const fetchNews = async () => {
         try {
@@ -53,19 +57,29 @@ export const AdminNews: React.FC = () => {
             setFormData({ title: '', summary: '', content: '', category: 'CORPORATE', imageUrl: '' });
         } catch (error) {
             console.error("Error saving news:", error);
-            alert("Error al guardar la noticia");
+            setFormData({ title: '', summary: '', content: '', category: 'CORPORATE', imageUrl: '' });
+            showAlert('Noticia guardada correctamente', 'success');
+        } catch (error) {
+            console.error("Error saving news:", error);
+            showAlert("Error al guardar la noticia", 'error');
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('¿Estás seguro de eliminar esta noticia?')) return;
-        try {
-            await newsService.delete(id);
-            await fetchNews();
-        } catch (error) {
-            console.error("Error deleting news:", error);
-            alert("Error al eliminar la noticia");
-        }
+        showConfirm(
+            '¿Estás seguro de eliminar esta noticia?',
+            async () => {
+                try {
+                    await newsService.delete(id);
+                    await fetchNews();
+                    showAlert('Noticia eliminada correctamente', 'success');
+                } catch (error) {
+                    console.error("Error deleting news:", error);
+                    showAlert("Error al eliminar la noticia", 'error');
+                }
+            },
+            'Eliminar Noticia'
+        );
     };
 
     const openEditModal = (newsItem: any) => {
@@ -211,6 +225,15 @@ export const AdminNews: React.FC = () => {
                     </div>
                 </div>
             )}
+            {/* Global Modal */}
+            <Modal
+                isOpen={modalState.isOpen}
+                onClose={closeModal}
+                title={modalState.title}
+                message={modalState.message}
+                type={modalState.type}
+                onConfirm={modalState.onConfirm}
+            />
         </div>
     );
 };

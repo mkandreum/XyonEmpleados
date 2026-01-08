@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/api';
 import { Upload, X, FileText } from 'lucide-react';
+import { useModal } from '../../hooks/useModal';
+import { Modal } from '../../components/Modal';
 
 interface PayrollFormData {
     userId: string;
@@ -18,8 +20,10 @@ export const AdminPayrolls: React.FC = () => {
         month: 'Enero',
         year: new Date().getFullYear(),
         amount: 0,
+        amount: 0,
         pdfUrl: ''
     });
+    const { modalState, showAlert, closeModal } = useModal();
 
     const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
@@ -41,10 +45,11 @@ export const AdminPayrolls: React.FC = () => {
             await adminService.createPayroll(formData);
             setShowModal(false);
             setFormData({ userId: '', month: 'Enero', year: new Date().getFullYear(), amount: 0, pdfUrl: '' });
-            alert('Nómina creada correctamente');
+            setFormData({ userId: '', month: 'Enero', year: new Date().getFullYear(), amount: 0, pdfUrl: '' });
+            showAlert('Nómina creada correctamente', 'success');
         } catch (error) {
             console.error("Error creating payroll:", error);
-            alert("Error al crear la nómina");
+            showAlert("Error al crear la nómina", 'error');
         }
     };
 
@@ -158,5 +163,18 @@ export const AdminPayrolls: React.FC = () => {
                 </div>
             )}
         </div>
+                </div >
+            )}
+
+{/* Global Modal */ }
+<Modal
+    isOpen={modalState.isOpen}
+    onClose={closeModal}
+    title={modalState.title}
+    message={modalState.message}
+    type={modalState.type}
+    onConfirm={modalState.onConfirm}
+/>
+        </div >
     );
 };
