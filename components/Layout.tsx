@@ -14,9 +14,10 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../hooks/useSettings';
 
-const SidebarItem: React.FC<{ to: string; icon: any; label: string; active: boolean }> = ({ to, icon: Icon, label, active }) => (
+const SidebarItem: React.FC<{ to: string; icon: any; label: string; active: boolean; onClick?: () => void }> = ({ to, icon: Icon, label, active, onClick }) => (
   <Link
     to={to}
+    onClick={onClick}
     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${active
       ? 'bg-blue-600 text-white shadow-md'
       : 'text-slate-400 hover:bg-slate-800 hover:text-white'
@@ -76,6 +77,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 icon={item.icon}
                 label={item.label}
                 active={location.pathname === item.path}
+                onClick={() => setIsMobileMenuOpen(false)}
               />
             ))}
           </nav>
