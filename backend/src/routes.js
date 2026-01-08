@@ -25,7 +25,7 @@ router.put('/admin/users/:id', isAdmin, adminController.updateUser);
 router.delete('/admin/users/:id', isAdmin, adminController.deleteUser);
 router.get('/admin/vacations', isAdmin, adminController.getAllVacations);
 router.put('/admin/vacations/:id/status', isAdmin, adminController.updateVacationStatus);
-router.get('/admin/settings', isAdmin, adminController.getSettings);
+router.get('/admin/settings', adminController.getSettings); // Public for logo loading
 router.put('/admin/settings', isAdmin, adminController.updateSettings);
 
 // Admin Content Management

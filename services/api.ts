@@ -57,6 +57,10 @@ export const userService = {
     updateProfile: async (data: Partial<User>) => {
         const response = await api.put<User>('/users/profile', data);
         return response.data;
+    },
+    changePassword: async (currentPassword: string, newPassword: string) => {
+        const response = await api.post('/users/change-password', { currentPassword, newPassword });
+        return response.data;
     }
 };
 

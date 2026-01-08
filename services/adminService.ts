@@ -41,5 +41,33 @@ export const adminService = {
     updateSettings: async (settings: GlobalSettings) => {
         const response = await api.put('/admin/settings', settings);
         return response.data;
+    },
+
+    // News Management
+    createNews: async (newsData: any) => {
+        const response = await api.post('/admin/news', newsData);
+        return response.data;
+    },
+    updateNews: async (id: string, newsData: any) => {
+        const response = await api.put(`/admin/news/${id}`, newsData);
+        return response.data;
+    },
+    deleteNews: async (id: string) => {
+        await api.delete(`/admin/news/${id}`);
+    },
+
+    // Events Management
+    createEvent: async (eventData: any) => {
+        const response = await api.post('/admin/events', eventData);
+        return response.data;
+    },
+    deleteEvent: async (id: string) => {
+        await api.delete(`/admin/events/${id}`);
+    },
+
+    // Payrolls Management
+    createPayroll: async (payrollData: any) => {
+        const response = await api.post('/admin/payrolls', payrollData);
+        return response.data;
     }
 };

@@ -30,8 +30,8 @@ export const RegisterPage: React.FC = () => {
 
         try {
             await authService.register(formData);
-            // Force reload or redirect to dashboard
-            window.location.href = '/';
+            // Navigate to dashboard
+            navigate('/');
         } catch (err: any) {
             console.error(err);
             setError(err.response?.data?.error || 'Error al registrarse');
