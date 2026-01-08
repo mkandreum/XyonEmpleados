@@ -163,7 +163,7 @@ export const VacationsPage: React.FC = () => {
         switch (type) {
             case 'VACATION': return 'Vacaciones';
             case 'PERSONAL': return 'Asuntos Propios';
-            case 'SICK_LEAVE': return 'Baja Médica';
+            case 'SICK_LEAVE': return 'Horas médicas';
             default: return type;
         }
     }
@@ -247,7 +247,7 @@ export const VacationsPage: React.FC = () => {
                                         >
                                             <option value="VACATION">Vacaciones</option>
                                             <option value="PERSONAL">Asuntos Propios</option>
-                                            <option value="SICK_LEAVE">Médico</option>
+                                            <option value="SICK_LEAVE">Horas médicas</option>
                                         </select>
                                     </div>
                                     <div className="md:col-span-2">

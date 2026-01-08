@@ -228,7 +228,7 @@ export const Dashboard: React.FC = () => {
                   <div className="p-3 bg-red-100 text-red-600 rounded-lg group-hover:bg-red-600 group-hover:text-white transition-colors">
                     <FileText size={24} />
                   </div>
-                  <span className="text-sm font-medium text-slate-700">Baja Médica</span>
+                  <span className="text-sm font-medium text-slate-700">Horas médicas</span>
                 </button>
 
                 <button
@@ -238,7 +238,7 @@ export const Dashboard: React.FC = () => {
                   <div className="p-3 bg-yellow-100 text-yellow-600 rounded-lg group-hover:bg-yellow-600 group-hover:text-white transition-colors">
                     <Calendar size={24} />
                   </div>
-                  <span className="text-sm font-medium text-slate-700">Ausencias</span>
+                  <span className="text-sm font-medium text-slate-700">Asuntos Propios</span>
                 </button>
 
                 <button
