@@ -5,10 +5,9 @@ const authController = require('./controllers/authController');
 const payrollController = require('./controllers/payrollController');
 const vacationController = require('./controllers/vacationController');
 const commonController = require('./controllers/commonController');
-
-// Auth
 const adminController = require('./controllers/adminController');
 const contentController = require('./controllers/contentController');
+const uploadController = require('./controllers/uploadController');
 const { isAdmin } = require('./middleware/auth');
 
 // Public Routes (NO AUTH REQUIRED)
@@ -20,6 +19,13 @@ router.get('/holidays/next', contentController.getNextHoliday);
 
 // Protected Routes (AUTH REQUIRED)
 router.use(authenticateToken);
+
+// Upload Routes
+router.post('/upload/logo', isAdmin, uploadController.uploadLogo, uploadController.handleUpload);
+router.post('/upload/payroll', isAdmin, uploadController.uploadPayroll, uploadController.handleUpload);
+router.post('/upload/justification', uploadController.uploadJustification, uploadController.handleUpload);
+router.post('/upload/avatar', uploadController.uploadAvatar, uploadController.handleUpload);
+router.delete('/upload/file', uploadController.deleteFile);
 
 // Admin Routes
 router.get('/admin/users', isAdmin, adminController.getUsers);
