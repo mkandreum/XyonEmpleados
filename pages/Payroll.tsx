@@ -56,42 +56,30 @@ export const PayrollPage: React.FC = () => {
       </div>
 
       {/* Summary Card */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 col-span-2">
-          {lastPayroll ? (
-            <>
-              <h3 className="text-sm font-semibold text-slate-500 mb-2">Última Nómina ({lastPayroll.month} {lastPayroll.year})</h3>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-slate-900">{lastPayroll.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
-              </div>
-              <div className="mt-4 pt-4 border-t border-slate-100 flex gap-6 text-sm">
-                {/* Placeholder values since we only have net amount in simple model */}
-                <div>
-                  <p className="text-slate-500">Bruto (Est.)</p>
-                  <p className="font-semibold">{(lastPayroll.amount * 1.25).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</p>
-                </div>
-                <div>
-                  <p className="text-slate-500">Retenciones (Est.)</p>
-                  <p className="font-semibold">{(lastPayroll.amount * 0.25).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</p>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex h-full items-center justify-center text-slate-500">
-              No hay datos de nómina disponibles.
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        {lastPayroll ? (
+          <>
+            <h3 className="text-sm font-semibold text-slate-500 mb-2">Última Nómina ({lastPayroll.month} {lastPayroll.year})</h3>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-bold text-slate-900">{lastPayroll.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
             </div>
-          )}
-        </div>
-        <div className="bg-slate-900 text-white p-6 rounded-xl shadow-md flex flex-col justify-between">
-          <div>
-            <h3 className="font-semibold mb-1">Datos Bancarios</h3>
-            <p className="text-slate-400 text-sm">Cuenta principal</p>
+            <div className="mt-4 pt-4 border-t border-slate-100 flex gap-6 text-sm">
+              {/* Placeholder values since we only have net amount in simple model */}
+              <div>
+                <p className="text-slate-500">Bruto (Est.)</p>
+                <p className="font-semibold">{(lastPayroll.amount * 1.25).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</p>
+              </div>
+              <div>
+                <p className="text-slate-500">Retenciones (Est.)</p>
+                <p className="font-semibold">{(lastPayroll.amount * 0.25).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex h-full items-center justify-center text-slate-500">
+            No hay datos de nómina disponibles.
           </div>
-          <div>
-            <p className="text-2xl font-mono tracking-wider">**** 4829</p>
-            <p className="text-xs text-slate-400 mt-2">ES45 2038 2930 2039 2392 4829</p>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* List Container */}
