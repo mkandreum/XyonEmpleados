@@ -113,7 +113,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <Bell size={20} />
               <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
             </button>
-            <div className="flex items-center gap-3 pl-6 border-l border-slate-200">
+            <Link to="/profile" className="flex items-center gap-3 pl-6 border-l border-slate-200 hover:bg-slate-50 rounded-lg px-3 py-2 -ml-3 transition-colors">
               <div className="text-right hidden md:block">
                 <p className="text-sm font-semibold text-slate-800">{user?.name}</p>
                 <p className="text-xs text-slate-500">{user?.position}</p>
@@ -123,7 +123,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 alt="Profile"
                 className="w-9 h-9 rounded-full object-cover ring-2 ring-blue-100"
               />
-            </div>
+            </Link>
           </div>
         </header>
 
