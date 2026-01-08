@@ -31,7 +31,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ to, icon: Icon, label, active
         onClick={onClick}
         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${active
             ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50'
-            : 'text-slate-600 hover:bg-slate-100'
+            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
             }`}
     >
         <Icon size={20} />
@@ -68,13 +68,13 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
     return (
         <div className="min-h-screen bg-slate-50">
             {/* Sidebar Desktop */}
-            <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 bg-white border-r border-slate-200">
+            <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 bg-slate-900 border-r border-slate-800">
                 {/* Logo */}
-                <div className="flex items-center gap-3 px-6 py-6 border-b border-slate-200">
+                <div className="flex items-center gap-3 px-6 py-6 border-b border-slate-800">
                     {logoUrl ? (
-                        <img src={logoUrl} alt={companyName} className="w-auto h-auto object-contain max-w-full max-h-12" />
+                        <img src={logoUrl} alt={companyName} className="w-auto object-contain max-w-full" />
                     ) : (
-                        <h1 className="text-xl font-bold text-slate-900">{companyName}<span className="text-blue-600">Admin</span></h1>
+                        <h1 className="text-xl font-bold text-white">{companyName}<span className="text-blue-500">Admin</span></h1>
                     )}
                 </div>
 
@@ -92,19 +92,19 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                 </nav>
 
                 {/* User Section */}
-                <div className="border-t border-slate-200 px-4 py-4">
-                    <Link to="/admin/settings" className="flex items-center gap-3 mb-3 hover:bg-slate-50 rounded-lg p-2 transition-colors">
+                <div className="border-t border-slate-800 px-4 py-4">
+                    <Link to="/admin/settings" className="flex items-center gap-3 mb-3 hover:bg-slate-800 rounded-lg p-2 transition-colors">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
                             {user?.name?.charAt(0) || 'A'}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900 truncate">{user?.name}</p>
-                            <p className="text-xs text-slate-500 truncate">Administrador</p>
+                            <p className="text-sm font-medium text-white truncate">{user?.name}</p>
+                            <p className="text-xs text-slate-400 truncate">Administrador</p>
                         </div>
                     </Link>
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="w-full flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors"
                     >
                         <LogOut size={18} />
                         <span className="font-medium">Cerrar Sesión</span>
@@ -116,7 +116,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-50">
                 <div className="flex items-center gap-3">
                     {logoUrl ? (
-                        <img src={logoUrl} alt={companyName} className="h-8 w-auto" />
+                        <img src={logoUrl} alt={companyName} className="w-auto h-8" />
                     ) : (
                         <h1 className="text-lg font-bold text-slate-900">{companyName}<span className="text-blue-600">Admin</span></h1>
                     )}
@@ -132,8 +132,15 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             {/* Mobile Menu */}
             {isMobileMenuOpen && (
                 <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setIsMobileMenuOpen(false)}>
-                    <div className="fixed inset-y-0 left-0 w-64 bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
-                        <div className="px-4 py-6 space-y-1 mt-16">
+                    <div className="fixed inset-y-0 left-0 w-64 bg-slate-900 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-800 mt-safe">
+                            {logoUrl ? (
+                                <img src={logoUrl} alt={companyName} className="w-auto h-8 object-contain" />
+                            ) : (
+                                <h1 className="text-xl font-bold text-white">{companyName}<span className="text-blue-500">Admin</span></h1>
+                            )}
+                        </div>
+                        <div className="px-4 py-6 space-y-1">
                             {menuItems.map((item) => (
                                 <SidebarItem
                                     key={item.path}
@@ -146,7 +153,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                             ))}
                             <button
                                 onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                                className="w-full flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-4"
+                                className="w-full flex items-center gap-2 px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors mt-4"
                             >
                                 <LogOut size={20} />
                                 <span className="font-medium">Cerrar Sesión</span>
