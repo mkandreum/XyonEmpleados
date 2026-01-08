@@ -161,25 +161,33 @@ export const benefitsService = {
 };
 
 export const uploadService = {
-    uploadAvatar: async (formData: FormData) => {
+    uploadAvatar: async (file: File) => {
+        const formData = new FormData();
+        formData.append('avatars', file);
         const response = await api.post('/upload/avatar', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
         return response.data;
     },
-    uploadJustification: async (formData: FormData) => {
+    uploadJustification: async (file: File) => {
+        const formData = new FormData();
+        formData.append('justifications', file);
         const response = await api.post('/upload/justification', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
         return response.data;
     },
-    uploadPayroll: async (formData: FormData) => {
+    uploadPayroll: async (file: File) => {
+        const formData = new FormData();
+        formData.append('payrolls', file);
         const response = await api.post('/upload/payroll', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
         return response.data;
     },
-    uploadLogo: async (formData: FormData) => {
+    uploadLogo: async (file: File) => {
+        const formData = new FormData();
+        formData.append('logos', file);
         const response = await api.post('/upload/logo', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });

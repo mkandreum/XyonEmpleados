@@ -85,9 +85,7 @@ export const AdminSettings: React.FC = () => {
                                                 const file = e.target.files?.[0];
                                                 if (!file) return;
                                                 try {
-                                                    const formData = new FormData();
-                                                    formData.append('file', file);
-                                                    const result = await uploadService.uploadLogo(formData);
+                                                    const result = await uploadService.uploadLogo(file);
                                                     setSettings({ ...settings, logoUrl: result.url });
                                                 } catch (error) {
                                                     console.error("Error uploading logo:", error);
@@ -123,9 +121,7 @@ export const AdminSettings: React.FC = () => {
                                                 const file = e.target.files?.[0];
                                                 if (!file) return;
                                                 try {
-                                                    const formData = new FormData();
-                                                    formData.append('file', file);
-                                                    const result = await uploadService.uploadLogo(formData);
+                                                    const result = await uploadService.uploadLogo(file);
                                                     setSettings({ ...settings, adminLogoUrl: result.url });
                                                 } catch (error) {
                                                     console.error("Error uploading logo:", error);
