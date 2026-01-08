@@ -98,7 +98,7 @@ exports.getUserBenefitsBalance = async (req, res) => {
         const defaultBenefits = {
             vacationDays: 22,
             overtimeHoursBank: 40,
-            sickLeaveHours: 120,
+            sickLeaveDays: 15,
             paidAbsenceHours: 20
         };
 
@@ -135,7 +135,7 @@ exports.getUserBenefitsBalance = async (req, res) => {
             ...balance,
             vacationDaysRemaining: benefits.vacationDays - balance.vacationDaysUsed,
             overtimeHoursRemaining: benefits.overtimeHoursBank - balance.overtimeHoursUsed,
-            sickLeaveHoursRemaining: benefits.sickLeaveHours - balance.sickLeaveHoursUsed,
+            sickLeaveDaysRemaining: benefits.sickLeaveDays - balance.sickLeaveDaysUsed,
             paidAbsenceHoursRemaining: benefits.paidAbsenceHours - balance.paidAbsenceHoursUsed,
             totalBenefits: benefits
         });
@@ -148,7 +148,7 @@ exports.getUserBenefitsBalance = async (req, res) => {
 // Update user balance (called when vacation is approved)
 exports.updateUserBalance = async (req, res) => {
     try {
-        const { userId, type, days, quantity } = req.body;
+        const { userId, type, days } = req.body;
         const currentYear = new Date().getFullYear();
 
         const balance = await prisma.userBenefitsBalance.findUnique({
@@ -163,13 +163,9 @@ exports.updateUserBalance = async (req, res) => {
         if (type === 'VACATION') {
             updateData.vacationDaysUsed = balance.vacationDaysUsed + days;
         } else if (type === 'SICK_LEAVE') {
-            // Use quantity (hours) if provided, otherwise convert days to hours (8h/day)
-            const hoursToAdd = quantity !== undefined ? parseFloat(quantity) : (days * 8);
-            updateData.sickLeaveHoursUsed = (balance.sickLeaveHoursUsed || 0) + hoursToAdd;
+            updateData.sickLeaveDaysUsed = balance.sickLeaveDaysUsed + days;
         } else if (type === 'PERSONAL') {
-            // Use quantity (hours) if provided, otherwise convert days to hours (8h/day)
-            const hoursToAdd = quantity !== undefined ? parseFloat(quantity) : (days * 8);
-            updateData.paidAbsenceHoursUsed = (balance.paidAbsenceHoursUsed || 0) + hoursToAdd;
+            updateData.paidAbsenceHoursUsed = balance.paidAbsenceHoursUsed + (days * 8); // Convert days to hours
         }
 
         const updated = await prisma.userBenefitsBalance.update({

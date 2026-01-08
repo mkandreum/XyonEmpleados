@@ -1,9 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { adminService } from '../../services/api';
+import React, { useEffect, useState } from 'react';
+import { adminService } from '../../services/adminService';
 import { User } from '../../types';
-import { Plus, Edit, Trash, Search, User as UserIcon, X, Upload } from 'lucide-react';
-import { useModal } from '../../hooks/useModal';
-import { Modal } from '../../components/Modal';
+import { Plus, Edit, Trash, Search, User as UserIcon } from 'lucide-react';
 
 export const AdminUsers: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
@@ -11,7 +9,6 @@ export const AdminUsers: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<Partial<User> | null>(null);
-    const { modalState, showAlert, showConfirm, closeModal } = useModal();
 
     // Form state
     const [formData, setFormData] = useState({
@@ -20,8 +17,7 @@ export const AdminUsers: React.FC = () => {
         password: '',
         role: 'EMPLOYEE',
         department: '',
-        position: '',
-        joinDate: ''
+        position: ''
     });
 
     const fetchUsers = async () => {
@@ -30,7 +26,6 @@ export const AdminUsers: React.FC = () => {
             setUsers(data);
         } catch (error) {
             console.error("Error fetching users:", error);
-            showAlert('Error al cargar usuarios', 'error');
         } finally {
             setIsLoading(false);
         }
@@ -57,8 +52,7 @@ export const AdminUsers: React.FC = () => {
             password: '', // Required for new user
             role: 'EMPLOYEE',
             department: '',
-            position: '',
-            joinDate: new Date().toISOString().split('T')[0]
+            position: ''
         });
         setIsModalOpen(true);
     };
@@ -71,26 +65,20 @@ export const AdminUsers: React.FC = () => {
             password: '', // Don't show password
             role: user.role,
             department: user.department,
-            position: user.position,
-            joinDate: user.joinDate ? new Date(user.joinDate).toISOString().split('T')[0] : ''
+            position: user.position
         });
         setIsModalOpen(true);
     };
 
     const handleDelete = async (id: string) => {
-        showConfirm(
-            '¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer.',
-            async () => {
-                try {
-                    await adminService.deleteUser(id);
-                    await fetchUsers();
-                    showAlert('Usuario eliminado correctamente', 'success');
-                } catch (error) {
-                    showAlert('Error al eliminar usuario', 'error');
-                }
-            },
-            'Eliminar Usuario'
-        );
+        if (window.confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
+            try {
+                await adminService.deleteUser(id);
+                fetchUsers();
+            } catch (error) {
+                alert('Error al eliminar usuario');
+            }
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -106,10 +94,9 @@ export const AdminUsers: React.FC = () => {
                 await adminService.createUser(formData);
             }
             setIsModalOpen(false);
-            await fetchUsers();
-            showAlert(editingUser ? 'Usuario actualizado correctamente' : 'Usuario creado correctamente', 'success');
+            fetchUsers();
         } catch (error) {
-            showAlert('Error al guardar usuario', 'error');
+            alert('Error al guardar usuario');
         }
     };
 
@@ -119,68 +106,13 @@ export const AdminUsers: React.FC = () => {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h1 className="text-2xl font-bold text-slate-800">Gestión de Usuarios</h1>
-                <div className="flex gap-2">
-                    <label className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors cursor-pointer">
-                        <Upload size={20} />
-                        Importar (CSV)
-                        <input
-                            type="file"
-                            accept=".csv"
-                            className="hidden"
-                            onChange={async (e) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-
-                                const reader = new FileReader();
-                                reader.onload = async (evt) => {
-                                    const text = evt.target?.result as string;
-                                    const lines = text.split('\n');
-                                    // Skip header if present (assuming header: name,email,role,department,position,joinDate,password)
-                                    // Simple parsing
-                                    const usersToImport = lines
-                                        .filter(line => line.trim() !== '')
-                                        .slice(1) // skip header
-                                        .map(line => {
-                                            const [name, email, role, department, position, joinDate, password] = line.split(',');
-                                            return {
-                                                name: name?.trim(),
-                                                email: email?.trim(),
-                                                role: role?.trim() || 'EMPLOYEE',
-                                                department: department?.trim(),
-                                                position: position?.trim(),
-                                                joinDate: joinDate?.trim(),
-                                                password: password?.trim() || 'velilla123', // Default pass
-                                            };
-                                        })
-                                        .filter(u => u.email); // Ensure email exists
-
-                                    if (usersToImport.length === 0) {
-                                        showAlert('No se encontraron usuarios válidos en el CSV', 'warning');
-                                        return;
-                                    }
-
-                                    try {
-                                        await adminService.importUsers(usersToImport);
-                                        await fetchUsers();
-                                        showAlert(`Importados ${usersToImport.length} usuarios correctamente`, 'success');
-                                    } catch (err) {
-                                        showAlert('Error al importar usuarios', 'error');
-                                    }
-                                };
-                                reader.readAsText(file);
-                                // Reset input
-                                e.target.value = '';
-                            }}
-                        />
-                    </label>
-                    <button
-                        onClick={handleCreate}
-                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                        <Plus size={20} />
-                        Nuevo Usuario
-                    </button>
-                </div>
+                <button
+                    onClick={handleCreate}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                    <Plus size={20} />
+                    Nuevo Usuario
+                </button>
             </div>
 
             {/* Search */}
@@ -244,16 +176,16 @@ export const AdminUsers: React.FC = () => {
                 </div>
             </div>
 
-            {/* Edit/Create User Modal */}
+            {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-fadeIn">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold text-slate-800">
                                 {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
                             </h2>
                             <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                                <X size={24} />
+                                <XIcon size={24} />
                             </button>
                         </div>
 
@@ -322,16 +254,6 @@ export const AdminUsers: React.FC = () => {
                                     onChange={e => setFormData({ ...formData, position: e.target.value })}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Fecha de Incorporación</label>
-                                <input
-                                    type="date"
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                    value={formData.joinDate}
-                                    onChange={e => setFormData({ ...formData, joinDate: e.target.value })}
-                                />
-                                <p className="text-xs text-slate-500 mt-1">Utilizado para calcular las vacaciones proporcionales.</p>
-                            </div>
 
                             <div className="flex justify-end gap-3 mt-6">
                                 <button
@@ -352,16 +274,11 @@ export const AdminUsers: React.FC = () => {
                     </div>
                 </div>
             )}
-
-            {/* Global Actions Modal */}
-            <Modal
-                isOpen={modalState.isOpen}
-                onClose={closeModal}
-                title={modalState.title}
-                message={modalState.message}
-                type={modalState.type}
-                onConfirm={modalState.onConfirm}
-            />
         </div>
     );
 };
+
+// Helper for the X icon which was missing in imports
+const XIcon = ({ size }: { size: number }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+);

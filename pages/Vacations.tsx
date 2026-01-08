@@ -26,9 +26,7 @@ export const VacationsPage: React.FC = () => {
         startDate: today,
         endDate: today,
         type: 'VACATION',
-        justificationUrl: '',
-        hours: 0,
-        minutes: 0
+        justificationUrl: ''
     });
 
     const fetchVacations = async () => {
@@ -114,22 +112,10 @@ export const VacationsPage: React.FC = () => {
                 return;
             }
 
-            // Calculate quantity for hours-based types
-            let quantity = 0;
-            if (formData.type !== 'VACATION') {
-                quantity = formData.hours + (formData.minutes / 60);
-                if (quantity <= 0) {
-                    showAlert('Debes especificar una duración válida (horas/minutos)', 'warning');
-                    setSubmitting(false);
-                    return;
-                }
-            }
-
             await vacationService.create({
                 startDate: formData.startDate,
                 endDate: formData.endDate,
-                days: formData.type === 'VACATION' ? businessDays : 0, // 0 days for hours-based? or 1? Backend handles it.
-                quantity: formData.type !== 'VACATION' ? quantity : undefined,
+                days: businessDays,
                 type: formData.type as any,
                 status: VacationStatus.PENDING,
                 justificationUrl: formData.justificationUrl || undefined
@@ -137,7 +123,7 @@ export const VacationsPage: React.FC = () => {
 
             await fetchVacations(); // Refresh list
             setShowRequestForm(false);
-            setFormData({ startDate: today, endDate: today, type: 'VACATION', justificationUrl: '', hours: 0, minutes: 0 }); // Reset form
+            setFormData({ startDate: today, endDate: today, type: 'VACATION', justificationUrl: '' }); // Reset form
             showAlert('Solicitud enviada correctamente', 'success');
         } catch (error) {
             console.error("Error creating vacation:", error);
@@ -230,7 +216,7 @@ export const VacationsPage: React.FC = () => {
                         onClick={() => setShowRequestForm(!showRequestForm)}
                         className="md:hidden w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
                     >
-                        {showRequestForm ? <><X size={20} /> Cancelar</> : <><Plus size={20} /> Nueva Solicitud</>}
+                        {showRequestForm ? <><X size={20} /> Cancelar</> : <><Plus size={20} /> Solicitar Días</>}
                     </button>
                     <div className="text-center mt-2">
                         <p className="text-3xl font-bold text-blue-600">{remainingDays}</p>
@@ -248,6 +234,16 @@ export const VacationsPage: React.FC = () => {
                         <div className="p-6 bg-blue-50 border-b border-blue-100">
                             <h3 className="font-semibold text-blue-900 mb-4">Nueva Solicitud</h3>
                             <form className="space-y-4" onSubmit={handleCreate}>
+                                {/* Date Range Picker */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Selecciona el Rango de Fechas</label>
+                                    <DateRangePicker
+                                        startDate={formData.startDate}
+                                        endDate={formData.endDate}
+                                        onChange={(start, end) => setFormData({ ...formData, startDate: start, endDate: end })}
+                                    />
+                                </div>
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
@@ -261,53 +257,6 @@ export const VacationsPage: React.FC = () => {
                                             <option value="SICK_LEAVE">Horas médicas</option>
                                         </select>
                                     </div>
-
-                                    {formData.type === 'VACATION' ? (
-                                        <div className="md:col-span-2">
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">Selecciona el Rango de Fechas</label>
-                                            <DateRangePicker
-                                                startDate={formData.startDate}
-                                                endDate={formData.endDate}
-                                                onChange={(start, end) => setFormData({ ...formData, startDate: start, endDate: end })}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-700 mb-1">Fecha</label>
-                                                <input
-                                                    type="date"
-                                                    value={formData.startDate}
-                                                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value, endDate: e.target.value })}
-                                                    className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-slate-700 mb-1">Horas</label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        max="23"
-                                                        value={formData.hours}
-                                                        onChange={(e) => setFormData({ ...formData, hours: parseInt(e.target.value) || 0 })}
-                                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-slate-700 mb-1">Minutos</label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        max="59"
-                                                        value={formData.minutes}
-                                                        onChange={(e) => setFormData({ ...formData, minutes: parseInt(e.target.value) || 0 })}
-                                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
                                     <div className="md:col-span-2">
                                         <label className="block text-sm font-medium text-slate-700 mb-1">Justificante (PDF/Imagen)</label>
                                         <div className="flex items-center gap-2">
@@ -362,9 +311,9 @@ export const VacationsPage: React.FC = () => {
                                 <h3 className="font-semibold text-slate-700 text-sm">Bajas Médicas</h3>
                             </div>
                             <p className="text-2xl font-bold text-slate-900">
-                                {deptBenefits?.sickLeaveHours ? (deptBenefits.sickLeaveHours - (userBenefits?.sickLeaveHoursUsed || 0)) : 0}h
+                                {deptBenefits?.sickLeaveDays ? (deptBenefits.sickLeaveDays - (userBenefits?.sickLeaveDaysUsed || 0)) : 0}
                             </p>
-                            <p className="text-xs text-slate-400">Horas restantes de {deptBenefits?.sickLeaveHours || 0}h</p>
+                            <p className="text-xs text-slate-400">Días restantes de {deptBenefits?.sickLeaveDays || 0}</p>
                         </div>
                         <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
                             <div className="flex items-center gap-2 mb-2">
@@ -423,7 +372,7 @@ export const VacationsPage: React.FC = () => {
                         </table>
                     </div>
                 </div>
-            </div >
+            </div>
 
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
                 <AlertCircle className="text-amber-600 mt-0.5" size={20} />
@@ -442,6 +391,6 @@ export const VacationsPage: React.FC = () => {
                 type={modalState.type}
                 onConfirm={modalState.onConfirm}
             />
-        </div >
+        </div>
     );
 };

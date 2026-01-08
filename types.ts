@@ -40,7 +40,6 @@ export interface VacationRequest {
   startDate: string;
   endDate: string;
   days: number;
-  quantity?: number; // Hours
   status: VacationStatus;
   type: 'VACATION' | 'PERSONAL' | 'SICK_LEAVE';
   justificationUrl?: string;
@@ -85,7 +84,7 @@ export interface DepartmentBenefits {
   department: string;
   vacationDays: number;
   overtimeHoursBank: number;
-  sickLeaveHours: number;
+  sickLeaveDays: number;
   paidAbsenceHours: number;
 }
 
@@ -94,7 +93,7 @@ export interface UserBenefitsBalance {
   userId: string;
   vacationDaysUsed: number;
   overtimeHoursUsed: number;
-  sickLeaveHoursUsed: number;
+  sickLeaveDaysUsed: number;
   paidAbsenceHoursUsed: number;
   year: number;
 }
