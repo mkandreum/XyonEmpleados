@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { adminService } from '../../services/api';
 import { User } from '../../types';
-import { Plus, Edit, Trash, Search, User as UserIcon, X } from 'lucide-react';
+import { Plus, Edit, Trash, Search, User as UserIcon, X, Upload } from 'lucide-react';
 import { useModal } from '../../hooks/useModal';
 import { Modal } from '../../components/Modal';
 
