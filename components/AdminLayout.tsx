@@ -1,141 +1,167 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Users, Calendar, Settings, LogOut, Menu, X, Bell, Newspaper, CalendarDays, FileText } from 'lucide-react';
 import { useSettings } from '../hooks/useSettings';
+import {
+    LayoutDashboard,
+    Users,
+    Calendar,
+    Newspaper,
+    CalendarDays,
+    FileText,
+    Gift,
+    Settings,
+    LogOut,
+    Bell,
+    Menu,
+    X
+} from 'lucide-react';
+
+interface SidebarItemProps {
+    to: string;
+    icon: any;
+    label: string;
+    active: boolean;
+    onClick?: () => void;
+}
+
+const SidebarItem: React.FC<SidebarItemProps> = ({ to, icon: Icon, label, active, onClick }) => (
+    <Link
+        to={to}
+        onClick={onClick}
+        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${active
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+    >
+        <Icon size={20} />
+        <span className="font-medium">{label}</span>
+    </Link>
+);
 
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { user, logout } = useAuth();
-    const navigate = useNavigate();
     const location = useLocation();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const navigate = useNavigate();
+    const { user, logout } = useAuth();
     const { settings } = useSettings();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
 
-    const navigation = [
-        { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-        { name: 'Usuarios', href: '/admin/users', icon: Users },
-        { name: 'Vacaciones', href: '/admin/vacations', icon: Calendar },
-        { name: 'Nóminas', href: '/admin/payrolls', icon: FileText },
-        { name: 'Noticias', href: '/admin/news', icon: Newspaper },
-        { name: 'Eventos', href: '/admin/events', icon: CalendarDays },
-        { name: 'Configuración', href: '/admin/settings', icon: Settings },
+    const menuItems = [
+        { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+        { path: '/admin/users', label: 'Usuarios', icon: Users },
+        { path: '/admin/vacations', label: 'Vacaciones', icon: Calendar },
+        { path: '/admin/news', label: 'Noticias', icon: Newspaper },
+        { path: '/admin/events', label: 'Eventos', icon: CalendarDays },
+        { path: '/admin/payrolls', label: 'Nóminas', icon: FileText },
+        { path: '/admin/benefits', label: 'Beneficios', icon: Gift },
+        { path: '/admin/settings', label: 'Configuración', icon: Settings },
     ];
 
-    const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-
+    const logoUrl = settings.logoUrl;
     const companyName = settings.companyName || 'Velilla';
-    const adminLogoUrl = settings.adminLogoUrl;
 
     return (
-        <div className="min-h-screen bg-slate-100 flex">
-            {/* Sidebar */}
-            <aside className={`
-                fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transform transition-transform duration-200 ease-in-out
-                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-                md:relative md:translate-x-0
-            `}>
-                <div className="h-full flex flex-col">
-                    <div className="p-6 border-b border-slate-700 flex items-center justify-between">
-                        <Link to="/admin" className="text-xl font-bold tracking-wider">
-                            {adminLogoUrl ? (
-                                <img src={adminLogoUrl} alt={`${companyName} Admin`} className="w-auto h-auto object-contain max-w-full" />
-                            ) : (
-                                <>{companyName}<span className="text-purple-500">Admin</span></>
-                            )}
-                        </Link>
-                        <button onClick={toggleSidebar} className="md:hidden text-slate-400 hover:text-white">
-                            <X size={24} />
-                        </button>
-                    </div>
+        <div className="min-h-screen bg-slate-50">
+            {/* Sidebar Desktop */}
+            <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 bg-white border-r border-slate-200">
+                {/* Logo */}
+                <div className="flex items-center gap-3 px-6 py-6 border-b border-slate-200">
+                    {logoUrl ? (
+                        <img src={logoUrl} alt={companyName} className="w-auto h-auto object-contain max-w-full max-h-12" />
+                    ) : (
+                        <h1 className="text-xl font-bold text-slate-900">{companyName}<span className="text-blue-600">Admin</span></h1>
+                    )}
+                </div>
 
-                    <div className="p-4 border-b border-slate-800">
-                        <div className="flex items-center gap-3">
-                            <img
-                                src={user?.avatarUrl || `https://ui-avatars.com/api/?name=${user?.name || 'Admin'}`}
-                                alt="Admin Profile"
-                                className="w-10 h-10 rounded-full border-2 border-blue-500"
-                            />
-                            <div className="overflow-hidden">
-                                <p className="font-medium text-sm truncate">{user?.name}</p>
-                                <p className="text-xs text-slate-400 truncate">Administrador</p>
-                            </div>
+                {/* Navigation */}
+                <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+                    {menuItems.map((item) => (
+                        <SidebarItem
+                            key={item.path}
+                            to={item.path}
+                            icon={item.icon}
+                            label={item.label}
+                            active={location.pathname === item.path}
+                        />
+                    ))}
+                </nav>
+
+                {/* User Section */}
+                <div className="border-t border-slate-200 px-4 py-4">
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                            {user?.name?.charAt(0) || 'A'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">{user?.name}</p>
+                            <p className="text-xs text-slate-500 truncate">Administrador</p>
                         </div>
                     </div>
-
-                    <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-                        {navigation.map((item) => {
-                            const isActive = location.pathname === item.href;
-                            return (
-                                <Link
-                                    key={item.name}
-                                    to={item.href}
-                                    className={`
-                                        flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                                        ${isActive
-                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50'
-                                            : 'text-slate-400 hover:text-white hover:bg-slate-800'}
-                                    `}
-                                >
-                                    <item.icon size={20} />
-                                    {item.name}
-                                </Link>
-                            );
-                        })}
-                    </nav>
-
-                    <div className="p-4 border-t border-slate-800">
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-colors"
-                        >
-                            <LogOut size={20} />
-                            Cerrar Sesión
-                        </button>
-                    </div>
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                        <LogOut size={18} />
+                        <span className="font-medium">Cerrar Sesión</span>
+                    </button>
                 </div>
             </aside>
 
-            {/* Mobile Overlay */}
-            {isSidebarOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
-                    onClick={toggleSidebar}
-                />
+            {/* Mobile Header */}
+            <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-50">
+                <div className="flex items-center gap-3">
+                    {logoUrl ? (
+                        <img src={logoUrl} alt={companyName} className="h-8 w-auto" />
+                    ) : (
+                        <h1 className="text-lg font-bold text-slate-900">{companyName}<span className="text-blue-600">Admin</span></h1>
+                    )}
+                </div>
+                <button
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    className="p-2 hover:bg-slate-100 rounded-lg"
+                >
+                    {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+            </div>
+
+            {/* Mobile Menu */}
+            {isMobileMenuOpen && (
+                <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setIsMobileMenuOpen(false)}>
+                    <div className="fixed inset-y-0 left-0 w-64 bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="px-4 py-6 space-y-1 mt-16">
+                            {menuItems.map((item) => (
+                                <SidebarItem
+                                    key={item.path}
+                                    to={item.path}
+                                    icon={item.icon}
+                                    label={item.label}
+                                    active={location.pathname === item.path}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                />
+                            ))}
+                            <button
+                                onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
+                                className="w-full flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-4"
+                            >
+                                <LogOut size={20} />
+                                <span className="font-medium">Cerrar Sesión</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Topbar */}
-                <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-                    <button onClick={toggleSidebar} className="md:hidden text-slate-600 hover:text-slate-900">
-                        <Menu size={24} />
-                    </button>
-
-                    <div className="flex-1 px-4 md:px-0">
-                        <h2 className="text-lg font-semibold text-slate-800">Panel de Administración</h2>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <button className="relative p-2 text-slate-400 hover:text-blue-600 transition-colors">
-                            <Bell size={20} />
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                        </button>
-                        <Link to="/" className="text-sm font-medium text-blue-600 hover:text-blue-800">
-                            Ir al Portal
-                        </Link>
-                    </div>
-                </header>
-
-                {/* Page Content */}
-                <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <main className="lg:pl-64 pt-16 lg:pt-0">
+                <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto">
                     {children}
-                </main>
-            </div>
+                </div>
+            </main>
         </div>
     );
 };
