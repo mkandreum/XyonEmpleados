@@ -21,10 +21,17 @@ export const NotificationDropdown: React.FC = () => {
     const fetchNotifications = async () => {
         try {
             const response = await api.get('/notifications');
-            setNotifications(response.data.notifications);
-            setUnreadCount(response.data.unreadCount);
+            if (response.data && Array.isArray(response.data.notifications)) {
+                setNotifications(response.data.notifications);
+                setUnreadCount(response.data.unreadCount || 0);
+            } else {
+                console.warn('Invalid notifications response format', response.data);
+                setNotifications([]);
+            }
         } catch (error) {
             console.error('Error fetching notifications:', error);
+            // Don't crash, just show empty
+            setNotifications([]);
         }
     };
 
