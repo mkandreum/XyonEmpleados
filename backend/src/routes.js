@@ -45,6 +45,7 @@ router.get('/admin/users', isAdmin, adminController.getUsers);
 router.post('/admin/users', isAdmin, adminController.createUser);
 router.put('/admin/users/:id', isAdmin, adminController.updateUser);
 router.delete('/admin/users/:id', isAdmin, adminController.deleteUser);
+router.post('/admin/users/bulk', isAdmin, adminController.importUsers);
 router.get('/admin/vacations', isAdmin, adminController.getAllVacations);
 router.put('/admin/vacations/:id/status', isAdmin, adminController.updateVacationStatus);
 router.put('/admin/settings', isAdmin, adminController.updateSettings);

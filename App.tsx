@@ -20,6 +20,7 @@ import { AdminEvents } from './pages/admin/Events';
 import { AdminPayrolls } from './pages/admin/Payrolls';
 import { AdminBenefits } from './pages/admin/Benefits';
 import { TeamRequests } from './pages/manager/TeamRequests';
+import { TeamCalendar } from './pages/manager/TeamCalendar';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated } = useAuth();
@@ -124,6 +125,11 @@ const AppRoutes = () => {
             <Route path="/manager/team" element={
                 <ProtectedRoute>
                     <TeamRequests />
+                </ProtectedRoute>
+            } />
+            <Route path="/manager/calendar" element={
+                <ProtectedRoute>
+                    <TeamCalendar />
                 </ProtectedRoute>
             } />
 

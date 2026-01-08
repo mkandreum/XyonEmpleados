@@ -221,6 +221,10 @@ export const adminService = {
         const response = await api.delete(`/admin/users/${id}`);
         return response.data;
     },
+    importUsers: async (users: any[]) => {
+        const response = await api.post('/admin/users/bulk', users);
+        return response.data;
+    },
     getAllVacations: async () => {
         const response = await api.get<VacationRequest[]>('/admin/vacations');
         return response.data;

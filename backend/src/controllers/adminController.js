@@ -98,8 +98,48 @@ exports.deleteUser = async (req, res) => {
         await prisma.user.delete({ where: { id } });
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
-        console.error("Delete user error:", error);
-        res.status(500).json({ error: 'Failed to delete user' });
+    }
+};
+
+exports.importUsers = async (req, res) => {
+    try {
+        const users = req.body;
+        if (!Array.isArray(users)) {
+            return res.status(400).json({ error: 'Input must be an array' });
+        }
+
+        const results = { success: 0, failed: 0, errors: [] };
+
+        for (const user of users) {
+            try {
+                if (await prisma.user.findUnique({ where: { email: user.email } })) {
+                    results.failed++;
+                    results.errors.push(`${user.email}: Exists`);
+                    continue;
+                }
+                const hashedPassword = await bcrypt.hash(user.password || 'default123', 10);
+                await prisma.user.create({
+                    data: {
+                        name: user.name,
+                        email: user.email,
+                        password: hashedPassword,
+                        role: user.role || 'EMPLOYEE',
+                        department: user.department || 'General',
+                        position: user.position || 'Employee',
+                        joinDate: user.joinDate ? new Date(user.joinDate) : new Date(),
+                        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`
+                    }
+                });
+                results.success++;
+            } catch (err) {
+                results.failed++;
+                results.errors.push(`${user.email}: ${err.message}`);
+            }
+        }
+        res.json({ message: 'Import completed', results });
+    } catch (error) {
+        console.error("Bulk import error:", error);
+        res.status(500).json({ error: 'Failed to import users' });
     }
 };
 

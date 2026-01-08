@@ -39,7 +39,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/payroll', label: 'Mi Nómina', icon: FileText },
     { path: '/vacations', label: 'Vacaciones/Ausencias', icon: CalendarDays },
-    ...(user?.role === 'MANAGER' ? [{ path: '/manager/team', label: 'Gestión de equipo', icon: UserCircle }] : []),
+    ...(user?.role === 'MANAGER' ? [
+      { path: '/manager/team', label: 'Gestión de equipo', icon: UserCircle },
+      { path: '/manager/calendar', label: 'Calendario Equipo', icon: CalendarDays }
+    ] : []),
     { path: '/news', label: 'Comunicación', icon: Newspaper },
     { path: '/profile', label: 'Mi Perfil', icon: UserCircle },
   ];
