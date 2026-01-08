@@ -119,13 +119,68 @@ export const AdminUsers: React.FC = () => {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h1 className="text-2xl font-bold text-slate-800">Gestión de Usuarios</h1>
-                <button
-                    onClick={handleCreate}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                    <Plus size={20} />
-                    Nuevo Usuario
-                </button>
+                <div className="flex gap-2">
+                    <label className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors cursor-pointer">
+                        <Upload size={20} />
+                        Importar (CSV)
+                        <input
+                            type="file"
+                            accept=".csv"
+                            className="hidden"
+                            onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+
+                                const reader = new FileReader();
+                                reader.onload = async (evt) => {
+                                    const text = evt.target?.result as string;
+                                    const lines = text.split('\n');
+                                    // Skip header if present (assuming header: name,email,role,department,position,joinDate,password)
+                                    // Simple parsing
+                                    const usersToImport = lines
+                                        .filter(line => line.trim() !== '')
+                                        .slice(1) // skip header
+                                        .map(line => {
+                                            const [name, email, role, department, position, joinDate, password] = line.split(',');
+                                            return {
+                                                name: name?.trim(),
+                                                email: email?.trim(),
+                                                role: role?.trim() || 'EMPLOYEE',
+                                                department: department?.trim(),
+                                                position: position?.trim(),
+                                                joinDate: joinDate?.trim(),
+                                                password: password?.trim() || 'velilla123', // Default pass
+                                            };
+                                        })
+                                        .filter(u => u.email); // Ensure email exists
+
+                                    if (usersToImport.length === 0) {
+                                        showAlert('No se encontraron usuarios válidos en el CSV', 'warning');
+                                        return;
+                                    }
+
+                                    try {
+                                        await adminService.importUsers(usersToImport);
+                                        await fetchUsers();
+                                        showAlert(`Importados ${usersToImport.length} usuarios correctamente`, 'success');
+                                    } catch (err) {
+                                        showAlert('Error al importar usuarios', 'error');
+                                    }
+                                };
+                                reader.readAsText(file);
+                                // Reset input
+                                e.target.value = '';
+                            }}
+                        />
+                    </label>
+                    <button
+                        onClick={handleCreate}
+                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        <Plus size={20} />
+                        Nuevo Usuario
+                    </button>
+                </div>
             </div>
 
             {/* Search */}

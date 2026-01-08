@@ -230,7 +230,7 @@ export const VacationsPage: React.FC = () => {
                         onClick={() => setShowRequestForm(!showRequestForm)}
                         className="md:hidden w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
                     >
-                        {showRequestForm ? <><X size={20} /> Cancelar</> : <><Plus size={20} /> Solicitar Días</>}
+                        {showRequestForm ? <><X size={20} /> Cancelar</> : <><Plus size={20} /> Nueva Solicitud</>}
                     </button>
                     <div className="text-center mt-2">
                         <p className="text-3xl font-bold text-blue-600">{remainingDays}</p>

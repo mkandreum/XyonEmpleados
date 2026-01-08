@@ -73,7 +73,9 @@ export const Dashboard: React.FC = () => {
     } else {
       setQuickAccessForm({
         ...quickAccessForm,
-        type: type === 'vacation' ? 'VACATION' : type === 'sick' ? 'SICK_LEAVE' : 'PERSONAL'
+        type: type === 'vacation' ? 'VACATION' : type === 'sick' ? 'SICK_LEAVE' : 'PERSONAL',
+        hours: 0,
+        minutes: 0
       });
       setShowQuickAccessModal(type);
     }
@@ -86,16 +88,27 @@ export const Dashboard: React.FC = () => {
       const end = new Date(quickAccessForm.endDate);
       const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
+      // Calculate quantity for hours-based types
+      let quantity = 0;
+      if (quickAccessForm.type !== 'VACATION') {
+        quantity = quickAccessForm.hours + (quickAccessForm.minutes / 60);
+        if (quantity <= 0) {
+          showAlert('Debes especificar una duración válida (horas/minutos)', 'warning');
+          return;
+        }
+      }
+
       await vacationService.create({
         startDate: quickAccessForm.startDate,
         endDate: quickAccessForm.endDate,
-        days: diffDays,
+        days: quickAccessForm.type === 'VACATION' ? diffDays : 0,
+        quantity: quickAccessForm.type !== 'VACATION' ? quantity : undefined,
         type: quickAccessForm.type as any,
         status: 'PENDING' as any,
         justificationUrl: quickAccessForm.justificationUrl || undefined
       });
 
-      setQuickAccessForm({ ...quickAccessForm, justificationUrl: '' });
+      setQuickAccessForm({ ...quickAccessForm, justificationUrl: '', hours: 0, minutes: 0 });
       showAlert('Solicitud enviada correctamente', 'success');
       setShowQuickAccessModal(null);
       // Refresh logic would go here or force reload
@@ -304,26 +317,67 @@ export const Dashboard: React.FC = () => {
                 </button>
               </div>
               <form onSubmit={handleQuickAccessSubmit} className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Inicio</label>
-                  <input
-                    type="date"
-                    value={quickAccessForm.startDate}
-                    onChange={(e) => setQuickAccessForm({ ...quickAccessForm, startDate: e.target.value })}
-                    className="w-full border border-slate-300 rounded-lg p-2"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Fin</label>
-                  <input
-                    type="date"
-                    value={quickAccessForm.endDate}
-                    onChange={(e) => setQuickAccessForm({ ...quickAccessForm, endDate: e.target.value })}
-                    className="w-full border border-slate-300 rounded-lg p-2"
-                    required
-                  />
-                </div>
+                {showQuickAccessModal === 'vacation' ? (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Inicio</label>
+                      <input
+                        type="date"
+                        value={quickAccessForm.startDate}
+                        onChange={(e) => setQuickAccessForm({ ...quickAccessForm, startDate: e.target.value })}
+                        className="w-full border border-slate-300 rounded-lg p-2"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Fin</label>
+                      <input
+                        type="date"
+                        value={quickAccessForm.endDate}
+                        onChange={(e) => setQuickAccessForm({ ...quickAccessForm, endDate: e.target.value })}
+                        className="w-full border border-slate-300 rounded-lg p-2"
+                        required
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Fecha</label>
+                      <input
+                        type="date"
+                        value={quickAccessForm.startDate}
+                        onChange={(e) => setQuickAccessForm({ ...quickAccessForm, startDate: e.target.value, endDate: e.target.value })}
+                        className="w-full border border-slate-300 rounded-lg p-2"
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Horas</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="23"
+                          value={quickAccessForm.hours}
+                          onChange={(e) => setQuickAccessForm({ ...quickAccessForm, hours: parseInt(e.target.value) || 0 })}
+                          className="w-full border border-slate-300 rounded-lg p-2"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Minutos</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="59"
+                          value={quickAccessForm.minutes}
+                          onChange={(e) => setQuickAccessForm({ ...quickAccessForm, minutes: parseInt(e.target.value) || 0 })}
+                          className="w-full border border-slate-300 rounded-lg p-2"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
                 {(showQuickAccessModal === 'sick' || showQuickAccessModal === 'absence') && (
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -334,8 +388,8 @@ export const Dashboard: React.FC = () => {
                       value={quickAccessForm.justificationUrl}
                       onChange={(e) => setQuickAccessForm({ ...quickAccessForm, justificationUrl: e.target.value })}
                       className="w-full border border-slate-300 rounded-lg p-2"
-                      placeholder="URL del justificante"
-                      required
+                      placeholder="URL del justificante (opcional solo para prueba)"
+                    // required // Temporarily optional or required? User request emphasized categories/inputs.
                     />
                   </div>
                 )}
