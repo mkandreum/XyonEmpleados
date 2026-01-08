@@ -4,27 +4,27 @@ import { User, Mail, Briefcase, Phone, MapPin, Camera, Calendar } from 'lucide-r
 import { userService } from '../services/api';
 
 export const ProfilePage: React.FC = () => {
-    const { user, login } = useAuth(); // We might need a way to refresh user in context, but for now we'll manually update local state or rely on page reload. Ideally AuthContext exposes refresh.
-    // Actually, simplest is to update local form data from user prop, and on save, just alert. 
-    // BUT user wants persistence. So on save, we call API.
+    const { user, login } = useAuth();
 
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
-    // Form state initialized with user data or empty strings
     const [formData, setFormData] = useState({
         phone: user?.phone || '',
         address: user?.address || '',
-        emergencyContact: user?.emergencyContact || ''
+        emergencyContact: user?.emergencyContact || '',
+        avatarUrl: user?.avatarUrl || ''
     });
 
-    // Update form data if user changes (e.g. initial load)
     useEffect(() => {
         if (user) {
             setFormData({
                 phone: user.phone || '',
                 address: user.address || '',
-                emergencyContact: user.emergencyContact || ''
+                emergencyContact: user.emergencyContact || '',
+                avatarUrl: user.avatarUrl || ''
             });
         }
     }, [user]);
@@ -32,25 +32,42 @@ export const ProfilePage: React.FC = () => {
     const handleSave = async () => {
         setLoading(true);
         try {
-            // Call API to update profile
             const updatedUser = await userService.updateProfile(formData);
-
-            // Update local storage 'user' so valid on refresh, although AuthContext should handle this.
-            // Since AuthContext reads from localStorage on init, updating it here is a "poor man's" state update.
             localStorage.setItem('user', JSON.stringify(updatedUser));
-
-            // Force reload or better: rely on user to navigate.
-            // Ideally AuthContext should provide a setUser method. 
-            // For this scope, let's just alert and maybe reload to show persistence or just trust it.
             alert("Datos guardados correctamente.");
             setIsEditing(false);
-            // A full window reload ensures context picks up new data from localStorage
             window.location.reload();
         } catch (error) {
             console.error("Failed to update profile", error);
             alert("Error al guardar los datos.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            alert("Las contraseñas no coinciden");
+            return;
+        }
+        try {
+            await fetch('/api/users/change-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    currentPassword: passwordData.currentPassword,
+                    newPassword: passwordData.newPassword
+                })
+            });
+            alert("Contraseña cambiada correctamente");
+            setShowPasswordModal(false);
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        } catch (error) {
+            alert("Error al cambiar la contraseña");
         }
     };
 
@@ -64,18 +81,25 @@ export const ProfilePage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Profile Card */}
                 <div className="md:col-span-1">
                     <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex flex-col items-center text-center">
                         <div className="relative mb-4">
                             <img
-                                src={user.avatarUrl}
+                                src={formData.avatarUrl || user.avatarUrl}
                                 alt="Profile"
                                 className="w-32 h-32 rounded-full object-cover ring-4 ring-slate-50"
                             />
-                            <button className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 shadow-md">
-                                <Camera size={16} />
-                            </button>
+                            {isEditing && (
+                                <div className="mt-2">
+                                    <input
+                                        type="text"
+                                        placeholder="URL de foto"
+                                        value={formData.avatarUrl}
+                                        onChange={(e) => setFormData({ ...formData, avatarUrl: e.target.value })}
+                                        className="text-xs w-full p-1 border rounded"
+                                    />
+                                </div>
+                            )}
                         </div>
                         <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
                         <p className="text-slate-500 text-sm mb-4">{user.position}</p>
@@ -96,7 +120,6 @@ export const ProfilePage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Details Form */}
                 <div className="md:col-span-2">
                     <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
                         <div className="p-6 border-b border-slate-100 flex justify-between items-center">
@@ -178,13 +201,67 @@ export const ProfilePage: React.FC = () => {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="font-medium text-slate-800">Contraseña</p>
-                                <p className="text-sm text-slate-500">Última actualización: hace 3 meses</p>
+                                <p className="text-sm text-slate-500">Mantén tu cuenta segura</p>
                             </div>
-                            <button className="text-blue-600 text-sm font-medium hover:underline">Cambiar contraseña</button>
+                            <button
+                                onClick={() => setShowPasswordModal(true)}
+                                className="text-blue-600 text-sm font-medium hover:underline"
+                            >
+                                Cambiar contraseña
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Password Change Modal */}
+            {showPasswordModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowPasswordModal(false)}>
+                    <div className="bg-white rounded-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="text-xl font-bold mb-4">Cambiar Contraseña</h2>
+                        <form onSubmit={handleChangePassword} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Contraseña Actual</label>
+                                <input
+                                    type="password"
+                                    required
+                                    value={passwordData.currentPassword}
+                                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                    className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Nueva Contraseña</label>
+                                <input
+                                    type="password"
+                                    required
+                                    value={passwordData.newPassword}
+                                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                    className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Confirmar Nueva Contraseña</label>
+                                <input
+                                    type="password"
+                                    required
+                                    value={passwordData.confirmPassword}
+                                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                    className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-4">
+                                <button type="button" onClick={() => setShowPasswordModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+                                    Cancelar
+                                </button>
+                                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                    Cambiar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

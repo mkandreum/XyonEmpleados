@@ -43,6 +43,8 @@ router.get('/holidays/next', contentController.getNextHoliday);
 // User
 router.get('/users/profile', authController.getProfile);
 router.put('/users/profile', authController.updateProfile);
+router.post('/users/change-password', authController.changePassword);
+
 
 // Payrolls
 router.get('/payrolls', payrollController.getAllPayrolls);

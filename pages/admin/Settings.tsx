@@ -55,7 +55,23 @@ export const AdminSettings: React.FC = () => {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    URL del Logo
+                                    Nombre de la Empresa
+                                </label>
+                                <input
+                                    type="text"
+                                    name="companyName"
+                                    value={settings.companyName || ''}
+                                    onChange={handleChange}
+                                    placeholder="Velilla"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                />
+                                <p className="mt-1 text-xs text-slate-500">
+                                    Nombre que aparecerá en el logo del portal de empleados.
+                                </p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    URL del Logo (Portal Empleados)
                                 </label>
                                 <input
                                     type="text"
@@ -66,7 +82,23 @@ export const AdminSettings: React.FC = () => {
                                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                                 />
                                 <p className="mt-1 text-xs text-slate-500">
-                                    URL de la imagen del logo que se mostrará en la barra de navegación y login.
+                                    Logo que se mostrará en el portal de empleados. Deja vacío para usar el nombre.
+                                </p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    URL del Logo (Panel Admin)
+                                </label>
+                                <input
+                                    type="text"
+                                    name="adminLogoUrl"
+                                    value={settings.adminLogoUrl || ''}
+                                    onChange={handleChange}
+                                    placeholder="https://ejemplo.com/admin-logo.png"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                />
+                                <p className="mt-1 text-xs text-slate-500">
+                                    Logo que se mostrará en el panel de administración. Deja vacío para usar el nombre.
                                 </p>
                             </div>
                         </div>
