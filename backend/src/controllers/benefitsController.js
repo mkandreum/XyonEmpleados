@@ -98,7 +98,7 @@ exports.getUserBenefitsBalance = async (req, res) => {
         const defaultBenefits = {
             vacationDays: 22,
             overtimeHoursBank: 40,
-            sickLeaveDays: 15,
+            sickLeaveHours: 120,
             paidAbsenceHours: 20
         };
 

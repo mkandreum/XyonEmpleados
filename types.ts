@@ -47,7 +47,38 @@ export interface VacationRequest {
   user?: User;
 }
 
-// ...
+export interface NewsItem {
+  id: string;
+  title: string;
+  summary: string;
+  content: string;
+  date: string;
+  category: 'CORPORATE' | 'EVENT' | 'URGENT';
+  imageUrl?: string;
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  read: boolean;
+  date: string;
+}
+
+export interface Event {
+  id: string;
+  title: string;
+  description?: string;
+  date: string;
+  location?: string;
+}
+
+export interface Holiday {
+  id: string;
+  name: string;
+  date: string;
+  year: number;
+}
 
 export interface DepartmentBenefits {
   id: string;

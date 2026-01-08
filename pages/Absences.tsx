@@ -184,10 +184,10 @@ export const AbsencesPage: React.FC = () => {
                         <div className="p-3 bg-white/20 rounded-lg">
                             <Heart size={24} />
                         </div>
-                        <span className="text-3xl font-bold">{benefits?.sickLeaveDaysRemaining || 15}</span>
+                        <span className="text-3xl font-bold">{benefits?.sickLeaveHours || 0}</span>
                     </div>
-                    <h3 className="font-semibold mb-1">Días Baja Médica</h3>
-                    <p className="text-red-100 text-sm">Días retribuidos disponibles</p>
+                    <h3 className="font-semibold mb-1">Horas Médicas</h3>
+                    <p className="text-red-100 text-sm">Disponible</p>
                 </div>
 
                 {/* Paid Absence */}
