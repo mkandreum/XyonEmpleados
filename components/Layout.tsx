@@ -55,7 +55,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           <div className="p-6 border-b border-slate-800 flex justify-between items-center">
             <div>
               {logoUrl ? (
-                <img src={logoUrl} alt={companyName} className="h-20 w-auto" />
+                <img src={logoUrl} alt={companyName} className="w-48 h-auto object-contain" />
               ) : (
                 <>
                   <h1 className="text-2xl font-bold tracking-tight text-white">{companyName}<span className="text-blue-500">Emp</span></h1>
