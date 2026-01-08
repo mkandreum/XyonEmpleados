@@ -79,7 +79,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+                <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1 dark-scrollbar">
                     {menuItems.map((item) => (
                         <SidebarItem
                             key={item.path}
