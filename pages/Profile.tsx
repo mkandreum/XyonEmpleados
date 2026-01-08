@@ -50,7 +50,6 @@ export const ProfilePage: React.FC = () => {
 
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
-        e.preventDefault();
         if (passwordData.newPassword !== passwordData.confirmPassword) {
             showAlert("Las contraseñas no coinciden", 'warning');
             return;
