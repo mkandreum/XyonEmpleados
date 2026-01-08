@@ -12,6 +12,9 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Static files (build from frontend)
 // We assume the frontend will be built into a 'public' folder inside backend or similar
 app.use(express.static(path.join(__dirname, '../public')));
