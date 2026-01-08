@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { payrollService } from '../services/api';
 import { Download, FileText, Calendar, DollarSign, TrendingUp, CheckSquare, Square } from 'lucide-react';
+import { useModal } from '../hooks/useModal';
+import { Modal } from '../components/Modal';
 
 interface Payroll {
   id: string;
@@ -15,6 +17,7 @@ export const PayrollPage: React.FC = () => {
   const [payrolls, setPayrolls] = useState<Payroll[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPayrolls, setSelectedPayrolls] = useState<Set<string>>(new Set());
+  const { modalState, showAlert, closeModal } = useModal();
 
   useEffect(() => {
     fetchPayrolls();
@@ -51,7 +54,7 @@ export const PayrollPage: React.FC = () => {
 
   const downloadSelected = () => {
     if (selectedPayrolls.size === 0) {
-      alert('Selecciona al menos una nómina para descargar');
+      showAlert('Selecciona al menos una nómina para descargar', 'warning');
       return;
     }
 
@@ -193,8 +196,8 @@ export const PayrollPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${payroll.status === 'PAID'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-amber-100 text-amber-800'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-amber-100 text-amber-800'
                         }`}>
                         {payroll.status === 'PAID' ? 'Pagado' : 'Pendiente'}
                       </span>
@@ -223,6 +226,15 @@ export const PayrollPage: React.FC = () => {
           </table>
         </div>
       </div>
+      {/* Global Modal */}
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        title={modalState.title}
+        message={modalState.message}
+        type={modalState.type}
+        onConfirm={modalState.onConfirm}
+      />
     </div>
   );
 };

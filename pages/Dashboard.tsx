@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { notificationService, vacationService, eventsService, holidayService, benefitsService } from '../services/api';
 import { Notification, VacationRequest, Event, Holiday, UserBenefitsBalance, DepartmentBenefits } from '../types';
 import { Calendar, CheckCircle2, Clock, Briefcase, AlertCircle, Plane, FileText, Info, Upload, X } from 'lucide-react';
+import { useModal } from '../hooks/useModal';
+import { Modal } from '../components/Modal';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -16,6 +18,7 @@ export const Dashboard: React.FC = () => {
   const [benefits, setBenefits] = useState<UserBenefitsBalance | null>(null);
   const [deptBenefits, setDeptBenefits] = useState<DepartmentBenefits | null>(null);
   const [loading, setLoading] = useState(true);
+  const { modalState, showAlert, closeModal } = useModal();
 
   // Quick access modal state
   const [showQuickAccessModal, setShowQuickAccessModal] = useState<string | null>(null);
@@ -92,11 +95,13 @@ export const Dashboard: React.FC = () => {
         justificationUrl: quickAccessForm.justificationUrl || undefined
       });
 
-      alert('Solicitud enviada correctamente');
+      setQuickAccessForm({ ...quickAccessForm, justificationUrl: '' });
+      showAlert('Solicitud enviada correctamente', 'success');
       setShowQuickAccessModal(null);
-      window.location.reload();
+      // Refresh logic would go here or force reload
+      setTimeout(() => window.location.reload(), 1500);
     } catch (error) {
-      alert('Error al enviar la solicitud');
+      showAlert('Error al enviar la solicitud', 'error');
     }
   };
 
@@ -341,6 +346,15 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Global Modal */}
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        title={modalState.title}
+        message={modalState.message}
+        type={modalState.type}
+        onConfirm={modalState.onConfirm}
+      />
     </div>
   );
 };
