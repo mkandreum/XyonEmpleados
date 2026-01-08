@@ -37,8 +37,6 @@ export const ProfilePage: React.FC = () => {
         try {
             const updatedUser = await userService.updateProfile(formData);
             localStorage.setItem('user', JSON.stringify(updatedUser));
-            const updatedUser = await userService.updateProfile(formData);
-            localStorage.setItem('user', JSON.stringify(updatedUser));
             showAlert("Datos guardados correctamente.", 'success');
             setIsEditing(false);
             window.location.reload();
