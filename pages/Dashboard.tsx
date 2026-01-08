@@ -256,69 +256,70 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Quick Access Modal */}
-        {showQuickAccessModal && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowQuickAccessModal(null)}>
-            <div className="bg-white rounded-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-              <div className="border-b border-slate-200 p-4 flex justify-between items-center">
-                <h2 className="text-xl font-bold">
-                  {showQuickAccessModal === 'vacation' && 'Solicitar Vacaciones'}
-                  {showQuickAccessModal === 'sick' && 'Solicitar Baja Médica'}
-                  {showQuickAccessModal === 'absence' && 'Solicitar Ausencia'}
-                </h2>
-                <button onClick={() => setShowQuickAccessModal(null)} className="p-2 hover:bg-slate-100 rounded-lg">
-                  <X size={20} />
+      {/* Quick Access Modal */}
+      {showQuickAccessModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowQuickAccessModal(null)}>
+          <div className="bg-white rounded-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="border-b border-slate-200 p-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold">
+                {showQuickAccessModal === 'vacation' && 'Solicitar Vacaciones'}
+                {showQuickAccessModal === 'sick' && 'Solicitar Baja Médica'}
+                {showQuickAccessModal === 'absence' && 'Solicitar Ausencia'}
+              </h2>
+              <button onClick={() => setShowQuickAccessModal(null)} className="p-2 hover:bg-slate-100 rounded-lg">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleQuickAccessSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Inicio</label>
+                <input
+                  type="date"
+                  value={quickAccessForm.startDate}
+                  onChange={(e) => setQuickAccessForm({ ...quickAccessForm, startDate: e.target.value })}
+                  className="w-full border border-slate-300 rounded-lg p-2"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Fin</label>
+                <input
+                  type="date"
+                  value={quickAccessForm.endDate}
+                  onChange={(e) => setQuickAccessForm({ ...quickAccessForm, endDate: e.target.value })}
+                  className="w-full border border-slate-300 rounded-lg p-2"
+                  required
+                />
+              </div>
+              {(showQuickAccessModal === 'sick' || showQuickAccessModal === 'absence') && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Justificante <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={quickAccessForm.justificationUrl}
+                    onChange={(e) => setQuickAccessForm({ ...quickAccessForm, justificationUrl: e.target.value })}
+                    className="w-full border border-slate-300 rounded-lg p-2"
+                    placeholder="URL del justificante"
+                    required
+                  />
+                </div>
+              )}
+              <div className="flex justify-end gap-3 pt-4">
+                <button type="button" onClick={() => setShowQuickAccessModal(null)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+                  Cancelar
+                </button>
+                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  Enviar Solicitud
                 </button>
               </div>
-              <form onSubmit={handleQuickAccessSubmit} className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Inicio</label>
-                  <input
-                    type="date"
-                    value={quickAccessForm.startDate}
-                    onChange={(e) => setQuickAccessForm({ ...quickAccessForm, startDate: e.target.value })}
-                    className="w-full border border-slate-300 rounded-lg p-2"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Fin</label>
-                  <input
-                    type="date"
-                    value={quickAccessForm.endDate}
-                    onChange={(e) => setQuickAccessForm({ ...quickAccessForm, endDate: e.target.value })}
-                    className="w-full border border-slate-300 rounded-lg p-2"
-                    required
-                  />
-                </div>
-                {(showQuickAccessModal === 'sick' || showQuickAccessModal === 'absence') && (
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                      Justificante <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={quickAccessForm.justificationUrl}
-                      onChange={(e) => setQuickAccessForm({ ...quickAccessForm, justificationUrl: e.target.value })}
-                      className="w-full border border-slate-300 rounded-lg p-2"
-                      placeholder="URL del justificante"
-                      required
-                    />
-                  </div>
-                )}
-                <div className="flex justify-end gap-3 pt-4">
-                  <button type="button" onClick={() => setShowQuickAccessModal(null)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">
-                    Cancelar
-                  </button>
-                  <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    Enviar Solicitud
-                  </button>
-                </div>
-              </form>
-            </div>
+            </form>
           </div>
-        )}
-      </div>
-      );
+        </div>
+      )}
+    </div>
+  );
 };
