@@ -122,7 +122,20 @@ export const Dashboard: React.FC = () => {
             </div>
             <div className="divide-y divide-slate-100">
               {loading ? <div className="p-4 text-center">Cargando...</div> : notifications.map(notif => (
-                <div key={notif.id} className={`p-4 hover:bg-slate-50 transition-colors flex items-start gap-4 ${!notif.read ? 'bg-blue-50/30' : ''}`}>
+                <div
+                  key={notif.id}
+                  className={`p-4 hover:bg-slate-50 transition-colors flex items-start gap-4 cursor-pointer ${!notif.read ? 'bg-blue-50/30' : ''}`}
+                  onClick={async () => {
+                    if (!notif.read) {
+                      try {
+                        await notificationService.markAsRead(notif.id);
+                        setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+                      } catch (error) {
+                        console.error("Failed to mark notification as read", error);
+                      }
+                    }
+                  }}
+                >
                   <div className={`mt-1 w-2 h-2 rounded-full ${!notif.read ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
