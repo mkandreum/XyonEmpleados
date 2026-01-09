@@ -20,7 +20,8 @@ export const AdminUsers: React.FC = () => {
         password: '',
         role: 'EMPLOYEE',
         department: '',
-        position: ''
+        position: '',
+        avatarUrl: ''
     });
 
     const fetchUsers = async () => {
@@ -68,7 +69,8 @@ export const AdminUsers: React.FC = () => {
             password: '', // Don't show password
             role: user.role,
             department: user.department,
-            position: user.position
+            position: user.position,
+            avatarUrl: user.avatarUrl
         });
         setIsModalOpen(true);
     };
@@ -242,6 +244,45 @@ export const AdminUsers: React.FC = () => {
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                 />
                             </div>
+
+                            {/* Avatar Upload */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Avatar</label>
+                                <div className="flex items-center gap-4">
+                                    <img
+                                        src={(formData as any).avatarUrl || `https://ui-avatars.com/api/?name=${formData.name || 'User'}`}
+                                        alt="Avatar Preview"
+                                        className="h-12 w-12 rounded-full object-cover bg-slate-100"
+                                    />
+                                    <div className="flex-1">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="block w-full text-sm text-slate-500 dark:text-slate-400
+                                                file:mr-4 file:py-2 file:px-4
+                                                file:rounded-full file:border-0
+                                                file:text-sm file:font-semibold
+                                                file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400
+                                                hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50"
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                try {
+                                                    // Dynamic import to avoid circular dependency issues if any, or just use global service
+                                                    const { uploadService } = await import('../../services/api');
+                                                    const result = await uploadService.uploadAvatar(file);
+                                                    setFormData(prev => ({ ...prev, avatarUrl: result.url } as any));
+                                                } catch (error) {
+                                                    console.error("Error uploading avatar:", error);
+                                                    alert("Error al subir el avatar");
+                                                }
+                                            }}
+                                        />
+                                        <p className="text-xs text-slate-500 mt-1">Deja vacío para usar el avatar por defecto.</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
                                 <input

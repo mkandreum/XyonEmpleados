@@ -48,7 +48,7 @@ exports.createUser = async (req, res) => {
                 department: department || 'General',
                 position: position || 'Employee',
                 joinDate: joinDate ? new Date(joinDate) : new Date(),
-                avatarUrl: await (async () => {
+                avatarUrl: req.body.avatarUrl || await (async () => {
                     // Try to get default avatar from settings
                     const defaultAvatarSetting = await prisma.globalSettings.findUnique({
                         where: { key: 'defaultAvatarUrl' }
@@ -72,10 +72,11 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, email, role, department, position, joinDate } = req.body;
+        const { name, email, role, department, position, joinDate, avatarUrl } = req.body;
         // Note: Password update should probably be a separate secure endpoint or handled carefully
 
         const updateData = { name, email, role, department, position };
+        if (avatarUrl) updateData.avatarUrl = avatarUrl;
         if (joinDate) {
             updateData.joinDate = new Date(joinDate);
         }
