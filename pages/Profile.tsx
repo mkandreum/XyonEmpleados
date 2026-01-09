@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { User, Mail, Briefcase, Phone, MapPin, Camera, Calendar } from 'lucide-react';
-import { userService } from '../services/api';
+import { userService, uploadService } from '../services/api';
 import { useModal } from '../hooks/useModal';
 import { Modal } from '../components/Modal';
 
@@ -85,11 +85,25 @@ export const ProfilePage: React.FC = () => {
                             {isEditing && (
                                 <div className="mt-2">
                                     <input
-                                        type="text"
-                                        placeholder="URL de foto"
-                                        value={formData.avatarUrl}
-                                        onChange={(e) => setFormData({ ...formData, avatarUrl: e.target.value })}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+
+                                            setLoading(true); // Reusing loading state
+                                            try {
+                                                const response = await uploadService.uploadAvatar(file);
+                                                setFormData({ ...formData, avatarUrl: response.url });
+                                            } catch (error) {
+                                                console.error("Upload error:", error);
+                                                showAlert("Error al subir el avatar", "error");
+                                            } finally {
+                                                setLoading(false);
+                                            }
+                                        }}
                                         className="text-xs w-full p-1 border rounded"
+                                        disabled={loading}
                                     />
                                 </div>
                             )}
