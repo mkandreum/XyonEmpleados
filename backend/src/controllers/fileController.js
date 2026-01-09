@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 
+// Ensure uploads directories exist (using absolute path relative to this controller file)
 const uploadsBase = path.join(__dirname, '../../uploads');
 const privateDir = path.join(uploadsBase, 'private');
 
