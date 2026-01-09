@@ -80,7 +80,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                             <img
                                 src={logoUrl}
                                 alt={companyName}
-                                className="w-auto object-contain max-w-full"
+                                className="h-10 w-auto object-contain"
                                 onError={() => setLogoError(true)}
                             />
                         ) : (
