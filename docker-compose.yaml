@@ -7,7 +7,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://postgres:secure_pg_password_123@db:5432/xyonempleados_db
+      - DATABASE_URL=postgresql://postgres:secure_pg_password_123@db:5432/velilla_db
       - JWT_SECRET=super_secure_jwt_secret_change_me
     volumes:
       - uploads:/app/uploads
@@ -20,7 +20,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secure_pg_password_123
-      POSTGRES_DB: xyonempleados_db
+      POSTGRES_DB: velilla_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
