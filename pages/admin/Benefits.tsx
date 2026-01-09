@@ -80,7 +80,8 @@ export const AdminBenefits: React.FC = () => {
                 <p className="text-slate-500">Configura los días y horas disponibles para cada departamento</p>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            {/* Desktop Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden hidden sm:block">
                 <table className="min-w-full divide-y divide-slate-200">
                     <thead className="bg-slate-50">
                         <tr>
@@ -180,6 +181,88 @@ export const AdminBenefits: React.FC = () => {
                         })}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile View (Cards) */}
+            <div className="sm:hidden space-y-4">
+                {DEPARTMENTS.map(dept => {
+                    const deptBenefits = getBenefitsForDept(dept);
+                    const isEditing = editingDept === dept;
+
+                    if (isEditing) {
+                        return (
+                            <div key={dept} className="bg-blue-50 border border-blue-200 p-4 rounded-xl shadow-sm space-y-3">
+                                <div className="flex justify-between items-center border-b border-blue-100 pb-2">
+                                    <h3 className="font-bold text-blue-900">{dept}</h3>
+                                    <span className="text-xs text-blue-600 font-medium">Editando...</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-xs text-blue-800 block mb-1">Vacaciones</label>
+                                        <input type="number" className="w-full text-sm p-1 rounded border border-blue-300"
+                                            value={formData.vacationDays}
+                                            onChange={(e) => setFormData({ ...formData, vacationDays: parseInt(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-blue-800 block mb-1">H. Exceso</label>
+                                        <input type="number" className="w-full text-sm p-1 rounded border border-blue-300"
+                                            value={formData.overtimeHoursBank}
+                                            onChange={(e) => setFormData({ ...formData, overtimeHoursBank: parseInt(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-blue-800 block mb-1">H. Médicas</label>
+                                        <input type="number" className="w-full text-sm p-1 rounded border border-blue-300"
+                                            value={formData.sickLeaveDays}
+                                            onChange={(e) => setFormData({ ...formData, sickLeaveDays: parseInt(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-blue-800 block mb-1">H. Retribuidas</label>
+                                        <input type="number" className="w-full text-sm p-1 rounded border border-blue-300"
+                                            value={formData.paidAbsenceHours}
+                                            onChange={(e) => setFormData({ ...formData, paidAbsenceHours: parseInt(e.target.value) })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 pt-2">
+                                    <button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium">Guardar</button>
+                                    <button onClick={() => setEditingDept(null)} className="flex-1 bg-white text-slate-600 py-2 rounded-lg text-sm font-medium border border-slate-300">Cancelar</button>
+                                </div>
+                            </div>
+                        )
+                    }
+
+                    return (
+                        <div key={dept} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                            <div className="flex justify-between items-center mb-3 border-b border-slate-50 pb-2">
+                                <h3 className="font-bold text-slate-900">{dept}</h3>
+                                <button onClick={() => handleEdit(dept)} className="text-blue-600 bg-blue-50 p-1.5 rounded-lg">
+                                    <Edit2 size={16} />
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-sm">
+                                <div>
+                                    <span className="block text-xs text-slate-400">Vacaciones</span>
+                                    <span className="font-medium text-slate-700">{deptBenefits.vacationDays} días</span>
+                                </div>
+                                <div>
+                                    <span className="block text-xs text-slate-400">H. Exceso</span>
+                                    <span className="font-medium text-slate-700">{deptBenefits.overtimeHoursBank} h</span>
+                                </div>
+                                <div>
+                                    <span className="block text-xs text-slate-400">H. Médicas</span>
+                                    <span className="font-medium text-slate-700">{deptBenefits.sickLeaveDays} h</span>
+                                </div>
+                                <div>
+                                    <span className="block text-xs text-slate-400">H. Retribuidas</span>
+                                    <span className="font-medium text-slate-700">{deptBenefits.paidAbsenceHours} h</span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">

@@ -127,8 +127,8 @@ export const AdminUsers: React.FC = () => {
                 />
             </div>
 
-            {/* Users Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            {/* Users Table (Desktop) */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden hidden sm:block">
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-slate-200">
                         <thead className="bg-slate-50">
@@ -174,6 +174,41 @@ export const AdminUsers: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            {/* Mobile View (Cards) */}
+            <div className="sm:hidden space-y-4">
+                {filteredUsers.map((user) => (
+                    <div key={user.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="flex items-center gap-3">
+                                <img className="h-10 w-10 rounded-full" src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}`} alt="" />
+                                <div>
+                                    <div className="text-sm font-semibold text-slate-900">{user.name}</div>
+                                    <div className="text-xs text-slate-500">{user.email}</div>
+                                </div>
+                            </div>
+                            <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-full ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}`}>
+                                {user.role === 'EMPLOYEE' ? 'Empleado' : user.role}
+                            </span>
+                        </div>
+
+                        <div className="border-t border-slate-50 pt-3 flex justify-between items-center">
+                            <div>
+                                <p className="text-xs text-slate-400">Departamento</p>
+                                <p className="text-sm font-medium text-slate-700">{user.department}</p>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={() => handleEdit(user)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
+                                    <Edit size={18} />
+                                </button>
+                                <button onClick={() => handleDelete(user.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                                    <Trash size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
 
             {/* Modal */}

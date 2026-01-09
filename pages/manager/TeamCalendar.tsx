@@ -71,7 +71,8 @@ export const TeamCalendar: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            {/* Desktop View (Table) */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden hidden sm:block">
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
@@ -149,6 +150,68 @@ export const TeamCalendar: React.FC = () => {
                         V: Vacaciones, B: Baja, A: Ausencia
                     </div>
                 </div>
+            </div>
+
+            {/* Mobile View (List) */}
+            <div className="sm:hidden space-y-4">
+                {uniqueUsers.map(user => {
+                    // Filter vacations for this user in current month (simplified check)
+                    const userVacations = teamVacations.filter(v => {
+                        if (v.user?.id !== user.id) return false;
+                        if (v.status === 'REJECTED') return false;
+
+                        const start = new Date(v.startDate);
+                        const end = new Date(v.endDate);
+                        const currentMonth = currentDate.getMonth();
+                        const currentYear = currentDate.getFullYear();
+
+                        // Check if vacation overlaps with current month
+                        const startInMonth = start.getMonth() === currentMonth && start.getFullYear() === currentYear;
+                        const endInMonth = end.getMonth() === currentMonth && end.getFullYear() === currentYear;
+
+                        // Check if vacation spans over the entire month
+                        const spansMonth = start < new Date(currentYear, currentMonth, 1) && end > new Date(currentYear, currentMonth + 1, 0);
+
+                        return startInMonth || endInMonth || spansMonth;
+                    });
+
+                    return (
+                        <div key={user.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-50">
+                                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                                    {user.name?.charAt(0) || 'U'}
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-slate-900">{user.name}</h3>
+                                    <p className="text-xs text-slate-500">{user.position || 'Empleado'}</p>
+                                </div>
+                            </div>
+
+                            {userVacations.length > 0 ? (
+                                <div className="space-y-3">
+                                    {userVacations.map(vac => (
+                                        <div key={vac.id} className="bg-slate-50 p-3 rounded-lg flex items-center justify-between">
+                                            <div>
+                                                <p className="text-sm font-medium text-slate-900">
+                                                    {vac.type === 'VACATION' ? 'Vacaciones' : vac.type === 'SICK_LEAVE' ? 'Baja Médica' : 'Ausencia'}
+                                                </p>
+                                                <p className="text-xs text-slate-500">
+                                                    {new Date(vac.startDate).getDate()} - {new Date(vac.endDate).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                            <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${vac.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                                                }`}>
+                                                {vac.status === 'APPROVED' ? 'Aprobado' : 'Pendiente'}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-slate-400 text-center py-2">Sin ausencias este mes</p>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

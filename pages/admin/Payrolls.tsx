@@ -105,11 +105,10 @@ export const AdminPayrolls: React.FC = () => {
                 </div>
             </div>
 
-            {/* Payrolls List */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            {/* Payrolls List (Desktop) */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden hidden sm:block">
                 <div className="p-6 border-b border-slate-100 flex justify-between items-center">
                     <h3 className="font-semibold text-slate-900">Historial de Nóminas</h3>
-                    {/* Add filter here later if needed */}
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
@@ -161,6 +160,43 @@ export const AdminPayrolls: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            {/* Mobile View (Cards) */}
+            <div className="sm:hidden space-y-4">
+                <h3 className="font-semibold text-slate-900 px-1">Historial de Nóminas</h3>
+                {payrolls.map((payroll) => (
+                    <div key={payroll.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                        <div className="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 className="font-medium text-slate-900">{payroll.user?.name || 'Desconocido'}</h4>
+                                <p className="text-xs text-slate-500">{payroll.user?.email}</p>
+                            </div>
+                            <span className="text-lg font-bold text-slate-700">{payroll.amount} €</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm text-slate-600 mb-4 bg-slate-50 p-2 rounded">
+                            <span className="capitalize font-medium">{payroll.month} {payroll.year}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-2 border-t border-slate-50">
+                            <a
+                                href={payroll.pdfUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            >
+                                <FileText size={16} /> Ver PDF
+                            </a>
+                            <button
+                                onClick={() => handleDelete(payroll.id)}
+                                className="text-red-500 hover:text-red-700 text-sm"
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                ))}
             </div>
 
             {/* Modal */}
