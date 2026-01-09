@@ -42,19 +42,19 @@ export const AdminSettings: React.FC = () => {
         }
     };
 
-    if (isLoading) return <div className="p-8 text-center text-slate-500">Cargando configuración...</div>;
+    if (isLoading) return <div className="p-8 text-center text-slate-500 dark:text-slate-400">Cargando configuración...</div>;
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-slate-800">Configuración Global</h1>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Configuración Global</h1>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 max-w-2xl">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 max-w-2xl transition-colors">
                 <form onSubmit={handleSave} className="space-y-6">
                     <div>
-                        <h3 className="text-lg font-medium text-slate-900 mb-4">Apariencia</h3>
+                        <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">Apariencia</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                     Nombre de la Empresa
                                 </label>
                                 <input
@@ -63,19 +63,19 @@ export const AdminSettings: React.FC = () => {
                                     value={settings.companyName || ''}
                                     onChange={handleChange}
                                     placeholder="Velilla"
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
                                 />
-                                <p className="mt-1 text-xs text-slate-500">
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                     Nombre que aparecerá en el logo del portal de empleados.
                                 </p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                     Logo del Portal (Empleados/Admin)
                                 </label>
                                 <div className="flex items-center gap-4">
                                     {settings.logoUrl && (
-                                        <img src={settings.logoUrl} alt="Logo Portal" className="h-24 w-auto border border-slate-200 rounded p-1" />
+                                        <img src={settings.logoUrl} alt="Logo Portal" className="h-24 w-auto border border-slate-200 dark:border-slate-700 rounded p-1" />
                                     )}
                                     <div className="flex-1">
                                         <input
@@ -92,26 +92,26 @@ export const AdminSettings: React.FC = () => {
                                                     alert("Error al subir el logo");
                                                 }
                                             }}
-                                            className="block w-full text-sm text-slate-500
+                                            className="block w-full text-sm text-slate-500 dark:text-slate-400
                                                 file:mr-4 file:py-2 file:px-4
                                                 file:rounded-full file:border-0
                                                 file:text-sm file:font-semibold
-                                                file:bg-blue-50 file:text-blue-700
-                                                hover:file:bg-blue-100"
+                                                file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400
+                                                hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50"
                                         />
                                     </div>
                                 </div>
-                                <p className="mt-1 text-xs text-slate-500">
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                     Logo que se mostrará en el portal de empleados y en el panel de administración.
                                 </p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                     Logo del Login
                                 </label>
                                 <div className="flex items-center gap-4">
                                     {settings.loginLogoUrl && (
-                                        <img src={settings.loginLogoUrl} alt="Logo Login" className="h-24 w-auto border border-slate-200 rounded p-1" />
+                                        <img src={settings.loginLogoUrl} alt="Logo Login" className="h-24 w-auto border border-slate-200 dark:border-slate-700 rounded p-1" />
                                     )}
                                     <div className="flex-1">
                                         <input
@@ -128,26 +128,26 @@ export const AdminSettings: React.FC = () => {
                                                     alert("Error al subir el logo");
                                                 }
                                             }}
-                                            className="block w-full text-sm text-slate-500
+                                            className="block w-full text-sm text-slate-500 dark:text-slate-400
                                                 file:mr-4 file:py-2 file:px-4
                                                 file:rounded-full file:border-0
                                                 file:text-sm file:font-semibold
-                                                file:bg-blue-50 file:text-blue-700
-                                                hover:file:bg-blue-100"
+                                                file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400
+                                                hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50"
                                         />
                                     </div>
                                 </div>
-                                <p className="mt-1 text-xs text-slate-500">
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                     Logo que se mostrará en la página de inicio de sesión (tamaño automático).
                                 </p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                     Avatar por Defecto
                                 </label>
                                 <div className="flex items-center gap-4">
                                     {settings.defaultAvatarUrl && (
-                                        <img src={settings.defaultAvatarUrl} alt="Default Avatar" className="h-16 w-16 rounded-full border border-slate-200 object-cover" />
+                                        <img src={settings.defaultAvatarUrl} alt="Default Avatar" className="h-16 w-16 rounded-full border border-slate-200 dark:border-slate-700 object-cover" />
                                     )}
                                     <div className="flex-1">
                                         <input
@@ -164,23 +164,23 @@ export const AdminSettings: React.FC = () => {
                                                     alert("Error al subir el avatar");
                                                 }
                                             }}
-                                            className="block w-full text-sm text-slate-500
+                                            className="block w-full text-sm text-slate-500 dark:text-slate-400
                                                 file:mr-4 file:py-2 file:px-4
                                                 file:rounded-full file:border-0
                                                 file:text-sm file:font-semibold
-                                                file:bg-blue-50 file:text-blue-700
-                                                hover:file:bg-blue-100"
+                                                file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400
+                                                hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50"
                                         />
                                     </div>
                                 </div>
-                                <p className="mt-1 text-xs text-slate-500">
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                     Imagen que se asignará a los nuevos usuarios si no tienen una personalizada.
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="pt-4 border-t border-slate-100 flex justify-end">
+                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
                         <button
                             type="submit"
                             disabled={isSaving}

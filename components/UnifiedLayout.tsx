@@ -50,7 +50,10 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
                 {/* Right Actions */}
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={toggleTheme}
+                        onClick={() => {
+                            console.log('[UnifiedLayout] Mode selector clicked. Current isDark:', isDark);
+                            toggleTheme();
+                        }}
                         className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                         title={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
                     >
@@ -81,13 +84,11 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
                                 </div>
                                 <Link
                                     to={user?.role === 'ADMIN' ? '/admin/settings' : '/profile'}
-                                    className="flex items-center gap-2 px-4 py-2text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                                    className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                                     onClick={() => setShowProfileMenu(false)}
                                 >
-                                    <div className="px-4 py-2 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
-                                        <User size={16} />
-                                        Mi Perfil / Ajustes
-                                    </div>
+                                    <User size={16} />
+                                    Mi Perfil / Ajustes
                                 </Link>
                                 <button
                                     onClick={handleLogout}

@@ -96,8 +96,8 @@ export const AdminNews: React.FC = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Gestión de Noticias</h1>
-                    <p className="text-slate-500">Crea y gestiona las noticias del portal</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestión de Noticias</h1>
+                    <p className="text-slate-500 dark:text-slate-400">Crea y gestiona las noticias del portal</p>
                 </div>
                 <button
                     onClick={() => {
@@ -105,39 +105,39 @@ export const AdminNews: React.FC = () => {
                         setFormData({ title: '', summary: '', content: '', category: 'CORPORATE', imageUrl: '' });
                         setShowModal(true);
                     }}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-purple-700 shadow-sm"
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-purple-700 shadow-sm transition-colors"
                 >
                     <Plus size={18} />
                     Nueva Noticia
                 </button>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
                 <table className="w-full">
-                    <thead className="bg-slate-50 border-b border-slate-200">
+                    <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Título</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Categoría</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Fecha</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Acciones</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Título</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Categoría</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Fecha</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
                         {loading ? (
-                            <tr><td colSpan={4} className="px-6 py-4 text-center text-slate-500">Cargando...</td></tr>
+                            <tr><td colSpan={4} className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">Cargando...</td></tr>
                         ) : news.length === 0 ? (
-                            <tr><td colSpan={4} className="px-6 py-4 text-center text-slate-500">No hay noticias</td></tr>
+                            <tr><td colSpan={4} className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">No hay noticias</td></tr>
                         ) : (
                             news.map((item) => (
-                                <tr key={item.id} className="hover:bg-slate-50">
-                                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{item.title}</td>
-                                    <td className="px-6 py-4 text-sm text-slate-600">{item.category}</td>
-                                    <td className="px-6 py-4 text-sm text-slate-600">{new Date(item.date).toLocaleDateString('es-ES')}</td>
+                                <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{item.title}</td>
+                                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{item.category}</td>
+                                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{new Date(item.date).toLocaleDateString('es-ES')}</td>
                                     <td className="px-6 py-4 text-right text-sm space-x-2">
-                                        <button onClick={() => openEditModal(item)} className="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded">
+                                        <button onClick={() => openEditModal(item)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors">
                                             <Edit size={16} />
                                         </button>
-                                        <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded">
+                                        <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-2 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors">
                                             <Trash2 size={16} />
                                         </button>
                                     </td>
@@ -150,59 +150,60 @@ export const AdminNews: React.FC = () => {
 
             {/* Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-                    <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                        <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex justify-between items-center">
-                            <h2 className="text-xl font-bold">{editingNews ? 'Editar Noticia' : 'Nueva Noticia'}</h2>
-                            <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 rounded-lg">
-                                <X size={20} />
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
+                    <div className="bg-white dark:bg-slate-900 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800 shadow-xl transition-colors" onClick={(e) => e.stopPropagation()}>
+                        <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 flex justify-between items-center z-10">
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{editingNews ? 'Editar Noticia' : 'Nueva Noticia'}</h2>
+                            <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                <X size={20} className="text-slate-500 dark:text-slate-400" />
                             </button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Título</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Título</label>
                                 <input
                                     type="text"
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                                    className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Resumen</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Resumen</label>
                                 <textarea
                                     value={formData.summary}
                                     onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-                                    className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                                    className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
                                     rows={2}
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Contenido</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Contenido</label>
                                 <textarea
                                     value={formData.content}
                                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                                    className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                                    className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
                                     rows={6}
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Categoría</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Categoría</label>
                                 <select
                                     value={formData.category}
                                     onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-                                    className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                                    className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
                                 >
                                     <option value="CORPORATE">Corporativa</option>
                                     <option value="EVENT">Evento</option>
                                     <option value="URGENT">Urgente</option>
                                 </select>
                             </div>
+                            {/* ... File Input styles are handled by global input styles mostly, but wrapper needs care ... */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Imagen de Noticia</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Imagen de Noticia</label>
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="file"
@@ -222,24 +223,24 @@ export const AdminNews: React.FC = () => {
                                                 setUploading(false);
                                             }
                                         }}
-                                        className="block w-full text-sm text-slate-500
+                                        className="block w-full text-sm text-slate-500 dark:text-slate-400
                                         file:mr-4 file:py-2 file:px-4
                                         file:rounded-full file:border-0
                                         file:text-sm file:font-semibold
-                                        file:bg-purple-50 file:text-purple-700
-                                        hover:file:bg-purple-100"
+                                        file:bg-purple-50 file:text-purple-700 dark:file:bg-purple-900/30 dark:file:text-purple-300
+                                        hover:file:bg-purple-100 dark:hover:file:bg-purple-900/50"
                                         disabled={uploading}
                                     />
-                                    {uploading && <span className="text-sm text-purple-600">Subiendo...</span>}
+                                    {uploading && <span className="text-sm text-purple-600 dark:text-purple-400">Subiendo...</span>}
                                     {formData.imageUrl && <div className="h-10 w-10 relative"><img src={formData.imageUrl} alt="Preview" className="h-full w-full object-cover rounded" /></div>}
                                 </div>
                                 <input type="hidden" value={formData.imageUrl} />
                             </div>
                             <div className="flex justify-end gap-3 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
                                     Cancelar
                                 </button>
-                                <button type="submit" disabled={uploading} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                                <button type="submit" disabled={uploading} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors">
                                     {editingNews ? 'Actualizar' : 'Crear'}
                                 </button>
                             </div>
