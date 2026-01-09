@@ -2,7 +2,7 @@
 FROM node:20-alpine as frontend-builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 COPY . .
 # Build the Vite app
 RUN npm run build   
