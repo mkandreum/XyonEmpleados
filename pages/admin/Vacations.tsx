@@ -495,7 +495,7 @@ export const AdminVacations: React.FC = () => {
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-slate-500">Tipo:</span>
-                                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${getTypeColor(request.type)}`}>
                                                     {getTypeLabel(request.type)}
                                                 </span>
                                             </div>
