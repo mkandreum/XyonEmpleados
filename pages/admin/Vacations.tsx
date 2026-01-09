@@ -86,11 +86,11 @@ export const AdminVacations: React.FC = () => {
 
     const getTypeColor = (type: string) => {
         switch (type) {
-            case 'VACATION': return 'bg-indigo-100 text-indigo-700';
-            case 'SICK_LEAVE': return 'bg-rose-100 text-rose-700';
-            case 'PERSONAL': return 'bg-amber-100 text-amber-700';
-            case 'OVERTIME': return 'bg-purple-100 text-purple-700';
-            default: return 'bg-blue-100 text-blue-700';
+            case 'VACATION': return 'bg-blue-100 text-blue-700 border border-blue-200';
+            case 'SICK_LEAVE': return 'bg-red-100 text-red-700 border border-red-200';
+            case 'PERSONAL': return 'bg-amber-100 text-amber-700 border border-amber-200';
+            case 'OVERTIME': return 'bg-violet-100 text-violet-700 border border-violet-200';
+            default: return 'bg-slate-100 text-slate-700 border border-slate-200';
         }
     };
 
