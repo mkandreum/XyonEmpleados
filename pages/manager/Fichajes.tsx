@@ -16,29 +16,42 @@ export const ManagerFichajes: React.FC = () => {
     const loadWeekData = async () => {
         setLoading(true);
         try {
+            console.log('Current user:', user);
+            console.log('User department:', user?.department);
+
             if (user?.department) {
+                console.log('Fetching fichajes for department:', user.department);
                 const response = await fichajeService.getDepartmentWeek(user.department);
                 console.log('Manager week response:', response);
+                console.log('Response users count:', response?.users?.length);
 
                 // El backend devuelve { department, schedule, users: [...] }
                 if (response && response.users) {
+                    console.log('Processing', response.users.length, 'users');
                     // Transformar datos para el formato esperado
-                    const transformedData = response.users.map((userGroup: any) => ({
-                        userId: userGroup.user.id,
-                        userName: userGroup.user.name,
-                        fichajes: userGroup.fichajes.flatMap((dayGroup: any) =>
-                            dayGroup.fichajes.map((f: any) => ({
-                                ...f,
-                                isLate: dayGroup.isLate,
-                                isEarlyDeparture: dayGroup.isEarlyDeparture,
-                                hasNotification: false // TODO: implementar check de notificaciones
-                            }))
-                        )
-                    }));
+                    const transformedData = response.users.map((userGroup: any) => {
+                        console.log('User:', userGroup.user.name, 'Fichajes groups:', userGroup.fichajes.length);
+                        return {
+                            userId: userGroup.user.id,
+                            userName: userGroup.user.name,
+                            fichajes: userGroup.fichajes.flatMap((dayGroup: any) =>
+                                dayGroup.fichajes.map((f: any) => ({
+                                    ...f,
+                                    isLate: dayGroup.isLate,
+                                    isEarlyDeparture: dayGroup.isEarlyDeparture,
+                                    hasNotification: false // TODO: implementar check de notificaciones
+                                }))
+                            )
+                        };
+                    });
+                    console.log('Transformed data:', transformedData);
                     setWeekData(transformedData);
                 } else {
+                    console.warn('No users in response or response is invalid');
                     setWeekData([]);
                 }
+            } else {
+                console.error('User department is undefined!');
             }
         } catch (error) {
             console.error('Error loading week data:', error);
