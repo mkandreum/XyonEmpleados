@@ -11,6 +11,7 @@ export const ManagerFichajes: React.FC = () => {
     const [selectedWeek, setSelectedWeek] = useState(0); // 0 = current week
     const [showModal, setShowModal] = useState(false);
     const [modalData, setModalData] = useState<{ userId: string; fichajeId: string; fecha: string; userName: string } | null>(null);
+    const [isSending, setIsSending] = useState(false);
 
     useEffect(() => {
         loadWeekData();
@@ -19,50 +20,30 @@ export const ManagerFichajes: React.FC = () => {
     const loadWeekData = async () => {
         setLoading(true);
         try {
-            console.log('Current user:', user);
-            console.log('User department:', user?.department);
-
             if (user?.department) {
-                console.log('Fetching fichajes for department:', user.department);
                 const response = await fichajeService.getDepartmentWeek(user.department);
-                console.log('Manager week response:', response);
-                console.log('Response users count:', response?.users?.length);
-
-                // El backend devuelve { department, schedule, users: [...] }
                 if (response && response.users) {
-                    console.log('Processing', response.users.length, 'users');
-                    // Transformar datos para el formato esperado
                     const transformedData = response.users.map((userGroup: any) => {
-                        console.log('User:', userGroup.user.name, 'Day groups:', userGroup.fichajes.length);
-
-                        // Aplanar fichajes pero mantener la fecha
                         const allFichajes = userGroup.fichajes.flatMap((dayGroup: any) =>
                             dayGroup.fichajes.map((f: any) => ({
                                 ...f,
-                                date: dayGroup.date, // Preservar la fecha
+                                date: dayGroup.date,
                                 isLate: dayGroup.isLate,
                                 isEarlyDeparture: dayGroup.isEarlyDeparture,
                                 hasNotification: dayGroup.fichajes.some((fInner: any) => fInner.id === f.id && fInner.lateNotifications && fInner.lateNotifications.length > 0),
                                 notificationRead: dayGroup.fichajes.some((fInner: any) => fInner.id === f.id && fInner.lateNotifications?.some((n: any) => n.leido))
                             }))
                         );
-
-                        console.log('User:', userGroup.user.name, 'Total fichajes:', allFichajes.length);
-
                         return {
                             userId: userGroup.user.id,
                             userName: userGroup.user.name,
                             fichajes: allFichajes
                         };
                     });
-                    console.log('Transformed data:', transformedData);
                     setWeekData(transformedData);
                 } else {
-                    console.warn('No users in response or response is invalid');
                     setWeekData([]);
                 }
-            } else {
-                console.error('User department is undefined!');
             }
         } catch (error) {
             console.error('Error loading week data:', error);
@@ -79,6 +60,7 @@ export const ManagerFichajes: React.FC = () => {
 
     const confirmSendWarning = async () => {
         if (!modalData) return;
+        setIsSending(true);
 
         try {
             await lateNotificationService.send({
@@ -94,6 +76,7 @@ export const ManagerFichajes: React.FC = () => {
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
 
+            setShowModal(false);
             loadWeekData();
         } catch (error: any) {
             // Error toast
@@ -102,6 +85,8 @@ export const ManagerFichajes: React.FC = () => {
             toast.textContent = error.response?.data?.error || 'Error al enviar aviso';
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
+        } finally {
+            setIsSending(false);
         }
     };
 
@@ -223,7 +208,7 @@ export const ManagerFichajes: React.FC = () => {
                         <table className="w-full">
                             <thead className="bg-slate-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider sticky left-0 bg-slate-50">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider sticky left-0 bg-slate-50 z-10">
                                         Empleado
                                     </th>
                                     {weekDays.map((day, index) => (
@@ -237,7 +222,7 @@ export const ManagerFichajes: React.FC = () => {
                             <tbody className="bg-white divide-y divide-slate-200">
                                 {weekData.map((employee: any, empIndex: number) => (
                                     <tr key={empIndex} className="hover:bg-slate-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 sticky left-0 bg-white">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_-3px_rgba(0,0,0,0.1)]">
                                             {employee.userName || 'N/A'}
                                         </td>
                                         {weekDays.map((day, dayIndex) => {
@@ -246,39 +231,39 @@ export const ManagerFichajes: React.FC = () => {
                                                 f.timestamp && new Date(f.timestamp).toISOString().split('T')[0] === dayStr
                                             ) || [];
 
-                                            // Separar entradas y salidas
                                             const entradas = dayFichajes.filter((f: any) => f.tipo === 'ENTRADA');
                                             const salidas = dayFichajes.filter((f: any) => f.tipo === 'SALIDA');
-
-                                            // Determinar si hay problemas (tarde o salida temprana)
                                             const hasIssues = dayFichajes.some((f: any) => f.isLate || f.isEarlyDeparture);
 
                                             return (
-                                                <td key={dayIndex} className="px-3 py-4 text-center">
+                                                <td key={dayIndex} className="px-3 py-4 text-center align-top">
                                                     {dayFichajes.length > 0 ? (
-                                                        <div className={`rounded-lg p-2 ${hasIssues ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
-                                                            {/* Mostrar todos los pares de entrada/salida */}
-                                                            {Math.max(entradas.length, salidas.length) > 0 && (
-                                                                <div className="space-y-1">
-                                                                    {Array.from({ length: Math.max(entradas.length, salidas.length) }).map((_, i) => (
-                                                                        <div key={i} className="text-xs">
-                                                                            {entradas[i] && (
-                                                                                <div className={`font-medium ${entradas[i].isLate ? 'text-red-700' : 'text-green-700'}`}>
-                                                                                    ↓ {formatTime(entradas[i].timestamp)}
-                                                                                </div>
-                                                                            )}
-                                                                            {salidas[i] && (
-                                                                                <div className={`font-medium ${salidas[i].isEarlyDeparture ? 'text-red-700' : 'text-green-700'}`}>
-                                                                                    ↑ {formatTime(salidas[i].timestamp)}
-                                                                                </div>
-                                                                            )}
-                                                                            {i < Math.max(entradas.length, salidas.length) - 1 && (
-                                                                                <div className="border-t border-slate-300 my-1"></div>
-                                                                            )}
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
+                                                        <div className={`rounded-xl p-3 border transition-all hover:shadow-sm ${hasIssues
+                                                            ? 'bg-red-50 border-red-100'
+                                                            : 'bg-green-50 border-green-100'
+                                                            }`}>
+                                                            {/* Fichaje Slots */}
+                                                            <div className="flex flex-col gap-2">
+                                                                {Array.from({ length: Math.max(entradas.length, salidas.length) }).map((_, i) => (
+                                                                    <div key={i} className="flex justify-between items-center text-xs bg-white/50 rounded-lg p-1.5 border border-black/5">
+                                                                        {entradas[i] && (
+                                                                            <span className={`font-mono font-medium ${entradas[i].isLate ? 'text-red-700' : 'text-slate-700'}`}>
+                                                                                {formatTime(entradas[i].timestamp)}
+                                                                            </span>
+                                                                        )}
+                                                                        <span className="text-slate-300 mx-1">→</span>
+                                                                        {salidas[i] ? (
+                                                                            <span className={`font-mono font-medium ${salidas[i].isEarlyDeparture ? 'text-red-700' : 'text-slate-700'}`}>
+                                                                                {formatTime(salidas[i].timestamp)}
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span className="text-slate-400 font-mono">--:--</span>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+
+                                                            {/* Actions */}
                                                             {hasIssues && !dayFichajes.some((f: any) => f.hasNotification) && (
                                                                 <button
                                                                     onClick={() => handleSendWarning(
@@ -287,19 +272,21 @@ export const ManagerFichajes: React.FC = () => {
                                                                         dayStr,
                                                                         employee.userName
                                                                     )}
-                                                                    className="mt-2 text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 transition-colors w-full"
+                                                                    className="mt-3 w-full bg-red-100 hover:bg-red-200 text-red-700 text-[10px] font-bold uppercase tracking-wider py-1.5 rounded-lg transition-colors border border-red-200"
                                                                 >
                                                                     Dar Aviso
                                                                 </button>
                                                             )}
+
+                                                            {/* Status Badges */}
                                                             {dayFichajes.some((f: any) => f.hasNotification) && (
-                                                                <div className="mt-2 flex flex-col items-center">
+                                                                <div className="mt-2 pt-2 border-t border-black/5">
                                                                     {dayFichajes.some((f: any) => f.notificationRead) ? (
-                                                                        <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-700 bg-green-100/50 px-2 py-0.5 rounded-full">
                                                                             ✓ Leído
                                                                         </span>
                                                                     ) : (
-                                                                        <span className="text-xs text-orange-600 font-medium flex items-center gap-1">
+                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-orange-700 bg-orange-100/50 px-2 py-0.5 rounded-full">
                                                                             ⚠ Enviado
                                                                         </span>
                                                                     )}
@@ -307,7 +294,9 @@ export const ManagerFichajes: React.FC = () => {
                                                             )}
                                                         </div>
                                                     ) : (
-                                                        <div className="text-slate-300 text-xs">-</div>
+                                                        <div className="h-full flex items-center justify-center">
+                                                            <div className="w-1.5 h-1.5 bg-slate-200 rounded-full"></div>
+                                                        </div>
                                                     )}
                                                 </td>
                                             );
@@ -335,50 +324,82 @@ export const ManagerFichajes: React.FC = () => {
                 ) : (
                     weekData.map((employee: any, index: number) => (
                         <div key={index} className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
-                            <h3 className="font-semibold text-slate-900 mb-3">{employee.userName}</h3>
-                            <div className="space-y-2">
+                            <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
+                                    {employee.userName.charAt(0)}
+                                </div>
+                                {employee.userName}
+                            </h3>
+                            <div className="space-y-3">
                                 {weekDays.map((day, dayIndex) => {
                                     const dayStr = day.toISOString().split('T')[0];
                                     const dayFichajes = employee.fichajes?.filter((f: any) =>
                                         f.timestamp && new Date(f.timestamp).toISOString().split('T')[0] === dayStr
                                     ) || [];
 
-                                    const entrada = dayFichajes.find((f: any) => f.tipo === 'ENTRADA');
-                                    const salida = dayFichajes.find((f: any) => f.tipo === 'SALIDA');
-                                    const isLate = entrada?.isLate;
-                                    const isEarlyDep = salida?.isEarlyDeparture;
-
                                     if (dayFichajes.length === 0) return null;
 
+                                    const entradas = dayFichajes.filter((f: any) => f.tipo === 'ENTRADA');
+                                    const salidas = dayFichajes.filter((f: any) => f.tipo === 'SALIDA');
+                                    const hasIssues = dayFichajes.some((f: any) => f.isLate || f.isEarlyDeparture);
+
                                     return (
-                                        <div key={dayIndex} className={`p-3 rounded-lg ${isLate || isEarlyDep ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'
+                                        <div key={dayIndex} className={`p-4 rounded-xl border ${hasIssues ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-100'
                                             }`}>
-                                            <div className="flex justify-between items-center mb-2">
-                                                <span className="text-sm font-medium text-slate-700">
-                                                    {day.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' })}
+                                            <div className="flex justify-between items-start mb-3">
+                                                <span className="text-sm font-bold text-slate-700 uppercase tracking-wide">
+                                                    {day.toLocaleDateString('es-ES', { weekday: 'long' })} <span className="text-slate-400 font-normal ml-1">{day.getDate()}</span>
                                                 </span>
-                                                {(isLate || isEarlyDep) && (
-                                                    <button
-                                                        onClick={() => handleSendWarning(
-                                                            employee.userId,
-                                                            entrada?.id || salida?.id,
-                                                            dayStr,
-                                                            employee.userName
-                                                        )}
-                                                        className="text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
-                                                    >
-                                                        Dar Aviso
-                                                    </button>
+                                                {hasIssues && (
+                                                    <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                                        INCIDENCIA
+                                                    </span>
                                                 )}
                                             </div>
-                                            <div className="text-xs space-y-1">
-                                                <div className={isLate ? 'text-red-700' : 'text-green-700'}>
-                                                    Entrada: {formatTime(entrada?.timestamp)}
-                                                </div>
-                                                <div className={isEarlyDep ? 'text-red-700' : 'text-green-700'}>
-                                                    Salida: {formatTime(salida?.timestamp)}
-                                                </div>
+
+                                            <div className="space-y-2">
+                                                {Array.from({ length: Math.max(entradas.length, salidas.length) }).map((_, i) => (
+                                                    <div key={i} className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm text-sm">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] text-slate-400 uppercase">Entrada</span>
+                                                            <span className={`font-mono font-medium ${entradas[i]?.isLate ? 'text-red-600' : 'text-slate-900'}`}>{formatTime(entradas[i]?.timestamp)}</span>
+                                                        </div>
+                                                        <div className="text-slate-300">→</div>
+                                                        <div className="flex flex-col items-end">
+                                                            <span className="text-[10px] text-slate-400 uppercase">Salida</span>
+                                                            <span className={`font-mono font-medium ${salidas[i]?.isEarlyDeparture ? 'text-red-600' : 'text-slate-900'}`}>{formatTime(salidas[i]?.timestamp)}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
+
+                                            {hasIssues && !dayFichajes.some((f: any) => f.hasNotification) && (
+                                                <button
+                                                    onClick={() => handleSendWarning(
+                                                        employee.userId,
+                                                        entradas[0]?.id || salidas[0]?.id,
+                                                        dayStr,
+                                                        employee.userName
+                                                    )}
+                                                    className="mt-3 w-full bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 rounded-lg transition-colors shadow-sm"
+                                                >
+                                                    DAR AVISO
+                                                </button>
+                                            )}
+
+                                            {dayFichajes.some((f: any) => f.hasNotification) && (
+                                                <div className="mt-3 pt-3 border-t border-black/5 text-center">
+                                                    {dayFichajes.some((f: any) => f.notificationRead) ? (
+                                                        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
+                                                            ✓ Aviso Leído
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-700">
+                                                            ⚠ Aviso Enviado
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -391,6 +412,7 @@ export const ManagerFichajes: React.FC = () => {
             {/* Confirmation Modal */}
             <ConfirmModal
                 isOpen={showModal}
+                isLoading={isSending}
                 onClose={() => setShowModal(false)}
                 onConfirm={confirmSendWarning}
                 title="Enviar Aviso"
