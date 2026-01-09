@@ -17,18 +17,17 @@ export const useSettings = () => {
                 const response = await fetch('/api/admin/settings');
                 const data = await response.json();
 
-                console.log('🔍 Settings received from API:', data);
-                console.log('🌐 Current origin:', window.location.origin);
+
 
                 // Convert relative URLs to absolute URLs for mobile compatibility
                 const processedSettings = { ...data };
                 if (data.logoUrl && data.logoUrl.startsWith('/uploads')) {
                     processedSettings.logoUrl = `${window.location.origin}${data.logoUrl}`;
-                    console.log('✅ Converted logoUrl:', processedSettings.logoUrl);
+
                 }
                 if (data.adminLogoUrl && data.adminLogoUrl.startsWith('/uploads')) {
                     processedSettings.adminLogoUrl = `${window.location.origin}${data.adminLogoUrl}`;
-                    console.log('✅ Converted adminLogoUrl:', processedSettings.adminLogoUrl);
+
                 }
 
                 setSettings(processedSettings);

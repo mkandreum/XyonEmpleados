@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Layout } from './components/Layout';
@@ -11,16 +11,20 @@ import { VacationsPage } from './pages/Vacations';
 import { AbsencesPage } from './pages/Absences';
 import { NewsPage } from './pages/News';
 import { ProfilePage } from './pages/Profile';
-import { AdminDashboard } from './pages/admin/Dashboard';
-import { AdminUsers } from './pages/admin/Users';
-import { AdminVacations } from './pages/admin/Vacations';
-import { AdminSettings } from './pages/admin/Settings';
-import { AdminNews } from './pages/admin/News';
-import { AdminEvents } from './pages/admin/Events';
-import { AdminPayrolls } from './pages/admin/Payrolls';
-import { AdminBenefits } from './pages/admin/Benefits';
-import { TeamRequests } from './pages/manager/TeamRequests';
-import { TeamCalendar } from './pages/manager/TeamCalendar';
+
+// Lazy load admin pages
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard').then(m => ({ default: m.AdminDashboard })));
+const AdminUsers = lazy(() => import('./pages/admin/Users').then(m => ({ default: m.AdminUsers })));
+const AdminVacations = lazy(() => import('./pages/admin/Vacations').then(m => ({ default: m.AdminVacations })));
+const AdminSettings = lazy(() => import('./pages/admin/Settings').then(m => ({ default: m.AdminSettings })));
+const AdminNews = lazy(() => import('./pages/admin/News').then(m => ({ default: m.AdminNews })));
+const AdminEvents = lazy(() => import('./pages/admin/Events').then(m => ({ default: m.AdminEvents })));
+const AdminPayrolls = lazy(() => import('./pages/admin/Payrolls').then(m => ({ default: m.AdminPayrolls })));
+const AdminBenefits = lazy(() => import('./pages/admin/Benefits').then(m => ({ default: m.AdminBenefits })));
+
+// Lazy load manager pages
+const TeamRequests = lazy(() => import('./pages/manager/TeamRequests').then(m => ({ default: m.TeamRequests })));
+const TeamCalendar = lazy(() => import('./pages/manager/TeamCalendar').then(m => ({ default: m.TeamCalendar })));
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated } = useAuth();
@@ -34,7 +38,13 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     const { user, isAuthenticated } = useAuth();
     if (!isAuthenticated) return <Navigate to="/login" replace />;
     if (user?.role !== 'ADMIN') return <Navigate to="/" replace />;
-    return <AdminLayout>{children}</AdminLayout>;
+    return (
+        <AdminLayout>
+            <Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>}>
+                {children}
+            </Suspense>
+        </AdminLayout>
+    );
 };
 
 const AppRoutes = () => {
