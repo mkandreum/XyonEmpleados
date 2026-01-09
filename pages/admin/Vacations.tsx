@@ -42,6 +42,24 @@ export const AdminVacations: React.FC = () => {
         }
     };
 
+    const getTypeLabel = (type: string) => {
+        switch (type) {
+            case 'VACATION': return 'Vacaciones';
+            case 'SICK_LEAVE': return 'Baja Médica';
+            case 'PERSONAL': return 'Asuntos Propios';
+            default: return type;
+        }
+    };
+
+    const getTypeBadgeColor = (type: string) => {
+        switch (type) {
+            case 'VACATION': return 'bg-indigo-100 text-indigo-700';
+            case 'SICK_LEAVE': return 'bg-rose-100 text-rose-700';
+            case 'PERSONAL': return 'bg-amber-100 text-amber-700';
+            default: return 'bg-slate-100 text-slate-700';
+        }
+    };
+
     if (isLoading) return <div className="p-8 text-center text-slate-500">Cargando solicitudes...</div>;
 
     return (
@@ -56,7 +74,7 @@ export const AdminVacations: React.FC = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Empleado</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Fecha Inicio</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Fecha Fin</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Días</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Duración</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Tipo</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Justificante</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</th>
@@ -77,10 +95,12 @@ export const AdminVacations: React.FC = () => {
                                         {new Date(req.endDate).toLocaleDateString()}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                                        {req.days}
+                                        {req.hours ? `${req.hours} horas` : `${req.days} días`}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                                        {req.type}
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeBadgeColor(req.type)}`}>
+                                            {getTypeLabel(req.type)}
+                                        </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                                         {req.justificationUrl ? (
