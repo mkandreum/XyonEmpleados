@@ -66,109 +66,99 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
     const companyName = settings.companyName || 'Velilla';
 
     return (
-        <div className="min-h-screen bg-slate-50">
-            {/* Sidebar Desktop */}
-            <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 bg-slate-900 border-r border-slate-800">
-                {/* Logo */}
-                <div className="flex items-center gap-3 px-6 py-6 border-b border-slate-800">
-                    {logoUrl ? (
-                        <img src={logoUrl} alt={companyName} className="w-auto object-contain max-w-full" />
-                    ) : (
-                        <h1 className="text-xl font-bold text-white">{companyName}<span className="text-blue-500">Admin</span></h1>
-                    )}
-                </div>
+        <div className="flex h-screen bg-slate-100 overflow-hidden">
+            {/* Sidebar - Desktop & Mobile Wrapper */}
+            <aside
+                className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+                    }`}
+            >
+                <div className="flex flex-col h-full">
+                    {/* Logo */}
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+                        {logoUrl ? (
+                            <img src={logoUrl} alt={companyName} className="w-auto h-8 object-contain max-w-full" />
+                        ) : (
+                            <h1 className="text-xl font-bold text-white">{companyName}<span className="text-blue-500">Admin</span></h1>
+                        )}
+                        <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden text-slate-400 hover:text-white">
+                            <X size={24} />
+                        </button>
+                    </div>
 
-                {/* Navigation */}
-                <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1 dark-scrollbar">
-                    {menuItems.map((item) => (
-                        <SidebarItem
-                            key={item.path}
-                            to={item.path}
-                            icon={item.icon}
-                            label={item.label}
-                            active={location.pathname === item.path}
-                        />
-                    ))}
-                </nav>
+                    {/* Navigation */}
+                    <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1 dark-scrollbar">
+                        {menuItems.map((item) => (
+                            <SidebarItem
+                                key={item.path}
+                                to={item.path}
+                                icon={item.icon}
+                                label={item.label}
+                                active={location.pathname === item.path}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            />
+                        ))}
+                    </nav>
 
-                {/* User Section */}
-                <div className="border-t border-slate-800 px-4 py-4">
-                    <Link to="/admin/settings" className="flex items-center gap-3 mb-3 hover:bg-slate-800 rounded-lg p-2 transition-colors">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
-                            {user?.name?.charAt(0) || 'A'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-white truncate">{user?.name}</p>
-                            <p className="text-xs text-slate-400 truncate">Administrador</p>
-                        </div>
-                    </Link>
-                    <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors"
-                    >
-                        <LogOut size={18} />
-                        <span className="font-medium">Cerrar Sesión</span>
-                    </button>
+                    {/* User Section (Bottom Sidebar) */}
+                    <div className="border-t border-slate-800 px-4 py-4">
+                        <Link to="/admin/settings" className="flex items-center gap-3 mb-3 hover:bg-slate-800 rounded-lg p-2 transition-colors">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                                {user?.name?.charAt(0) || 'A'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-white truncate">{user?.name}</p>
+                                <p className="text-xs text-slate-400 truncate">Administrador</p>
+                            </div>
+                        </Link>
+                        <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors"
+                        >
+                            <LogOut size={18} />
+                            <span className="font-medium">Cerrar Sesión</span>
+                        </button>
+                    </div>
                 </div>
             </aside>
 
-            {/* Mobile Header */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-50">
-                <div className="flex items-center gap-3">
-                    {logoUrl ? (
-                        <img src={logoUrl} alt={companyName} className="w-auto h-8" />
-                    ) : (
-                        <h1 className="text-lg font-bold text-slate-900">{companyName}<span className="text-blue-600">Admin</span></h1>
-                    )}
-                </div>
-                <button
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className="p-2 hover:bg-slate-100 rounded-lg"
-                >
-                    {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                </button>
+            {/* Main Content Wrapper */}
+            <div className="flex-1 flex flex-col h-screen overflow-hidden">
+                {/* Header (Mobile Toggle & Title/Breadcrumbs if needed, simplified for Admin) */}
+                <header className="bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-8 z-10">
+                    <button
+                        onClick={() => setIsMobileMenuOpen(true)}
+                        className="lg:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-md"
+                    >
+                        <Menu size={24} />
+                    </button>
+
+                    {/* Title or decorative element could go here, but for now we keep it clean or align right */}
+                    <div className="flex-1"></div>
+
+                    {/* Right Header Controls */}
+                    <div className="flex items-center gap-4">
+                        {/* We can add Admin Notifications or just the profile link again if desired, 
+                             but the Sidebar already has profile. 
+                             Let's just keep it clean or maybe a Notification bell if Admin has them. 
+                             Not essential for "matching layout" logic but header presence is key. */}
+                    </div>
+                </header>
+
+                {/* Page Content */}
+                <main className="flex-1 overflow-auto bg-slate-50 p-4 lg:p-8">
+                    <div className="max-w-7xl mx-auto">
+                        {children}
+                    </div>
+                </main>
             </div>
 
-            {/* Mobile Menu */}
+            {/* Mobile Overlay */}
             {isMobileMenuOpen && (
-                <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setIsMobileMenuOpen(false)}>
-                    <div className="fixed inset-y-0 left-0 w-64 bg-slate-900 shadow-xl" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-800 mt-safe">
-                            {logoUrl ? (
-                                <img src={logoUrl} alt={companyName} className="w-auto h-8 object-contain" />
-                            ) : (
-                                <h1 className="text-xl font-bold text-white">{companyName}<span className="text-blue-500">Admin</span></h1>
-                            )}
-                        </div>
-                        <div className="px-4 py-6 space-y-1">
-                            {menuItems.map((item) => (
-                                <SidebarItem
-                                    key={item.path}
-                                    to={item.path}
-                                    icon={item.icon}
-                                    label={item.label}
-                                    active={location.pathname === item.path}
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                />
-                            ))}
-                            <button
-                                onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                                className="w-full flex items-center gap-2 px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors mt-4"
-                            >
-                                <LogOut size={20} />
-                                <span className="font-medium">Cerrar Sesión</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <div
+                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                ></div>
             )}
-
-            {/* Main Content */}
-            <main className="lg:pl-64 pt-16 lg:pt-0">
-                <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto">
-                    {children}
-                </div>
-            </main>
         </div>
     );
 };
