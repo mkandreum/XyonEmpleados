@@ -162,8 +162,11 @@ const updateUserBalanceLogic = async (userId, type, days, hours) => {
     // Priority to hours if provided
     if (hours) {
         // Both SICK_LEAVE (Horas médicas) and PERSONAL (Asuntos Propios) consume paidAbsenceHours
-        if (type === 'PERSONAL' || type === 'SICK_LEAVE') {
+        if (type === 'PERSONAL') {
             updateData.paidAbsenceHoursUsed = balance.paidAbsenceHoursUsed + hours;
+        } else if (type === 'SICK_LEAVE') {
+            // "Bajas Médicas" / "Horas Médicas" now tracks HOURS in the sickLeaveDaysUsed field
+            updateData.sickLeaveDaysUsed = balance.sickLeaveDaysUsed + hours;
         }
     } else {
         // Legacy/Days logic

@@ -351,12 +351,12 @@ export const VacationsPage: React.FC = () => {
                         <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
                             <div className="flex items-center gap-2 mb-2">
                                 <span className="p-1.5 bg-red-100 text-red-600 rounded-lg"><AlertCircle size={16} /></span>
-                                <h3 className="font-semibold text-slate-700 text-sm">Bajas Médicas</h3>
+                                <h3 className="font-semibold text-slate-700 text-sm">Horas Médicas</h3>
                             </div>
                             <p className="text-2xl font-bold text-slate-900">
-                                {deptBenefits?.sickLeaveDays ? (deptBenefits.sickLeaveDays - (userBenefits?.sickLeaveDaysUsed || 0)) : 0}
+                                {deptBenefits?.sickLeaveDays ? (deptBenefits.sickLeaveDays - (userBenefits?.sickLeaveDaysUsed || 0)) : 0}h
                             </p>
-                            <p className="text-xs text-slate-400">Días restantes de {deptBenefits?.sickLeaveDays || 0}</p>
+                            <p className="text-xs text-slate-400">Restantes de {deptBenefits?.sickLeaveDays || 0}h</p>
                         </div>
                         <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
                             <div className="flex items-center gap-2 mb-2">
