@@ -87,6 +87,12 @@ exports.register = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Get default avatar from settings
+        const defaultAvatarSetting = await prisma.globalSettings.findUnique({
+            where: { key: 'defaultAvatarUrl' }
+        });
+        const avatarUrl = defaultAvatarSetting?.value || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`;
+
         const user = await prisma.user.create({
             data: {
                 name,
@@ -95,7 +101,7 @@ exports.register = async (req, res) => {
                 department: department || 'General',
                 position: position || 'Employee',
                 role: 'EMPLOYEE',
-                avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`
+                avatarUrl
             }
         });
 

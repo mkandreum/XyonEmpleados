@@ -219,7 +219,7 @@ exports.getSettings = async (req, res) => {
 
 exports.updateSettings = async (req, res) => {
     try {
-        const settings = req.body; // Expects object like { logoUrl: '...', companyName: '...' }
+        const settings = req.body; // Expects object like { logoUrl: '...', companyName: '...', defaultAvatarUrl: '...' }
         const keys = Object.keys(settings);
 
         // Upsert each setting
@@ -232,6 +232,23 @@ exports.updateSettings = async (req, res) => {
         );
 
         await Promise.all(promises);
+
+        // If defaultAvatarUrl was updated, apply it to all users who are using ui-avatars
+        if (settings.defaultAvatarUrl) {
+            await prisma.user.updateMany({
+                where: {
+                    OR: [
+                        { avatarUrl: { startsWith: 'https://ui-avatars.com' } },
+                        { avatarUrl: null }
+                    ]
+                },
+                data: {
+                    avatarUrl: settings.defaultAvatarUrl
+                }
+            });
+            console.log('✅ Updated all users with default avatar:', settings.defaultAvatarUrl);
+        }
+
         res.json({ message: 'Settings updated successfully' });
     } catch (error) {
         console.error("Update settings error:", error);
