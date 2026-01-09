@@ -125,7 +125,7 @@ export const FloatingNavbar: React.FC = () => {
                                 rounded-full transition-colors duration-200
                                 ${isActive
                                     ? 'text-blue-700 dark:text-blue-400'
-                                    : 'text-blue-900 dark:text-blue-300 hover:bg-white/20 dark:hover:bg-slate-800/30 hover:text-blue-950 dark:hover:text-blue-200'}
+                                    : 'text-blue-700 dark:text-blue-400 hover:bg-white/20 dark:hover:bg-slate-800/30 hover:text-blue-800 dark:hover:text-blue-300'}
                             `}
                         >
                             <Icon size={isMobile ? 20 : 22} strokeWidth={isActive ? 3 : 2} className="transition-transform duration-200" />
@@ -149,7 +149,7 @@ export const FloatingNavbar: React.FC = () => {
                                 rounded-full transition-colors duration-200
                                 ${showMore
                                     ? 'text-blue-700 dark:text-blue-400 bg-white/50 dark:bg-slate-800/50'
-                                    : 'text-blue-900 dark:text-blue-300 hover:bg-white/20 dark:hover:bg-slate-800/30 hover:text-blue-950 dark:hover:text-blue-200'}
+                                    : 'text-blue-700 dark:text-blue-400 hover:bg-white/20 dark:hover:bg-slate-800/30 hover:text-blue-800 dark:hover:text-blue-300'}
                             `}
                         >
                             <MoreHorizontal size={22} />
@@ -179,7 +179,7 @@ export const FloatingNavbar: React.FC = () => {
                                                 flex items-center gap-3 px-4 py-3 rounded-xl transition-colors
                                                 ${isActive
                                                     ? 'bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400'
-                                                    : 'text-blue-900 dark:text-blue-300 hover:bg-white/50 dark:hover:bg-slate-800/50'}
+                                                    : 'text-blue-700 dark:text-blue-400 hover:bg-white/50 dark:hover:bg-slate-800/50'}
                                             `}
                                         >
                                             <Icon size={18} />
