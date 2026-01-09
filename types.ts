@@ -126,6 +126,9 @@ export interface Fichaje {
   timestamp: string;
   department: string;
   createdAt: string;
+  latitude?: number;
+  longitude?: number;
+  accuracy?: number;
 }
 
 export interface DepartmentSchedule {
