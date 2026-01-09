@@ -184,43 +184,44 @@ export const AdminVacations: React.FC = () => {
 
             {/* Pending Requests Section */}
             {pendingRequests.length > 0 && (
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-lg p-6">
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-lg p-4 md:p-6">
                     <div className="flex items-center gap-2 mb-4">
                         <AlertCircle className="text-amber-600" size={24} />
-                        <h2 className="text-xl font-bold text-amber-900">
+                        <h2 className="text-lg md:text-xl font-bold text-amber-900">
                             Solicitudes Pendientes ({pendingRequests.length})
                         </h2>
                     </div>
 
                     <div className="space-y-3">
                         {pendingRequests.map(request => (
-                            <div key={request.id} className="bg-white rounded-lg p-4 shadow-sm border border-amber-100">
-                                <div className="flex items-center justify-between">
+                            <div key={request.id} className="bg-white rounded-lg p-3 md:p-4 shadow-sm border border-amber-100">
+                                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                     <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-2">
+                                        <div className="flex flex-wrap items-center gap-2 mb-2">
                                             <span className="font-semibold text-slate-800">{request.user.name}</span>
-                                            <span className="text-sm text-slate-500">•</span>
+                                            <span className="text-sm text-slate-500 hidden md:inline">•</span>
                                             <span className="text-sm text-slate-600">{request.user.department}</span>
                                         </div>
-                                        <div className="flex items-center gap-4 text-sm text-slate-600">
+                                        <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-slate-600">
                                             <span>{formatDate(request.startDate)} - {formatDate(request.endDate)}</span>
-                                            <span>•</span>
+                                            <span className="hidden md:inline">•</span>
                                             <span>{request.days ? `${request.days} días` : `${request.hours} horas`}</span>
-                                            <span>•</span>
-                                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md font-medium">
+                                            <span className="hidden md:inline">•</span>
+                                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md font-medium text-xs">
                                                 {getTypeLabel(request.type)}
                                             </span>
                                             {request.justificationUrl && (
                                                 <>
-                                                    <span>•</span>
+                                                    <span className="hidden md:inline">•</span>
                                                     <a
                                                         href={request.justificationUrl}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                                        className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-xs md:text-sm"
                                                     >
                                                         <FileText size={16} />
-                                                        Ver justificante
+                                                        <span className="hidden md:inline">Ver justificante</span>
+                                                        <span className="md:hidden">Ver</span>
                                                     </a>
                                                 </>
                                             )}
@@ -229,17 +230,19 @@ export const AdminVacations: React.FC = () => {
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => handleStatusUpdate(request.id, 'APPROVED')}
-                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                                            className="flex-1 md:flex-none px-3 md:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm"
                                         >
-                                            <Check size={18} />
-                                            Aprobar
+                                            <Check size={16} />
+                                            <span className="hidden md:inline">Aprobar</span>
+                                            <span className="md:hidden">✓</span>
                                         </button>
                                         <button
                                             onClick={() => handleStatusUpdate(request.id, 'REJECTED')}
-                                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                                            className="flex-1 md:flex-none px-3 md:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 text-sm"
                                         >
-                                            <X size={18} />
-                                            Rechazar
+                                            <X size={16} />
+                                            <span className="hidden md:inline">Rechazar</span>
+                                            <span className="md:hidden">✗</span>
                                         </button>
                                     </div>
                                 </div>
@@ -249,16 +252,16 @@ export const AdminVacations: React.FC = () => {
                 </div>
             )}
 
-            {/* Historical Section */}
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200">
+            {/* Historical Section - Desktop Only */}
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 hidden md:block">
                 <div className="p-4 border-b border-slate-200 flex justify-between items-center">
                     <h2 className="text-lg font-semibold text-slate-800">Historial de Solicitudes</h2>
                     <div className="flex gap-2">
                         <button
                             onClick={() => setViewMode('grouped')}
                             className={`px-4 py-2 rounded-lg transition-colors ${viewMode === 'grouped'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                 }`}
                         >
                             👥 Agrupado
@@ -266,8 +269,8 @@ export const AdminVacations: React.FC = () => {
                         <button
                             onClick={() => setViewMode('list')}
                             className={`px-4 py-2 rounded-lg transition-colors ${viewMode === 'list'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                 }`}
                         >
                             📋 Lista
@@ -318,8 +321,8 @@ export const AdminVacations: React.FC = () => {
                                                                 {getTypeLabel(request.type)}
                                                             </span>
                                                             <span className={`px-2 py-1 rounded text-xs font-medium ${request.status === 'APPROVED'
-                                                                    ? 'bg-green-100 text-green-700'
-                                                                    : 'bg-red-100 text-red-700'
+                                                                ? 'bg-green-100 text-green-700'
+                                                                : 'bg-red-100 text-red-700'
                                                                 }`}>
                                                                 {getStatusLabel(request.status)}
                                                             </span>
@@ -375,8 +378,8 @@ export const AdminVacations: React.FC = () => {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <span className={`px-2 py-1 rounded-md text-xs font-medium ${request.status === 'APPROVED'
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-red-100 text-red-700'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-red-100 text-red-700'
                                                     }`}>
                                                     {getStatusLabel(request.status)}
                                                 </span>
