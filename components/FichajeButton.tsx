@@ -3,40 +3,23 @@ import { LogIn, LogOut, Loader2, Clock } from 'lucide-react';
 import { fichajeService } from '../services/api';
 import { FichajeTipo } from '../types';
 
-export const FichajeButton: React.FC = () => {
+interface FichajeButtonProps {
+    onFichajeChange?: () => void;
+}
+
+export const FichajeButton: React.FC<FichajeButtonProps> = ({ onFichajeChange }) => {
     const [loading, setLoading] = useState(false);
     const [hasActiveEntry, setHasActiveEntry] = useState(false);
     const [checking, setChecking] = useState(true);
-    const [todayFichajes, setTodayFichajes] = useState<any[]>([]);
 
     const checkCurrentStatus = async () => {
         try {
             const status = await fichajeService.getCurrent();
             setHasActiveEntry(status.hasActiveEntry);
-
-            // Cargar fichajes de hoy
-            await loadTodayFichajes();
         } catch (error) {
             console.error('Error checking fichaje status:', error);
         } finally {
             setChecking(false);
-        }
-    };
-
-    const loadTodayFichajes = async () => {
-        try {
-            const today = new Date();
-            const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-            const endOfDay = new Date(today.setHours(23, 59, 59, 999));
-
-            const history = await fichajeService.getHistory({
-                startDate: startOfDay.toISOString(),
-                endDate: endOfDay.toISOString()
-            });
-
-            setTodayFichajes(history);
-        } catch (error) {
-            console.error('Error loading today fichajes:', error);
         }
     };
 
@@ -52,8 +35,10 @@ export const FichajeButton: React.FC = () => {
 
             setHasActiveEntry(result.status.hasActiveEntry);
 
-            // Recargar fichajes de hoy
-            await loadTodayFichajes();
+            // Notify parent
+            if (onFichajeChange) {
+                onFichajeChange();
+            }
 
             // Show success message
             const message = tipo === FichajeTipo.ENTRADA
@@ -84,10 +69,6 @@ export const FichajeButton: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const formatTime = (timestamp: string) => {
-        return new Date(timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
     };
 
     if (checking) {
@@ -131,26 +112,6 @@ export const FichajeButton: React.FC = () => {
                     </>
                 )}
             </button>
-
-            {/* Historial de hoy */}
-            {todayFichajes.length > 0 && (
-                <div className="w-full max-w-md bg-white/50 rounded-lg p-3 border border-blue-100">
-                    <div className="flex items-center gap-2 mb-2">
-                        <Clock size={14} className="text-blue-600" />
-                        <span className="text-xs font-medium text-slate-700">Fichajes de hoy:</span>
-                    </div>
-                    <div className="space-y-1">
-                        {todayFichajes.map((fichaje, index) => (
-                            <div key={index} className="flex items-center justify-between text-xs">
-                                <span className={`font-medium ${fichaje.tipo === 'ENTRADA' ? 'text-blue-600' : 'text-green-600'}`}>
-                                    {fichaje.tipo === 'ENTRADA' ? '→ Entrada' : '← Salida'}
-                                </span>
-                                <span className="text-slate-600">{formatTime(fichaje.timestamp)}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

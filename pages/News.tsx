@@ -8,7 +8,7 @@ export const NewsPage: React.FC = () => {
   // State for sub-tabs and data
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'news' | 'attendance'>('news');
-  const [attendanceSubTab, setAttendanceSubTab] = useState<'received' | 'sent'>('received');
+  // Removed attendanceSubTab state
   const [news, setNews] = useState<NewsItem[]>([]);
   const [warnings, setWarnings] = useState<LateArrivalNotification[]>([]);
   const [sentWarnings, setSentWarnings] = useState<LateArrivalNotification[]>([]); // For managers
@@ -25,13 +25,12 @@ export const NewsPage: React.FC = () => {
     if (activeTab === 'news') {
       fetchNews();
     } else {
-      if (attendanceSubTab === 'received') {
-        fetchWarnings();
-      } else {
+      if (user?.role !== 'EMPLOYEE') {
         fetchSentWarnings();
       }
+      fetchWarnings();
     }
-  }, [activeTab, attendanceSubTab]);
+  }, [activeTab]);
 
   const fetchNews = async () => {
     setLoading(true);
@@ -177,163 +176,153 @@ export const NewsPage: React.FC = () => {
         </div>
       ) : (
         /* Attendance Warnings Tab */
-        <div className="space-y-4">
-          {/* Sub-tabs for Managers */}
-          {user?.role !== 'EMPLOYEE' && (
-            <div className="flex gap-2 mb-4">
-              <button
-                onClick={() => setAttendanceSubTab('received')}
-                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${attendanceSubTab === 'received' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-              >
-                Recibidos
-              </button>
-              <button
-                onClick={() => setAttendanceSubTab('sent')}
-                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${attendanceSubTab === 'sent' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-              >
-                Enviados
-              </button>
-            </div>
-          )}
-
-          {attendanceSubTab === 'received' ? (
-            /* Received Warnings View (Existing) */
-            <>
-              {loading ? (
-                <div className="text-center py-10 text-slate-500">Cargando avisos...</div>
-              ) : warnings.length === 0 ? (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-12 text-center">
-                  <CheckCircle className="mx-auto text-green-500 mb-4" size={48} />
-                  <h3 className="text-lg font-medium text-slate-900">Todo en orden</h3>
-                  <p className="text-slate-500">No tienes avisos de asistencia pendientes.</p>
-                </div>
-              ) : (
-                warnings.map((warning) => (
-                  <div key={warning.id} className={`bg-white rounded-xl shadow-sm border p-6 transition-all ${warning.justificado ? 'border-green-200 bg-green-50/30' : 'border-red-200 bg-red-50/30'}`}>
-                    <div className="flex flex-col md:flex-row justify-between gap-4">
-                      <div className="flex items-start gap-4">
-                        <div className={`p-3 rounded-lg ${warning.justificado ? 'bg-green-100' : 'bg-red-100'}`}>
-                          {warning.justificado ? (
-                            <CheckCircle className="text-green-600" size={24} />
-                          ) : (
-                            <AlertTriangle className="text-red-600" size={24} />
-                          )}
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                            Llegada Tarde
-                            {!warning.justificado && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                                Pendiente
-                              </span>
-                            )}
-                          </h3>
-                          <p className="text-sm text-slate-600 mt-1">
-                            Has recibido un aviso por llegada tarde el día <span className="font-medium">{new Date(warning.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</span>.
-                          </p>
-                          {warning.justificado && (
-                            <div className="mt-3 bg-white/50 p-3 rounded-lg border border-green-100 text-sm">
-                              <span className="font-medium text-green-800">Tu justificación:</span>
-                              <p className="text-slate-700 mt-1 italic">"{warning.justificacionTexto}"</p>
-                            </div>
-                          )}
-                        </div>
+        <div className="space-y-8">
+          {/* Received Warnings Section */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-slate-900 border-b border-slate-200 pb-2">
+              Avisos Recibidos
+            </h2>
+            {loading ? (
+              <div className="text-center py-6 text-slate-500">Cargando avisos...</div>
+            ) : warnings.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 text-center">
+                <CheckCircle className="mx-auto text-green-500 mb-4" size={32} />
+                <h3 className="text-md font-medium text-slate-900">Todo en orden</h3>
+                <p className="text-sm text-slate-500">No tienes avisos pendientes.</p>
+              </div>
+            ) : (
+              warnings.map((warning) => (
+                <div key={warning.id} className={`bg-white rounded-xl shadow-sm border p-6 transition-all ${warning.justificado ? 'border-green-200 bg-green-50/30' : 'border-red-200 bg-red-50/30'}`}>
+                  <div className="flex flex-col md:flex-row justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className={`p-3 rounded-lg ${warning.justificado ? 'bg-green-100' : 'bg-red-100'}`}>
+                        {warning.justificado ? (
+                          <CheckCircle className="text-green-600" size={24} />
+                        ) : (
+                          <AlertTriangle className="text-red-600" size={24} />
+                        )}
                       </div>
-
-                      <div className="flex flex-col items-end gap-2">
-                        <div className="flex items-center gap-2">
-                          {!warning.leido && (
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await lateNotificationService.markAsRead(warning.id);
-                                  fetchWarnings();
-                                } catch (e) { console.error(e); }
-                              }}
-                              className="px-3 py-1 bg-white border border-slate-300 text-slate-600 text-xs font-medium rounded hover:bg-slate-50 transition-colors"
-                            >
-                              Marcar Leído
-                            </button>
-                          )}
+                      <div>
+                        <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                          Llegada Tarde
                           {!warning.justificado && (
-                            <button
-                              onClick={() => handleOpenJustify(warning)}
-                              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
-                            >
-                              Justificar
-                            </button>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                              Pendiente
+                            </span>
                           )}
-                        </div>
-                        <div className="text-xs text-slate-400">
-                          {new Date(warning.createdAt).toLocaleDateString()}
-                        </div>
+                        </h3>
+                        <p className="text-sm text-slate-600 mt-1">
+                          Has recibido un aviso por llegada tarde el día <span className="font-medium">{new Date(warning.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</span>.
+                        </p>
+                        {warning.justificado && (
+                          <div className="mt-3 bg-white/50 p-3 rounded-lg border border-green-100 text-sm">
+                            <span className="font-medium text-green-800">Tu justificación:</span>
+                            <p className="text-slate-700 mt-1 italic">"{warning.justificacionTexto}"</p>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))
-              )}
-            </>
-          ) : (
-            /* Sent Warnings View (New) */
-            <>
-              {loading ? (
-                <div className="text-center py-10 text-slate-500">Cargando avisos enviados...</div>
-              ) : sentWarnings.length === 0 ? (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-12 text-center">
-                  <Clock className="mx-auto text-slate-300 mb-4" size={48} />
-                  <h3 className="text-lg font-medium text-slate-900">Sin avisos enviados</h3>
-                  <p className="text-slate-500">No has enviado avisos de llegada tarde.</p>
-                </div>
-              ) : (
-                sentWarnings.map((warning) => (
-                  <div key={warning.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                    <div className="flex flex-col md:flex-row justify-between gap-4">
-                      <div className="flex items-start gap-4">
-                        <div className="p-3 rounded-lg bg-blue-50">
-                          <Clock className="text-blue-600" size={24} />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-slate-900">
-                            Aviso a {warning.user?.name || 'Empleado'}
-                          </h3>
-                          <p className="text-sm text-slate-600 mt-1">
-                            Día: <span className="font-medium">{new Date(warning.fecha).toLocaleDateString('es-ES')}</span>
-                          </p>
 
-                          <div className="mt-3 flex items-center gap-4 text-sm">
-                            <div className="flex items-center gap-1.5">
-                              {warning.leido ? (
-                                <><CheckCircle size={16} className="text-green-500" /> <span className="text-green-700 font-medium">Leído</span></>
-                              ) : (
-                                <><Clock size={16} className="text-slate-400" /> <span className="text-slate-500">No leído</span></>
-                              )}
-                            </div>
-                            <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
-                            <div className="flex items-center gap-1.5">
-                              {warning.justificado ? (
-                                <><Tag size={16} className="text-green-500" /> <span className="text-green-700 font-medium">Justificado</span></>
-                              ) : (
-                                <><AlertTriangle size={16} className="text-orange-500" /> <span className="text-orange-600 font-medium">Sin justificar</span></>
-                              )}
-                            </div>
-                          </div>
-
-                          {warning.justificado && warning.justificacionTexto && (
-                            <div className="mt-3 bg-slate-50 p-3 rounded-lg border border-slate-100 text-sm">
-                              <span className="font-medium text-slate-700">Justificación:</span>
-                              <p className="text-slate-600 mt-1 italic">"{warning.justificacionTexto}"</p>
-                            </div>
-                          )}
-                        </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-2">
+                        {!warning.leido && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await lateNotificationService.markAsRead(warning.id);
+                                fetchWarnings();
+                              } catch (e) { console.error(e); }
+                            }}
+                            className="px-3 py-1 bg-white border border-slate-300 text-slate-600 text-xs font-medium rounded hover:bg-slate-50 transition-colors"
+                          >
+                            Marcar Leído
+                          </button>
+                        )}
+                        {!warning.justificado && (
+                          <button
+                            onClick={() => handleOpenJustify(warning)}
+                            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                          >
+                            Justificar
+                          </button>
+                        )}
                       </div>
                       <div className="text-xs text-slate-400">
-                        Enviado: {new Date(warning.createdAt).toLocaleDateString()}
+                        {new Date(warning.createdAt).toLocaleDateString()}
                       </div>
                     </div>
                   </div>
-                ))
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Sent Warnings Section (Managers Only) */}
+          {user?.role !== 'EMPLOYEE' && (
+            <div className="space-y-4 pt-6 border-t border-slate-200">
+              <h2 className="text-lg font-semibold text-slate-900 pb-2">
+                Avisos Enviados por Mí
+              </h2>
+              {loading ? (
+                <div className="text-center py-6 text-slate-500">Cargando avisos enviados...</div>
+              ) : sentWarnings.length === 0 ? (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 text-center opacity-75">
+                  <Clock className="mx-auto text-slate-300 mb-4" size={32} />
+                  <h3 className="text-md font-medium text-slate-900">Sin historial</h3>
+                  <p className="text-sm text-slate-500">No has enviado avisos aún.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {sentWarnings.map((warning) => (
+                    <div key={warning.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 hover:border-blue-200 transition-colors">
+                      <div className="flex flex-col md:flex-row justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 rounded-lg bg-blue-50">
+                            <Clock className="text-blue-600" size={20} />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-slate-900 text-sm">
+                              Aviso a {warning.user?.name || 'Empleado'}
+                            </h3>
+                            <p className="text-xs text-slate-500">
+                              Fecha incidencia: <span className="font-medium text-slate-700">{new Date(warning.fecha).toLocaleDateString('es-ES')}</span>
+                            </p>
+
+                            <div className="mt-2 flex items-center gap-3 text-xs">
+                              <div className="flex items-center gap-1.5">
+                                {warning.leido ? (
+                                  <><CheckCircle size={14} className="text-green-500" /> <span className="text-green-700 font-medium">Leído</span></>
+                                ) : (
+                                  <><Clock size={14} className="text-slate-400" /> <span className="text-slate-500">No leído</span></>
+                                )}
+                              </div>
+                              <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
+                              <div className="flex items-center gap-1.5">
+                                {warning.justificado ? (
+                                  <><Tag size={14} className="text-green-500" /> <span className="text-green-700 font-medium">Justificado</span></>
+                                ) : (
+                                  <><AlertTriangle size={14} className="text-orange-500" /> <span className="text-orange-600 font-medium">Sin justificar</span></>
+                                )}
+                              </div>
+                            </div>
+
+                            {warning.justificado && warning.justificacionTexto && (
+                              <div className="mt-2 bg-slate-50 p-2 rounded border border-slate-100 text-xs">
+                                <span className="font-medium text-slate-700">Justificación:</span>
+                                <p className="text-slate-600 mt-0.5 italic">"{warning.justificacionTexto}"</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-xs text-slate-400 self-start md:self-center bg-slate-50 px-2 py-1 rounded">
+                          Enviado: {new Date(warning.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
-            </>
+            </div>
           )}
         </div>
       )}

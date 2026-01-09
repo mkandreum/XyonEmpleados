@@ -165,7 +165,8 @@ exports.justifyLateArrival = async (req, res) => {
             where: { id },
             data: {
                 justificado: true,
-                justificacionTexto: justificacion
+                justificacionTexto: justificacion,
+                leido: true
             },
             include: {
                 user: {

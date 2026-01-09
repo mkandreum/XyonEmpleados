@@ -6,6 +6,7 @@ import { VacationRequest, Event, Holiday, UserBenefitsBalance, DepartmentBenefit
 import { Calendar, Clock, Briefcase, FileText, Download, ChevronRight, Plane, AlertTriangle } from 'lucide-react';
 import { DigitalClock } from '../components/DigitalClock';
 import { FichajeButton } from '../components/FichajeButton';
+import { TodayFichajesList, TodayFichajesListRef } from '../components/TodayFichajesList';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -19,6 +20,11 @@ export const Dashboard: React.FC = () => {
   const [lastPayroll, setLastPayroll] = useState<Payroll | null>(null);
   const [pendingWarnings, setPendingWarnings] = useState<LateArrivalNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const fichajesListRef = React.useRef<TodayFichajesListRef>(null);
+
+  const handleFichajeChange = () => {
+    fichajesListRef.current?.refresh();
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -169,11 +175,21 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Fichaje Section */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl shadow-sm border border-blue-100">
-        <h2 className="text-xl font-bold text-slate-900 mb-6">Control de Asistencia</h2>
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <DigitalClock />
-          <FichajeButton />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl shadow-sm border border-blue-100 flex flex-col justify-center">
+          <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+            <Clock className="text-blue-600" />
+            Control de Asistencia
+          </h2>
+          <div className="flex flex-col md:flex-row items-center justify-around gap-8">
+            <DigitalClock />
+            <FichajeButton onFichajeChange={handleFichajeChange} />
+          </div>
+        </div>
+
+        {/* Today's Fichajes List - Separate Card */}
+        <div className="lg:col-span-1">
+          <TodayFichajesList ref={fichajesListRef} />
         </div>
       </div>
 
