@@ -90,7 +90,7 @@ export const FloatingNavbar: React.FC = () => {
             {/* Glass Container */}
             <div className="
                 relative flex items-center p-1
-                rounded-2xl sm:rounded-full
+                rounded-full
                 bg-white/40 dark:bg-slate-900/60
                 backdrop-blur-xl
                 border border-white/30 dark:border-slate-700/50
@@ -101,7 +101,7 @@ export const FloatingNavbar: React.FC = () => {
                 {/* Sliding Active Indicator (The "Pill") */}
                 {showSlider && (
                     <div
-                        className="absolute top-1 bottom-1 bg-white dark:bg-slate-800 rounded-xl sm:rounded-full shadow-sm transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] pointer-events-none"
+                        className="absolute top-1 bottom-1 bg-white dark:bg-slate-800 rounded-full shadow-sm transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] pointer-events-none"
                         style={{
                             left: `calc(4px + ${activeIndex * (isMobile ? 64 : 96)}px)`,
                             width: isMobile ? '64px' : '96px'
@@ -123,7 +123,7 @@ export const FloatingNavbar: React.FC = () => {
                                 relative z-10 flex flex-col items-center justify-center gap-1
                                 h-14 sm:h-16
                                 ${isMobile ? 'w-16' : 'w-24'}
-                                rounded-xl sm:rounded-full transition-colors duration-200
+                                rounded-full transition-colors duration-200
                                 ${isActive
                                     ? 'text-blue-700 dark:text-blue-400'
                                     : 'text-slate-500 dark:text-slate-400 hover:bg-white/20 dark:hover:bg-slate-800/30 hover:text-slate-700 dark:hover:text-slate-200'}
@@ -147,7 +147,7 @@ export const FloatingNavbar: React.FC = () => {
                                 flex flex-col items-center justify-center gap-1
                                 h-14 sm:h-16
                                 ${isMobile ? 'w-16' : 'w-24'}
-                                rounded-xl sm:rounded-full transition-colors duration-200
+                                rounded-full transition-colors duration-200
                                 ${showMore
                                     ? 'text-blue-700 dark:text-blue-400 bg-white/50 dark:bg-slate-800/50'
                                     : 'text-slate-500 dark:text-slate-400 hover:bg-white/20 dark:hover:bg-slate-800/30 hover:text-slate-700 dark:hover:text-slate-200'}
