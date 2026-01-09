@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { adminService } from '../../services/api';
 import { User } from '../../types';
 import { Plus, Edit, Trash, Search, User as UserIcon } from 'lucide-react';
+import { ConfirmModal } from '../../components/ConfirmModal';
 
 export const AdminUsers: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
@@ -9,6 +10,8 @@ export const AdminUsers: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<Partial<User> | null>(null);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -70,14 +73,18 @@ export const AdminUsers: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const handleDelete = async (id: string) => {
-        if (window.confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
-            try {
-                await adminService.deleteUser(id);
-                fetchUsers();
-            } catch (error) {
-                alert('Error al eliminar usuario');
-            }
+    const handleDelete = (id: string) => {
+        setUserToDelete(id);
+        setDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!userToDelete) return;
+        try {
+            await adminService.deleteUser(userToDelete);
+            fetchUsers();
+        } catch (error) {
+            alert('Error al eliminar usuario');
         }
     };
 
@@ -309,6 +316,16 @@ export const AdminUsers: React.FC = () => {
                     </div>
                 </div>
             )}
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="Eliminar Usuario"
+                message="¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer."
+                type="danger"
+                confirmText="Eliminar"
+            />
         </div>
     );
 };

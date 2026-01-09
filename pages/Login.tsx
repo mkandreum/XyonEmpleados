@@ -10,6 +10,8 @@ export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [isShaking, setIsShaking] = useState(false);
   const { settings } = useSettings();
 
   // Load remembered email on mount
@@ -32,8 +34,11 @@ export const LoginPage: React.FC = () => {
         localStorage.removeItem('rememberedEmail');
       }
       await login(email, password);
+      await login(email, password);
     } catch (error) {
-      alert("Error al iniciar sesión. Verifica tus credenciales.");
+      setIsError(true);
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 500);
       setIsLoading(false);
     }
   };
@@ -74,8 +79,11 @@ export const LoginPage: React.FC = () => {
                   autoComplete="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 sm:text-sm border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 border"
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setIsError(false);
+                  }}
+                  className={`block w-full pl-10 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 border ${isError ? 'border-red-500 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500' : 'border-slate-300'}`}
                   placeholder="usuario@velilla.com"
                 />
               </div>
@@ -96,8 +104,11 @@ export const LoginPage: React.FC = () => {
                   autoComplete="current-password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 sm:text-sm border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 border"
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setIsError(false);
+                  }}
+                  className={`block w-full pl-10 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 border ${isError ? 'border-red-500 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500' : 'border-slate-300'} ${isShaking ? 'animate-shake' : ''}`}
                   placeholder="••••••••"
                 />
               </div>
