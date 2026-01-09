@@ -57,6 +57,7 @@ exports.upsertDepartmentBenefits = async (req, res) => {
 };
 
 // Get user benefits balance
+// Get user benefits balance
 exports.getUserBenefitsBalance = async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -94,6 +95,38 @@ exports.getUserBenefitsBalance = async (req, res) => {
             where: { department: user.department }
         });
 
+        // --- DYNAMIC CALCULATION FIX ---
+        // Calculate true usage from approved requests to ensure consistency
+        const startOfYear = new Date(currentYear, 0, 1);
+        const endOfYear = new Date(currentYear, 11, 31);
+
+        const approvedVacations = await prisma.vacationRequest.findMany({
+            where: {
+                userId,
+                status: 'APPROVED',
+                type: 'VACATION',
+                startDate: {
+                    gte: startOfYear,
+                    lte: endOfYear
+                }
+            }
+        });
+
+        const calculatedVacationDaysUsed = approvedVacations.reduce((acc, curr) => acc + (curr.days || 0), 0);
+
+        // Calculate others dynamically too if possible, but focusing on Vacations first
+        // For Overtime/Medical/etc, we can stick to stored or calculate similarly.
+        // Let's stick to stored for others for now to minimize risk, but Vacations is the critical bug.
+
+        // Update the stored balance to be correct for next time (self-healing)
+        if (balance.vacationDaysUsed !== calculatedVacationDaysUsed) {
+            await prisma.userBenefitsBalance.update({
+                where: { userId },
+                data: { vacationDaysUsed: calculatedVacationDaysUsed }
+            });
+            balance.vacationDaysUsed = calculatedVacationDaysUsed;
+        }
+
         // Calculate remaining
         const defaultBenefits = {
             vacationDays: 22,
@@ -112,8 +145,6 @@ exports.getUserBenefitsBalance = async (req, res) => {
             const joinYear = joinDate.getFullYear();
 
             if (joinYear === currentYear) {
-                const startOfYear = new Date(currentYear, 0, 1);
-                const endOfYear = new Date(currentYear, 11, 31);
                 const totalDaysInYear = (endOfYear - startOfYear) / (1000 * 60 * 60 * 24) + 1;
 
                 // Days active in the year (from join date to end of year)
@@ -133,7 +164,7 @@ exports.getUserBenefitsBalance = async (req, res) => {
 
         res.json({
             ...balance,
-            vacationDaysRemaining: benefits.vacationDays - balance.vacationDaysUsed,
+            vacationDaysRemaining: benefits.vacationDays - calculatedVacationDaysUsed,
             overtimeHoursRemaining: benefits.overtimeHoursBank - balance.overtimeHoursUsed,
             sickLeaveDaysRemaining: benefits.sickLeaveDays - balance.sickLeaveDaysUsed,
             paidAbsenceHoursRemaining: benefits.paidAbsenceHours - balance.paidAbsenceHoursUsed,
