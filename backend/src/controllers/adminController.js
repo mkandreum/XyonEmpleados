@@ -55,8 +55,7 @@ exports.createUser = async (req, res) => {
                     });
                     if (defaultAvatarSetting) return defaultAvatarSetting.value;
 
-                    // Fallback to UI Avatars
-                    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`;
+                    return null; // No default avatar
                 })()
             }
         });

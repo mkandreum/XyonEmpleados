@@ -61,7 +61,7 @@ model Payroll {
   pdfUrl    String
   status    String   @default("PAID") // 'PAID' | 'PENDING'
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
 
@@ -76,7 +76,7 @@ model VacationRequest {
   subtype   String?
   justificationUrl String?
   userId    String
-  user      User           @relation(fields: [userId], references: [id])
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime       @default(now())
 }
 
@@ -98,7 +98,7 @@ model Notification {
   read      Boolean  @default(false)
   date      DateTime @default(now())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model GlobalSettings {
@@ -138,7 +138,7 @@ model DepartmentBenefits {
 model UserBenefitsBalance {
   id                    String @id @default(uuid())
   userId                String @unique
-  user                  User   @relation(fields: [userId], references: [id])
+  user                  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   vacationDaysUsed      Int    @default(0) @map("vacationDaysUsed")
   overtimeHoursUsed     Int    @default(0) @map("overtimeHoursUsed")
   sickLeaveDaysUsed     Int    @default(0) @map("sickLeaveDaysUsed")

@@ -155,7 +155,13 @@ export const AdminUsers: React.FC = () => {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <div className="flex-shrink-0 h-10 w-10">
-                                                <img className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700" src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}`} alt="" />
+                                                {user.avatarUrl && !user.avatarUrl.includes('ui-avatars.com') ? (
+                                                    <img className="h-10 w-10 rounded-full object-cover bg-slate-200 dark:bg-slate-700" src={user.avatarUrl} alt="" />
+                                                ) : (
+                                                    <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                                                        <UserIcon size={20} />
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="ml-4">
                                                 <div className="text-sm font-medium text-slate-900 dark:text-white">{user.name}</div>
@@ -192,7 +198,13 @@ export const AdminUsers: React.FC = () => {
                     <div key={user.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
-                                <img className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700" src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}`} alt="" />
+                                {user.avatarUrl && !user.avatarUrl.includes('ui-avatars.com') ? (
+                                    <img className="h-10 w-10 rounded-full object-cover bg-slate-200 dark:bg-slate-700" src={user.avatarUrl} alt="" />
+                                ) : (
+                                    <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                                        <UserIcon size={20} />
+                                    </div>
+                                )}
                                 <div>
                                     <div className="text-sm font-semibold text-slate-900 dark:text-white">{user.name}</div>
                                     <div className="text-xs text-slate-500 dark:text-slate-400">{user.email}</div>
@@ -250,11 +262,17 @@ export const AdminUsers: React.FC = () => {
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Avatar</label>
                                 <div className="flex items-center gap-4">
-                                    <img
-                                        src={(formData as any).avatarUrl || `https://ui-avatars.com/api/?name=${formData.name || 'User'}`}
-                                        alt="Avatar Preview"
-                                        className="h-12 w-12 rounded-full object-cover bg-slate-100"
-                                    />
+                                    {(formData as any).avatarUrl && !(formData as any).avatarUrl.includes('ui-avatars.com') ? (
+                                        <img
+                                            src={(formData as any).avatarUrl}
+                                            alt="Avatar Preview"
+                                            className="h-12 w-12 rounded-full object-cover bg-slate-100"
+                                        />
+                                    ) : (
+                                        <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                                            <UserIcon size={24} />
+                                        </div>
+                                    )}
                                     <div className="flex-1">
                                         <input
                                             type="file"
