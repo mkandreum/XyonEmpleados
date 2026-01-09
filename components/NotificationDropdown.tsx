@@ -91,6 +91,17 @@ export const NotificationDropdown: React.FC = () => {
         }
     };
 
+    const getNotificationStyle = (title: string, message: string) => {
+        const text = (title + message).toLowerCase();
+        if (text.includes('aprobada') || text.includes('approved')) {
+            return 'border-l-4 border-l-green-500 bg-green-50/50';
+        }
+        if (text.includes('rechazada') || text.includes('rejected')) {
+            return 'border-l-4 border-l-red-500 bg-red-50/50';
+        }
+        return 'border-l-4 border-l-blue-500 bg-blue-50/50';
+    };
+
     return (
         <div className="relative" ref={dropdownRef}>
             <button
@@ -128,14 +139,14 @@ export const NotificationDropdown: React.FC = () => {
                                 {notifications.map(notification => (
                                     <div
                                         key={notification.id}
-                                        className={`px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors ${!notification.read ? 'bg-blue-50/30' : ''}`}
+                                        className={`px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors ${getNotificationStyle(notification.title, notification.message)} ${!notification.read ? 'opacity-100' : 'opacity-70'}`}
                                     >
                                         <div className="flex justify-between items-start gap-3">
                                             <div className="flex-1">
                                                 <h4 className={`text-sm ${!notification.read ? 'font-semibold text-slate-900' : 'font-medium text-slate-700'}`}>
                                                     {notification.title}
                                                 </h4>
-                                                <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                                                <p className="text-xs text-slate-600 mt-1 line-clamp-2">
                                                     {notification.message}
                                                 </p>
                                                 <span className="text-[10px] text-slate-400 mt-2 block">
