@@ -85,6 +85,8 @@ export const AdminUsers: React.FC = () => {
         if (!userToDelete) return;
         try {
             await adminService.deleteUser(userToDelete);
+            setDeleteModalOpen(false);
+            setUserToDelete(null);
             fetchUsers();
         } catch (error) {
             alert('Error al eliminar usuario');
