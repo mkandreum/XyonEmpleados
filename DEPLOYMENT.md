@@ -2,24 +2,21 @@
 
 ## Persistent Storage Configuration
 
-### Required Volume Mount
-The application requires a persistent volume for user uploads:
+### Automatic Volume Detection
 
-**Volume Path:** `/app/uploads`
+The `Dockerfile` declares `/app/uploads` as a `VOLUME`, which means **Coolify should automatically detect and configure persistent storage** when you deploy.
 
-### Coolify Configuration
+### Verification in Coolify
 
-In your Coolify deployment settings, add a **Persistent Storage** volume:
+After deployment, verify the volume was created:
 
 1. Go to your application in Coolify
 2. Navigate to **Storage** tab
-3. Add a new volume:
-   - **Name:** `uploads` (or any descriptive name)
-   - **Source:** Leave empty for auto-generated volume
-   - **Destination:** `/app/uploads`
-   - **Type:** Volume
+3. You should see a volume mounted at `/app/uploads`
 
-This ensures uploaded files (logos, avatars, payrolls, justifications, news images) persist across container restarts and redeployments.
+If for some reason it's not auto-detected, you can manually add it:
+- **Destination:** `/app/uploads`
+- **Type:** Volume
 
 ### Directory Structure
 The uploads directory contains:
