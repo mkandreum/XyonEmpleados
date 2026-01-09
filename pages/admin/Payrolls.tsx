@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { adminService } from '../../services/api';
+import { adminService, uploadService } from '../../services/api';
 import { Upload, X, FileText } from 'lucide-react';
 import { useModal } from '../../hooks/useModal';
 import { Modal } from '../../components/Modal';
@@ -15,6 +15,7 @@ interface PayrollFormData {
 export const AdminPayrolls: React.FC = () => {
     const [users, setUsers] = useState<any[]>([]);
     const [showModal, setShowModal] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [formData, setFormData] = useState<PayrollFormData>({
         userId: '',
         month: 'Enero',
@@ -138,23 +139,46 @@ export const AdminPayrolls: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">URL del PDF</label>
-                                <input
-                                    type="url"
-                                    value={formData.pdfUrl}
-                                    onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })}
-                                    className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                                    placeholder="https://..."
-                                    required
-                                />
-                                <p className="text-xs text-slate-500 mt-1">Sube el PDF a un servicio de almacenamiento y pega aquí la URL</p>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Archivo PDF</label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="file"
+                                        accept=".pdf"
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+
+                                            setUploading(true);
+                                            try {
+                                                const response = await uploadService.uploadPayroll(file);
+                                                setFormData({ ...formData, pdfUrl: response.url });
+                                            } catch (error) {
+                                                console.error("Upload error:", error);
+                                                showAlert("Error al subir el archivo", "error");
+                                            } finally {
+                                                setUploading(false);
+                                            }
+                                        }}
+                                        className="block w-full text-sm text-slate-500
+                                        file:mr-4 file:py-2 file:px-4
+                                        file:rounded-full file:border-0
+                                        file:text-sm file:font-semibold
+                                        file:bg-purple-50 file:text-purple-700
+                                        hover:file:bg-purple-100"
+                                        disabled={uploading}
+                                        required={!formData.pdfUrl}
+                                    />
+                                    {uploading && <span className="text-sm text-purple-600">Subiendo...</span>}
+                                    {formData.pdfUrl && <span className="text-sm text-green-600 font-medium whitespace-nowrap">¡PDF Cargado!</span>}
+                                </div>
+                                <input type="hidden" value={formData.pdfUrl} />
                             </div>
                             <div className="flex justify-end gap-3 pt-4">
                                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">
                                     Cancelar
                                 </button>
-                                <button type="submit" className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                                    Crear Nómina
+                                <button type="submit" disabled={uploading || !formData.pdfUrl} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">
+                                    {uploading ? 'Subiendo...' : 'Crear Nómina'}
                                 </button>
                             </div>
                         </form>
