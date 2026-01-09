@@ -56,7 +56,8 @@ export const AdminUsers: React.FC = () => {
             password: '', // Required for new user
             role: 'EMPLOYEE',
             department: '',
-            position: ''
+            position: '',
+            avatarUrl: ''
         });
         setIsModalOpen(true);
     };
