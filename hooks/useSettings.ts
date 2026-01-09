@@ -16,7 +16,17 @@ export const useSettings = () => {
             try {
                 const response = await fetch('/api/admin/settings');
                 const data = await response.json();
-                setSettings(data);
+
+                // Convert relative URLs to absolute URLs for mobile compatibility
+                const processedSettings = { ...data };
+                if (data.logoUrl && data.logoUrl.startsWith('/uploads')) {
+                    processedSettings.logoUrl = `${window.location.origin}${data.logoUrl}`;
+                }
+                if (data.adminLogoUrl && data.adminLogoUrl.startsWith('/uploads')) {
+                    processedSettings.adminLogoUrl = `${window.location.origin}${data.adminLogoUrl}`;
+                }
+
+                setSettings(processedSettings);
             } catch (error) {
                 console.error('Error fetching settings:', error);
                 // Use defaults if fetch fails
