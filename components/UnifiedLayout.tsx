@@ -30,7 +30,7 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
             <header className="fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-white/20 dark:border-slate-800 shadow-sm z-40 px-4 sm:px-8 flex items-center justify-between transition-colors duration-300">
 
                 {/* Brand / Logo */}
-                <div className="flex items-center gap-3">
+                <Link to="/" className="flex items-center gap-3">
                     {logoUrl && !logoError ? (
                         <img
                             src={logoUrl}
@@ -45,7 +45,7 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
                             </h1>
                         </div>
                     )}
-                </div>
+                </Link>
 
                 {/* Right Actions */}
                 <div className="flex items-center gap-4">

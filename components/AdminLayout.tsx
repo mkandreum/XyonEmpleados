@@ -78,18 +78,20 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                 <div className="flex flex-col h-full">
                     {/* Logo */}
                     <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
-                        {logoUrl && !logoError ? (
-                            <img
-                                src={logoUrl}
-                                alt={companyName}
-                                className="w-auto object-contain"
-                                onError={() => setLogoError(true)}
-                            />
-                        ) : (
-                            <h1 className="text-xl font-bold text-white max-w-[200px] truncate" title={companyName}>
-                                {companyName}<span className="text-blue-500">Admin</span>
-                            </h1>
-                        )}
+                        <Link to="/admin" className="flex items-center gap-2">
+                            {logoUrl && !logoError ? (
+                                <img
+                                    src={logoUrl}
+                                    alt={companyName}
+                                    className="w-auto object-contain"
+                                    onError={() => setLogoError(true)}
+                                />
+                            ) : (
+                                <h1 className="text-xl font-bold text-white max-w-[200px] truncate" title={companyName}>
+                                    {companyName}<span className="text-blue-500">Admin</span>
+                                </h1>
+                            )}
+                        </Link>
                         <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden text-slate-400 hover:text-white">
                             <X size={24} />
                         </button>
