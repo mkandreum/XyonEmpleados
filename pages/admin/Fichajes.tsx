@@ -61,20 +61,26 @@ export const AdminFichajes: React.FC = () => {
                 const flatData: any[] = [];
                 response.users.forEach((userGroup: any) => {
                     userGroup.fichajes.forEach((dayGroup: any) => {
-                        // Encontrar entrada y salida
+                        // Separar entradas y salidas
                         const entradas = dayGroup.fichajes.filter((f: any) => f.tipo === 'ENTRADA');
                         const salidas = dayGroup.fichajes.filter((f: any) => f.tipo === 'SALIDA');
 
-                        flatData.push({
-                            userName: userGroup.user.name,
-                            date: dayGroup.date,
-                            entrada: entradas[0] ? new Date(entradas[0].timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '-',
-                            salida: salidas[0] ? new Date(salidas[0].timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '-',
-                            horasTrabajadas: dayGroup.horasTrabajadas,
-                            isComplete: dayGroup.isComplete,
-                            isLate: dayGroup.isLate,
-                            isEarlyDeparture: dayGroup.isEarlyDeparture
-                        });
+                        // Crear una fila por cada par entrada-salida
+                        const maxPairs = Math.max(entradas.length, salidas.length);
+
+                        for (let i = 0; i < maxPairs; i++) {
+                            flatData.push({
+                                userName: userGroup.user.name,
+                                date: dayGroup.date,
+                                pairIndex: i + 1, // Para identificar si es 1er turno, 2do turno, etc.
+                                entrada: entradas[i] ? new Date(entradas[i].timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '-',
+                                salida: salidas[i] ? new Date(salidas[i].timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '-',
+                                horasTrabajadas: i === maxPairs - 1 ? dayGroup.horasTrabajadas : null, // Solo mostrar total en la última fila
+                                isComplete: dayGroup.isComplete,
+                                isLate: entradas[i] ? dayGroup.isLate : false,
+                                isEarlyDeparture: salidas[i] ? dayGroup.isEarlyDeparture : false
+                            });
+                        }
                     });
                 });
                 setFichajes(flatData);
@@ -290,13 +296,16 @@ export const AdminFichajes: React.FC = () => {
                                                 Fecha
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                Turno
+                                            </th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                                 Entrada
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                                 Salida
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                                Horas
+                                                Horas Total
                                             </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                                                 Estado
@@ -313,12 +322,18 @@ export const AdminFichajes: React.FC = () => {
                                                     {new Date(fichaje.date).toLocaleDateString('es-ES')}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                    <span className={`px-2 py-1 text-xs font-medium rounded ${fichaje.pairIndex === 1 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                                                        }`}>
+                                                        {fichaje.pairIndex === 1 ? 'Mañana' : 'Tarde'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                                     {fichaje.entrada || '-'}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                                     {fichaje.salida || '-'}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-700">
                                                     {fichaje.horasTrabajadas ? `${fichaje.horasTrabajadas}h` : '-'}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
