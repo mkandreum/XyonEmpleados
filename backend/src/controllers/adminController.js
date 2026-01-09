@@ -209,6 +209,7 @@ exports.getSettings = async (req, res) => {
             acc[curr.key] = curr.value;
             return acc;
         }, {});
+        console.log('📤 Sending settings to frontend:', settingsObj);
         res.json(settingsObj);
     } catch (error) {
         console.error("Get settings error:", error);
