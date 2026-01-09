@@ -167,6 +167,14 @@ const updateUserBalanceLogic = async (userId, type, days, hours) => {
         } else if (type === 'SICK_LEAVE') {
             // "Bajas Médicas" / "Horas Médicas" now tracks HOURS in the sickLeaveDaysUsed field
             updateData.sickLeaveDaysUsed = balance.sickLeaveDaysUsed + hours;
+        } else if (type === 'OVERTIME') {
+            updateData.overtimeHoursUsed = balance.overtimeHoursUsed + hours;
+        } else if (type === 'OTHER') {
+            if (subtype && subtype.includes('Horas Consulta')) {
+                updateData.paidAbsenceHoursUsed = balance.paidAbsenceHoursUsed + hours;
+            } else if (subtype && subtype.includes('Exceso')) {
+                updateData.overtimeHoursUsed = balance.overtimeHoursUsed + hours;
+            }
         }
     } else {
         // Legacy/Days logic
@@ -176,6 +184,9 @@ const updateUserBalanceLogic = async (userId, type, days, hours) => {
             updateData.sickLeaveDaysUsed = balance.sickLeaveDaysUsed + days;
         } else if (type === 'PERSONAL') {
             updateData.paidAbsenceHoursUsed = balance.paidAbsenceHoursUsed + (days * 8); // Convert days to hours
+        } else if (type === 'OTHER') {
+            // If days are used for "Otros Permisos", we generally don't deduct unless specified.
+            // Matrimonio, Fallecimiento etc are paid leaves (No deduction).
         }
     }
 

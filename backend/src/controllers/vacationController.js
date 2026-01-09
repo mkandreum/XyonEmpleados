@@ -41,6 +41,7 @@ exports.createVacation = async (req, res) => {
                 days,
                 hours,
                 type,
+                subtype: req.body.subtype || null,
                 justificationUrl: justificationUrl || null,
                 userId: req.user.userId,
                 status: initialStatus

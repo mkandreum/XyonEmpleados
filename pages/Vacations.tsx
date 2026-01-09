@@ -19,17 +19,28 @@ export const VacationsPage: React.FC = () => {
     const [uploading, setUploading] = useState(false);
     const { modalState, showAlert, closeModal } = useModal();
 
-
     // Form state
     const today = new Date().toISOString().split('T')[0];
     const [formData, setFormData] = useState({
         startDate: today,
         endDate: today,
         type: 'VACATION',
+        subtype: '', // New field for 'Otros Permisos'
         justificationUrl: '',
-        hours: '', // Store as string for input, convert to Int on submit
-        durationMode: 'days' // 'days' | 'hours'
+        hours: '',
+        durationMode: 'days', // 'days' | 'hours'
+        lessThanOneDay: false // New Checkbox state
     });
+
+    const [animateForm, setAnimateForm] = useState(false);
+
+    useEffect(() => {
+        if (showRequestForm) {
+            setTimeout(() => setAnimateForm(true), 10);
+        } else {
+            setAnimateForm(false);
+        }
+    }, [showRequestForm]);
 
     const fetchVacations = async () => {
         try {
@@ -74,6 +85,13 @@ export const VacationsPage: React.FC = () => {
         }
     };
 
+    // Calculate natural days (including weekends)
+    const calculateNaturalDays = (start: Date, end: Date): number => {
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays + 1; // Inclusive
+    };
+
     // Calculate business days (excluding weekends)
     const calculateBusinessDays = (start: Date, end: Date): number => {
         let count = 0;
@@ -91,42 +109,60 @@ export const VacationsPage: React.FC = () => {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validate justification for non-vacation types
-        if ((formData.type === 'SICK_LEAVE' || formData.type === 'PERSONAL') && !formData.justificationUrl) {
-            showAlert('El justificante es obligatorio para horas médicas y ausencias justificadas', 'warning');
+        // Validate justification for non-vacation types and specific subtypes
+        const isVacation = formData.type === 'VACATION';
+        if (!isVacation && !formData.justificationUrl) {
+            // For "Otros Permisos", justification is generally required unless implied otherwise? User said "El justificante es obligatorio..."
+            // Assuming required for all non-vacation.
+            showAlert('El justificante es obligatorio para este tipo de solicitud', 'warning');
+            return;
+        }
+
+        if (formData.type === 'OTHER' && !formData.subtype) {
+            showAlert('Por favor selecciona un motivo específico', 'warning');
             return;
         }
 
         setSubmitting(true);
         try {
-            // Calculate business days (excluding weekends)
             const start = new Date(formData.startDate);
             const end = new Date(formData.endDate);
-            const businessDays = calculateBusinessDays(start, end);
 
-            // Validate for VACATION type: check if exceeds available days
-            if (formData.type === 'VACATION' && businessDays > remainingDays) {
-                showAlert(
-                    `No tienes suficientes días disponibles.\n\nDías laborables solicitados: ${businessDays}\nDías disponibles: ${remainingDays}`,
-                    'error'
-                );
+            let daysCalculated = 0;
+            // Logic: Matrimonio (natural), Others (business)
+            // If subtype is 'Matrimonio...', use natural days.
+            if (formData.subtype && formData.subtype.includes('Matrimonio')) {
+                daysCalculated = calculateNaturalDays(start, end);
+            } else {
+                daysCalculated = calculateBusinessDays(start, end);
+            }
+
+            // Validate available days/hours logic
+            if (formData.type === 'VACATION' && daysCalculated > remainingDays) {
+                showAlert(`No tienes suficientes días disponibles.\n\nDías solicitados: ${daysCalculated}\nDías disponibles: ${remainingDays}`, 'error');
                 setSubmitting(false);
                 return;
+            }
+
+            // Exceso Jornada validation? 
+            if (formData.type === 'OVERTIME') {
+                // Check logic if needed
             }
 
             await vacationService.create({
                 startDate: formData.startDate,
                 endDate: formData.endDate,
-                days: businessDays,
-                hours: formData.durationMode === 'hours' && formData.hours ? parseInt(formData.hours) : undefined,
+                days: daysCalculated,
+                hours: formData.lessThanOneDay && formData.hours ? parseInt(formData.hours) : undefined,
                 type: formData.type as any,
+                subtype: formData.subtype || undefined,
                 status: VacationStatus.PENDING,
                 justificationUrl: formData.justificationUrl || undefined
             });
 
-            fetchVacations(); // Refresh list
+            fetchVacations();
             setShowRequestForm(false);
-            setFormData({ startDate: today, endDate: today, type: 'VACATION', justificationUrl: '', hours: '', durationMode: 'days' }); // Reset form
+            setFormData({ startDate: today, endDate: today, type: 'VACATION', subtype: '', justificationUrl: '', hours: '', durationMode: 'days', lessThanOneDay: false });
             showAlert('Solicitud enviada correctamente', 'success');
         } catch (error) {
             console.error("Error creating vacation:", error);
@@ -136,8 +172,28 @@ export const VacationsPage: React.FC = () => {
         }
     };
 
-    // Check if justification is required
-    const requiresJustification = formData.type === 'SICK_LEAVE' || formData.type === 'PERSONAL';
+    // Derived states
+    const requiresJustification = formData.type !== 'VACATION';
+    const showSubtypeDropdown = formData.type === 'OTHER';
+
+    // Subtypes list
+    const otherSubtypes = [
+        "Intervención quirúrgica familiar sin Hospitalización - 1 día",
+        "Enfermedad / Reposo Médico Domiciliario",
+        "Lactancia",
+        "Horas Sindicales",
+        "Fallecimiento Familiar 1º grado - 3 días",
+        "Fallecimiento Familiar 2º grado - 2 días",
+        "Fallecimiento Familiar 3º grado - 1 día",
+        "Accidente o Enfermedad Grave - 5 días",
+        "Matrimonio - 15 días naturales",
+        "Mudanza - 1 día",
+        "Matrimonio hijos/as en día laboral - 1 día",
+        "Deber inexcusable de carácter público",
+        "Horas Consulta Médico Cabecera / Especialista - 20 horas",
+        "Horas Acom. Médico - 10 horas",
+        "Ausencia Urgente Fuerza Mayor - 4 días anuales"
+    ];
 
     // Data for chart
     const totalDays = deptBenefits?.vacationDays || 22;
@@ -157,16 +213,20 @@ export const VacationsPage: React.FC = () => {
         switch (status) {
             case VacationStatus.APPROVED: return 'bg-green-100 text-green-800';
             case VacationStatus.PENDING: return 'bg-amber-100 text-amber-800';
+            case VacationStatus.PENDING_MANAGER: return 'bg-amber-100 text-amber-800';
+            case VacationStatus.PENDING_ADMIN: return 'bg-amber-100 text-amber-800';
             case VacationStatus.REJECTED: return 'bg-red-100 text-red-800';
             default: return 'bg-slate-100 text-slate-800';
         }
     };
 
-    const getTypeLabel = (type: string) => {
+    const getTypeLabel = (type: string, subtype?: string) => {
         switch (type) {
             case 'VACATION': return 'Vacaciones';
-            case 'PERSONAL': return 'Asuntos Propios';
-            case 'SICK_LEAVE': return 'Horas médicas';
+            case 'PERSONAL': return 'Ausencias Retribuídas'; // Renamed
+            case 'SICK_LEAVE': return 'Horas Médicas';
+            case 'OVERTIME': return 'Horas Exceso Jornada';
+            case 'OTHER': return subtype || 'Otros Permisos';
             default: return type;
         }
     }
@@ -234,72 +294,92 @@ export const VacationsPage: React.FC = () => {
                     </div>
 
                     {showRequestForm && (
-                        <div className="p-6 bg-blue-50 border-b border-blue-100">
+                        <div className={`p-6 bg-blue-50 border-b border-blue-100 transition-all duration-300 transform ${animateForm ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
                             <h3 className="font-semibold text-blue-900 mb-4">Nueva Solicitud</h3>
                             <form className="space-y-4" onSubmit={handleCreate}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Tipo de Solicitud</label>
+                                        <select
+                                            value={formData.type}
+                                            onChange={(e) => setFormData({ ...formData, type: e.target.value, subtype: '' })}
+                                            className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                                        >
+                                            <option value="VACATION">Vacaciones</option>
+                                            <option value="PERSONAL">Ausencias Retribuídas</option>
+                                            <option value="SICK_LEAVE">Horas Médicas</option>
+                                            <option value="OVERTIME">Horas Exceso de Jornada</option>
+                                            <option value="OTHER">Otros Permisos</option>
+                                        </select>
+                                    </div>
+
+                                    {showSubtypeDropdown && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Motivo (Específico)</label>
+                                            <select
+                                                value={formData.subtype}
+                                                onChange={(e) => setFormData({ ...formData, subtype: e.target.value })}
+                                                className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                                            >
+                                                <option value="">Selecciona un motivo...</option>
+                                                {otherSubtypes.map(s => (
+                                                    <option key={s} value={s}>{s}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+                                </div>
+
                                 {/* Date Range Picker */}
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Selecciona el Rango de Fechas</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Selecciona las Fechas</label>
                                     <DateRangePicker
                                         startDate={formData.startDate}
                                         endDate={formData.endDate}
                                         onChange={(start, end) => setFormData({ ...formData, startDate: start, endDate: end })}
                                     />
-                                    {(formData.type === 'SICK_LEAVE' || formData.type === 'PERSONAL') && (
-                                        <div className="mt-4 flex items-center gap-4">
-                                            <label className="flex items-center gap-2 text-sm text-slate-700">
-                                                <input
-                                                    type="radio"
-                                                    name="durationMode"
-                                                    checked={formData.durationMode === 'days'}
-                                                    onChange={() => setFormData({ ...formData, durationMode: 'days', hours: '' })}
-                                                    className="text-blue-600 focus:ring-blue-500"
-                                                />
-                                                Días Completos
-                                            </label>
-                                            <label className="flex items-center gap-2 text-sm text-slate-700">
-                                                <input
-                                                    type="radio"
-                                                    name="durationMode"
-                                                    checked={formData.durationMode === 'hours'}
-                                                    onChange={() => setFormData({ ...formData, durationMode: 'hours', endDate: formData.startDate })} // Reset end date to start date for single day
-                                                    className="text-blue-600 focus:ring-blue-500"
-                                                />
-                                                Por Horas
-                                            </label>
-                                        </div>
-                                    )}
 
-                                    {formData.durationMode === 'hours' && (formData.type === 'SICK_LEAVE' || formData.type === 'PERSONAL') && (
-                                        <div className="mt-2">
-                                            <label className="block text-sm font-medium text-slate-700 mb-1">Número de Horas</label>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                max="8"
-                                                value={formData.hours}
-                                                onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
-                                                className="w-32 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                                placeholder="Ej: 2"
-                                            />
-                                            <p className="text-xs text-slate-500 mt-1">Máximo 8 horas por día.</p>
+                                    {/* Less than one day checkbox - Only for Non-Vacation types usually? Or specifically requested for Other Permissions to measure hours */}
+                                    {formData.type !== 'VACATION' && (
+                                        <div className="mt-4 space-y-3">
+                                            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.lessThanOneDay}
+                                                    onChange={(e) => {
+                                                        const isChecked = e.target.checked;
+                                                        setFormData({
+                                                            ...formData,
+                                                            lessThanOneDay: isChecked,
+                                                            hours: isChecked ? formData.hours : '',
+                                                            endDate: isChecked ? formData.startDate : formData.endDate
+                                                        });
+                                                    }}
+                                                    className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
+                                                />
+                                                Duración inferior a un día
+                                            </label>
+
+                                            {formData.lessThanOneDay && (
+                                                <div className="pl-6 animate-fadeIn">
+                                                    <label className="block text-sm font-medium text-slate-700 mb-1">Número de Horas</label>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max="8"
+                                                        value={formData.hours}
+                                                        onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
+                                                        className="w-32 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                        placeholder="Ej: 2"
+                                                    />
+                                                    <p className="text-xs text-slate-500 mt-1">Si seleccionas horas, se contará como 1 día en términos de fechas, pero se restarán las horas del saldo correspondiente.</p>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
-                                        <select
-                                            value={formData.type}
-                                            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                            className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                        >
-                                            <option value="VACATION">Vacaciones</option>
-                                            <option value="PERSONAL">Asuntos Propios</option>
-                                            <option value="SICK_LEAVE">Horas médicas</option>
-                                        </select>
-                                    </div>
                                     <div className="md:col-span-2">
                                         <label className="block text-sm font-medium text-slate-700 mb-1">Justificante (PDF/Imagen)</label>
                                         <div className="flex items-center gap-2">
@@ -398,8 +478,10 @@ export const VacationsPage: React.FC = () => {
                                                     <span className="text-slate-500 text-xs">hasta {new Date(vac.endDate).toLocaleDateString()}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-slate-600">{vac.days} días</td>
-                                            <td className="px-6 py-4 text-slate-600">{getTypeLabel(vac.type)}</td>
+                                            <td className="px-6 py-4 text-slate-600">
+                                                {vac.hours ? `${vac.hours} horas` : `${vac.days} días`}
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-600">{getTypeLabel(vac.type, vac.subtype)}</td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(vac.status)}`}>
                                                     {vac.status === VacationStatus.APPROVED ? 'Aprobado' :
@@ -425,7 +507,6 @@ export const VacationsPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Custom Modal */}
             <Modal
                 isOpen={modalState.isOpen}
                 onClose={closeModal}

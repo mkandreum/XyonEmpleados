@@ -68,7 +68,8 @@ model VacationRequest {
   days      Int
   hours     Int?
   status    VacationStatus @default(PENDING)
-  type      String         // 'VACATION' | 'PERSONAL' | 'SICK_LEAVE'
+  type      String         // 'VACATION' | 'PERSONAL' | 'SICK_LEAVE' | 'OVERTIME' | 'OTHER'
+  subtype   String?
   justificationUrl String?
   userId    String
   user      User           @relation(fields: [userId], references: [id])
