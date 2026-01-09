@@ -84,7 +84,7 @@ export const LoginPage: React.FC = () => {
                     setIsError(false);
                   }}
                   className={`block w-full pl-10 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white text-slate-900 ${isError ? 'border-red-500 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500' : 'border-slate-300'} transition-colors`}
-                  placeholder="usuario@velilla.com"
+                  placeholder="usuario@xyonempleados.com"
                 />
               </div>
             </div>
