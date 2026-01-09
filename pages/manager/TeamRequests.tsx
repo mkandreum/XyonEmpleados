@@ -4,6 +4,7 @@ import { managerService } from '../../services/api';
 import { CheckCircle, XCircle, Calendar, Clock, User as UserIcon } from 'lucide-react';
 import { useModal } from '../../hooks/useModal';
 import { Modal } from '../../components/Modal';
+import { getTypeLabel, getTypeColor } from '../../utils/vacationUtils';
 
 export const TeamRequests: React.FC = () => {
     const [requests, setRequests] = useState<VacationRequest[]>([]);
