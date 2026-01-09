@@ -52,10 +52,38 @@ export const AdminFichajes: React.FC = () => {
     const loadFichajes = async () => {
         setLoading(true);
         try {
-            const data = await fichajeService.getDepartmentWeek(selectedDepartment);
-            setFichajes(data);
+            const response = await fichajeService.getDepartmentWeek(selectedDepartment);
+            console.log('Department week response:', response);
+
+            // El backend devuelve { department, schedule, users: [...] }
+            if (response && response.users) {
+                // Aplanar los datos para la tabla
+                const flatData: any[] = [];
+                response.users.forEach((userGroup: any) => {
+                    userGroup.fichajes.forEach((dayGroup: any) => {
+                        // Encontrar entrada y salida
+                        const entradas = dayGroup.fichajes.filter((f: any) => f.tipo === 'ENTRADA');
+                        const salidas = dayGroup.fichajes.filter((f: any) => f.tipo === 'SALIDA');
+
+                        flatData.push({
+                            userName: userGroup.user.name,
+                            date: dayGroup.date,
+                            entrada: entradas[0] ? new Date(entradas[0].timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '-',
+                            salida: salidas[0] ? new Date(salidas[0].timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '-',
+                            horasTrabajadas: dayGroup.horasTrabajadas,
+                            isComplete: dayGroup.isComplete,
+                            isLate: dayGroup.isLate,
+                            isEarlyDeparture: dayGroup.isEarlyDeparture
+                        });
+                    });
+                });
+                setFichajes(flatData);
+            } else {
+                setFichajes([]);
+            }
         } catch (error) {
             console.error('Error loading fichajes:', error);
+            setFichajes([]);
         } finally {
             setLoading(false);
         }
@@ -295,10 +323,10 @@ export const AdminFichajes: React.FC = () => {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${fichaje.isLate || fichaje.isEarlyDeparture
-                                                            ? 'bg-red-100 text-red-800'
-                                                            : fichaje.isComplete
-                                                                ? 'bg-green-100 text-green-800'
-                                                                : 'bg-yellow-100 text-yellow-800'
+                                                        ? 'bg-red-100 text-red-800'
+                                                        : fichaje.isComplete
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-yellow-100 text-yellow-800'
                                                         }`}>
                                                         {fichaje.isLate ? 'Tarde' : fichaje.isEarlyDeparture ? 'Salida temprana' : fichaje.isComplete ? 'Completo' : 'Incompleto'}
                                                     </span>

@@ -17,11 +17,32 @@ export const ManagerFichajes: React.FC = () => {
         setLoading(true);
         try {
             if (user?.department) {
-                const data = await fichajeService.getDepartmentWeek(user.department);
-                setWeekData(data);
+                const response = await fichajeService.getDepartmentWeek(user.department);
+                console.log('Manager week response:', response);
+
+                // El backend devuelve { department, schedule, users: [...] }
+                if (response && response.users) {
+                    // Transformar datos para el formato esperado
+                    const transformedData = response.users.map((userGroup: any) => ({
+                        userId: userGroup.user.id,
+                        userName: userGroup.user.name,
+                        fichajes: userGroup.fichajes.flatMap((dayGroup: any) =>
+                            dayGroup.fichajes.map((f: any) => ({
+                                ...f,
+                                isLate: dayGroup.isLate,
+                                isEarlyDeparture: dayGroup.isEarlyDeparture,
+                                hasNotification: false // TODO: implementar check de notificaciones
+                            }))
+                        )
+                    }));
+                    setWeekData(transformedData);
+                } else {
+                    setWeekData([]);
+                }
             }
         } catch (error) {
             console.error('Error loading week data:', error);
+            setWeekData([]);
         } finally {
             setLoading(false);
         }
