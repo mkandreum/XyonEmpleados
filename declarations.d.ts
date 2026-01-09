@@ -100,6 +100,9 @@ declare module 'lucide-react' {
     export const Camera: any;
     export const Bell: any;
     export const Terminal: any;
+    export const LogIn: any;
+    export const Loader2: any;
+    export const ChevronUp: any;
 }
 
 declare module 'recharts' {

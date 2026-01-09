@@ -17,7 +17,7 @@ const {
 exports.createFichaje = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const { tipo } = req.body;
+        const { tipo, latitude, longitude, accuracy } = req.body;
 
         if (!tipo || !Object.values(FichajeTipo).includes(tipo)) {
             return res.status(400).json({ error: 'Tipo de fichaje inválido' });
@@ -66,7 +66,10 @@ exports.createFichaje = async (req, res) => {
                 userId,
                 tipo,
                 department: user.department,
-                timestamp: new Date()
+                timestamp: new Date(),
+                latitude: latitude ? parseFloat(latitude) : null,
+                longitude: longitude ? parseFloat(longitude) : null,
+                accuracy: accuracy ? parseFloat(accuracy) : null
             }
         });
 

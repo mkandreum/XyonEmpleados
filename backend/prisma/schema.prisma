@@ -162,6 +162,11 @@ model Fichaje {
   department  String
   createdAt   DateTime @default(now())
   
+  // Geolocation
+  latitude    Float?
+  longitude   Float?
+  accuracy    Float?
+  
   lateNotifications LateArrivalNotification[]
   
   @@index([userId, timestamp])
