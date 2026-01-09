@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Users, Calendar, Settings, Download } from 'lucide-react';
+import { Clock, Users, Calendar, Settings, Download, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { fichajeService, scheduleService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -69,6 +69,11 @@ export const AdminFichajes: React.FC = () => {
                         const maxPairs = Math.max(entradas.length, salidas.length);
 
                         for (let i = 0; i < maxPairs; i++) {
+                            // Check for notifications
+                            const entradaWarning = entradas[i]?.lateNotifications?.some((n: any) => !n.leido) || false;
+                            const salidaWarning = salidas[i]?.lateNotifications?.some((n: any) => !n.leido) || false;
+                            const hasWarning = entradaWarning || salidaWarning;
+
                             flatData.push({
                                 userName: userGroup.user.name,
                                 date: dayGroup.date,
@@ -78,7 +83,8 @@ export const AdminFichajes: React.FC = () => {
                                 horasTrabajadas: i === maxPairs - 1 ? dayGroup.horasTrabajadas : null, // Solo mostrar total en la última fila
                                 isComplete: dayGroup.isComplete,
                                 isLate: entradas[i] ? dayGroup.isLate : false,
-                                isEarlyDeparture: salidas[i] ? dayGroup.isEarlyDeparture : false
+                                isEarlyDeparture: salidas[i] ? dayGroup.isEarlyDeparture : false,
+                                hasWarning: hasWarning
                             });
                         }
                     });
@@ -285,76 +291,167 @@ export const AdminFichajes: React.FC = () => {
                                 <p className="text-slate-500">No hay fichajes registrados</p>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead className="bg-slate-50">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                                Empleado
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                                Fecha
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                                Turno
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                                Entrada
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                                Salida
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                                Horas Total
-                                            </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                                Estado
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-slate-200">
-                                        {fichajes.map((fichaje: any, index: number) => (
-                                            <tr key={index} className="hover:bg-slate-50">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
-                                                    {fichaje.userName || 'N/A'}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                                    {new Date(fichaje.date).toLocaleDateString('es-ES')}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                                    <span className={`px-2 py-1 text-xs font-medium rounded ${fichaje.pairIndex === 1 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
-                                                        }`}>
-                                                        {fichaje.pairIndex === 1 ? 'Mañana' : 'Tarde'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                                    {fichaje.entrada || '-'}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                                    {fichaje.salida || '-'}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-700">
-                                                    {fichaje.horasTrabajadas ? `${fichaje.horasTrabajadas}h` : '-'}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${fichaje.isLate || fichaje.isEarlyDeparture
-                                                        ? 'bg-red-100 text-red-800'
-                                                        : fichaje.isComplete
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : 'bg-yellow-100 text-yellow-800'
-                                                        }`}>
-                                                        {fichaje.isLate ? 'Tarde' : fichaje.isEarlyDeparture ? 'Salida temprana' : fichaje.isComplete ? 'Completo' : 'Incompleto'}
-                                                    </span>
-                                                </td>
+                            <>
+                                {/* Desktop View */}
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead className="bg-slate-50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                    Empleado
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                    Fecha
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                    Turno
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                    Entrada
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                    Salida
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                    Horas Total
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                    Aviso
+                                                </th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                    Estado
+                                                </th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-slate-200">
+                                            {fichajes.map((fichaje: any, index: number) => (
+                                                <tr key={index} className="hover:bg-slate-50">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                                                        {fichaje.userName || 'N/A'}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                        {new Date(fichaje.date).toLocaleDateString('es-ES')}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                        <span className={`px-2 py-1 text-xs font-medium rounded ${fichaje.pairIndex === 1 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                                                            }`}>
+                                                            {fichaje.pairIndex === 1 ? 'Mañana' : 'Tarde'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                        {fichaje.entrada || '-'}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                        {fichaje.salida || '-'}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-700">
+                                                        {fichaje.horasTrabajadas ? `${fichaje.horasTrabajadas}h` : '-'}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        {fichaje.hasWarning && (
+                                                            <div className="flex items-center text-orange-600 gap-1" title="Aviso enviado por manager">
+                                                                <AlertCircle size={16} />
+                                                                <span className="text-xs font-medium">Enviado</span>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex gap-2">
+                                                            {fichaje.isLate && (
+                                                                <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                                                                    Tarde
+                                                                </span>
+                                                            )}
+                                                            {fichaje.isEarlyDeparture && (
+                                                                <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                                                                    Salida anticipada
+                                                                </span>
+                                                            )}
+                                                            {fichaje.isComplete && !fichaje.isLate && !fichaje.isEarlyDeparture && (
+                                                                <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                                                    Correcto
+                                                                </span>
+                                                            )}
+                                                            {!fichaje.isComplete && !fichaje.isLate && !fichaje.isEarlyDeparture && (
+                                                                <span className="px-2 py-1 text-xs font-medium bg-slate-100 text-slate-800 rounded-full">
+                                                                    Incompleto
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Mobile Card View */}
+                                <div className="md:hidden grid grid-cols-1 gap-4 p-4 bg-slate-50">
+                                    {fichajes.map((fichaje: any, index: number) => (
+                                        <div key={index} className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <div className="font-semibold text-slate-900">{fichaje.userName}</div>
+                                                    <div className="text-xs text-slate-500">{new Date(fichaje.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                                                </div>
+                                                <span className={`px-2 py-1 text-xs font-medium rounded ${fichaje.pairIndex === 1 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                                                    }`}>
+                                                    {fichaje.pairIndex === 1 ? 'Mañana' : 'Tarde'}
+                                                </span>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4 mb-3">
+                                                <div>
+                                                    <div className="text-xs text-slate-500 mb-1">Entrada</div>
+                                                    <div className="font-medium">{fichaje.entrada}</div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-xs text-slate-500 mb-1">Salida</div>
+                                                    <div className="font-medium">{fichaje.salida}</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                                                <div className="text-sm font-semibold text-slate-700">
+                                                    {fichaje.horasTrabajadas ? `${fichaje.horasTrabajadas}h` : '-'}
+                                                </div>
+                                                <div className="flex flex-wrap gap-2 justify-end">
+                                                    {fichaje.hasWarning && (
+                                                        <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-orange-50 text-orange-600 rounded-full border border-orange-100">
+                                                            <AlertCircle size={12} />
+                                                            Aviso
+                                                        </span>
+                                                    )}
+                                                    {fichaje.isLate && (
+                                                        <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                                                            Tarde
+                                                        </span>
+                                                    )}
+                                                    {fichaje.isEarlyDeparture && (
+                                                        <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                                                            Salida anticipada
+                                                        </span>
+                                                    )}
+                                                    {fichaje.isComplete && !fichaje.isLate && !fichaje.isEarlyDeparture && (
+                                                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                                            Correcto
+                                                        </span>
+                                                    )}
+                                                    {!fichaje.isComplete && !fichaje.isLate && !fichaje.isEarlyDeparture && (
+                                                        <span className="px-2 py-1 text-xs font-medium bg-slate-100 text-slate-800 rounded-full">
+                                                            Incompleto
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
                         )}
-                    </div>
+                    </div >
                 </>
             )}
-        </div>
+        </div >
     );
 };

@@ -344,6 +344,13 @@ exports.getDepartmentWeek = async (req, res) => {
                         name: true,
                         email: true
                     }
+                },
+                lateNotifications: {
+                    select: {
+                        id: true,
+                        leido: true,
+                        justificado: true
+                    }
                 }
             },
             orderBy: { timestamp: 'asc' }
