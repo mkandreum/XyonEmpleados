@@ -349,60 +349,117 @@ export const AdminVacations: React.FC = () => {
                             ))}
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-slate-50">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Empleado</th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Departamento</th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Fecha Inicio</th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Fecha Fin</th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Duración</th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Tipo</th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Estado</th>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Justificante</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {historicalRequests.map(request => (
-                                        <tr key={request.id} className="hover:bg-slate-50">
-                                            <td className="px-4 py-3 text-sm text-slate-800">{request.user.name}</td>
-                                            <td className="px-4 py-3 text-sm text-slate-600">{request.user.department}</td>
-                                            <td className="px-4 py-3 text-sm text-slate-600">{formatDate(request.startDate)}</td>
-                                            <td className="px-4 py-3 text-sm text-slate-600">{formatDate(request.endDate)}</td>
-                                            <td className="px-4 py-3 text-sm text-slate-600">
-                                                {request.days ? `${request.days} días` : `${request.hours} horas`}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+                        <>
+                            {/* Desktop Table View */}
+                            <div className="overflow-x-auto hidden md:block">
+                                <table className="w-full">
+                                    <thead className="bg-slate-50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Empleado</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Departamento</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Fecha Inicio</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Fecha Fin</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Duración</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Tipo</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Estado</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Justificante</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {historicalRequests.map(request => (
+                                            <tr key={request.id} className="hover:bg-slate-50">
+                                                <td className="px-4 py-3 text-sm text-slate-800">{request.user.name}</td>
+                                                <td className="px-4 py-3 text-sm text-slate-600">{request.user.department}</td>
+                                                <td className="px-4 py-3 text-sm text-slate-600">{formatDate(request.startDate)}</td>
+                                                <td className="px-4 py-3 text-sm text-slate-600">{formatDate(request.endDate)}</td>
+                                                <td className="px-4 py-3 text-sm text-slate-600">
+                                                    {request.days ? `${request.days} días` : `${request.hours} horas`}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+                                                        {getTypeLabel(request.type)}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    <span className={`px-2 py-1 rounded-md text-xs font-medium ${request.status === 'APPROVED'
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : 'bg-red-100 text-red-700'
+                                                        }`}>
+                                                        {getStatusLabel(request.status)}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    {request.justificationUrl && (
+                                                        <a
+                                                            href={request.justificationUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                                        >
+                                                            <FileText size={16} />
+                                                        </a>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Mobile Card View */}
+                            <div className="md:hidden space-y-3">
+                                {historicalRequests.map(request => (
+                                    <div key={request.id} className="bg-white border border-slate-200 rounded-lg p-3 hover:bg-slate-50">
+                                        <div className="flex items-start justify-between mb-2">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-semibold text-slate-800 text-sm truncate">{request.user.name}</p>
+                                                <p className="text-xs text-slate-500">{request.user.department}</p>
+                                            </div>
+                                            <span className={`px-2 py-1 rounded-md text-xs font-medium flex-shrink-0 ml-2 ${request.status === 'APPROVED'
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-red-100 text-red-700'
+                                                }`}>
+                                                {getStatusLabel(request.status)}
+                                            </span>
+                                        </div>
+
+                                        <div className="space-y-1.5 text-xs">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-slate-500">Fechas:</span>
+                                                <span className="text-slate-700 font-medium">
+                                                    {formatDate(request.startDate)} - {formatDate(request.endDate)}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-slate-500">Duración:</span>
+                                                <span className="text-slate-700 font-medium">
+                                                    {request.days ? `${request.days} días` : `${request.hours} horas`}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-slate-500">Tipo:</span>
+                                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
                                                     {getTypeLabel(request.type)}
                                                 </span>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span className={`px-2 py-1 rounded-md text-xs font-medium ${request.status === 'APPROVED'
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : 'bg-red-100 text-red-700'
-                                                    }`}>
-                                                    {getStatusLabel(request.status)}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                {request.justificationUrl && (
+                                            </div>
+                                            {request.justificationUrl && (
+                                                <div className="pt-1 border-t border-slate-100">
                                                     <a
                                                         href={request.justificationUrl}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                                        className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-xs"
                                                     >
-                                                        <FileText size={16} />
+                                                        <FileText size={14} />
+                                                        Ver justificante
                                                     </a>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </>
                     )}
                 </div>
             </div>
