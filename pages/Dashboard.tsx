@@ -8,7 +8,7 @@ import { DigitalClock } from '../components/DigitalClock';
 import { FichajeButton } from '../components/FichajeButton';
 
 export const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useAuth() as any;
   const navigate = useNavigate();
   const [vacations, setVacations] = useState<VacationRequest[]>([]);
   const [pendingVacations, setPendingVacations] = useState<VacationRequest[]>([]);
@@ -80,15 +80,15 @@ export const Dashboard: React.FC = () => {
   const remainingVacations = vacationLimit - vacationUsed;
 
   return (
-    <div className="space-y-6">
-      <div className="animate-slide-up">
+    <div className="flex flex-col gap-6">
+      <div className="animate-slide-up order-1">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">¡Hola, {user?.name?.split(' ')[0]}! 👋</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">{new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
 
       {/* Warning Alert Widget */}
       {pendingWarnings.length > 0 && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-xl p-6 relative overflow-hidden animate-slide-up delay-75">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-xl p-6 relative overflow-hidden animate-slide-up delay-75 order-3 md:order-2">
           <div className="absolute top-0 right-0 p-4 opacity-10">
             <AlertTriangle size={100} className="text-red-500" />
           </div>
@@ -129,7 +129,7 @@ export const Dashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 order-4 md:order-3">
         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors animate-slide-up delay-150">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg">
@@ -169,7 +169,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Fichaje Section */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 p-6 rounded-xl shadow-sm border border-blue-100 dark:border-slate-700 transition-colors animate-slide-up delay-300">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 p-6 rounded-xl shadow-sm border border-blue-100 dark:border-slate-700 transition-colors animate-slide-up delay-300 order-2 md:order-4">
         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Control de Asistencia</h2>
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <DigitalClock />
@@ -178,7 +178,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 order-5">
         {/* Left Column: Actions and Payroll */}
         <div className="lg:col-span-2 space-y-6">
 
