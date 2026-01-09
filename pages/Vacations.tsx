@@ -232,7 +232,7 @@ export const VacationsPage: React.FC = () => {
                 </div>
                 <button
                     onClick={() => setShowRequestForm(!showRequestForm)}
-                    className="hidden md:flex bg-blue-600 text-white px-4 py-2 rounded-lg items-center gap-2 hover:bg-blue-700 shadow-sm transition-colors"
+                    className="flex bg-blue-600 text-white px-4 py-2 rounded-lg items-center gap-2 hover:bg-blue-700 shadow-sm transition-colors"
                 >
                     <Plus size={18} />
                     <span>{showRequestForm ? 'Cancelar' : 'Nueva Solicitud'}</span>

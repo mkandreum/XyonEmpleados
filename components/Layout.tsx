@@ -9,7 +9,8 @@ import {
   LogOut,
   Menu,
   X,
-  Bell
+  Bell,
+  Clock
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { NotificationDropdown } from './NotificationDropdown';
@@ -43,7 +44,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     { path: '/vacations', label: 'Vacaciones/Ausencias', icon: CalendarDays },
     ...(user?.role === 'MANAGER' ? [
       { path: '/manager/team', label: 'Gestión de equipo', icon: UserCircle },
-      { path: '/manager/calendar', label: 'Calendario Equipo', icon: CalendarDays }
+      { path: '/manager/calendar', label: 'Calendario Equipo', icon: CalendarDays },
+      { path: '/manager/fichajes', label: 'Fichajes Equipo', icon: Clock }
     ] : []),
     { path: '/news', label: 'Comunicación', icon: Newspaper },
     { path: '/profile', label: 'Mi Perfil', icon: UserCircle },

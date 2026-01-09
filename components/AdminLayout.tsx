@@ -14,7 +14,8 @@ import {
     LogOut,
     Bell,
     Menu,
-    X
+    X,
+    Clock
 } from 'lucide-react';
 
 interface SidebarItemProps {
@@ -56,6 +57,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
         { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/admin/users', label: 'Usuarios', icon: Users },
         { path: '/admin/vacations', label: 'Vacaciones', icon: Calendar },
+        { path: '/admin/fichajes', label: 'Fichajes', icon: Clock },
         { path: '/admin/news', label: 'Noticias', icon: Newspaper },
         { path: '/admin/events', label: 'Eventos', icon: CalendarDays },
         { path: '/admin/payrolls', label: 'Nóminas', icon: FileText },

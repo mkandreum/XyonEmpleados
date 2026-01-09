@@ -21,10 +21,12 @@ const AdminNews = lazy(() => import('./pages/admin/News').then(m => ({ default: 
 const AdminEvents = lazy(() => import('./pages/admin/Events').then(m => ({ default: m.AdminEvents })));
 const AdminPayrolls = lazy(() => import('./pages/admin/Payrolls').then(m => ({ default: m.AdminPayrolls })));
 const AdminBenefits = lazy(() => import('./pages/admin/Benefits').then(m => ({ default: m.AdminBenefits })));
+const AdminFichajes = lazy(() => import('./pages/admin/Fichajes').then(m => ({ default: m.AdminFichajes })));
 
 // Lazy load manager pages
 const TeamRequests = lazy(() => import('./pages/manager/TeamRequests').then(m => ({ default: m.TeamRequests })));
 const TeamCalendar = lazy(() => import('./pages/manager/TeamCalendar').then(m => ({ default: m.TeamCalendar })));
+const ManagerFichajes = lazy(() => import('./pages/manager/Fichajes').then(m => ({ default: m.ManagerFichajes })));
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated } = useAuth();
@@ -100,6 +102,11 @@ const AppRoutes = () => {
                     <AdminBenefits />
                 </AdminRoute>
             } />
+            <Route path="/admin/fichajes" element={
+                <AdminRoute>
+                    <AdminFichajes />
+                </AdminRoute>
+            } />
 
 
             <Route path="/" element={
@@ -140,6 +147,11 @@ const AppRoutes = () => {
             <Route path="/manager/calendar" element={
                 <ProtectedRoute>
                     <TeamCalendar />
+                </ProtectedRoute>
+            } />
+            <Route path="/manager/fichajes" element={
+                <ProtectedRoute>
+                    <ManagerFichajes />
                 </ProtectedRoute>
             } />
 
