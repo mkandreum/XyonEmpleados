@@ -11,7 +11,16 @@ const PORT = process.env.PORT || 3000;
 
 // Security Middleware
 app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow images to be loaded
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            imgSrc: ["'self'", "data:", "https://ui-avatars.com"],
+            connectSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+        },
+    },
 }));
 app.disable('x-powered-by'); // Hide Express signature
 
