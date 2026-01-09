@@ -472,50 +472,92 @@ export const VacationsPage: React.FC = () => {
                     </div>
 
                     <div className="flex-1 overflow-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="text-xs text-slate-500 uppercase bg-slate-50">
-                                <tr>
-                                    <th className="px-6 py-3">Fechas</th>
-                                    <th className="px-6 py-3">Duración</th>
-                                    <th className="px-6 py-3">Tipo</th>
-                                    <th className="px-6 py-3">Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
+                        <div className="flex-1 overflow-auto">
+                            {/* Desktop View (Table) */}
+                            <table className="w-full text-sm text-left hidden sm:table">
+                                <thead className="text-xs text-slate-500 uppercase bg-slate-50">
+                                    <tr>
+                                        <th className="px-6 py-3">Fechas</th>
+                                        <th className="px-6 py-3">Duración</th>
+                                        <th className="px-6 py-3">Tipo</th>
+                                        <th className="px-6 py-3">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan={4} className="px-6 py-4 text-center text-slate-500">Cargando...</td>
+                                        </tr>
+                                    ) : vacations.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={4} className="px-6 py-4 text-center text-slate-500">No hay solicitudes registradas.</td>
+                                        </tr>
+                                    ) : (
+                                        vacations.map(vac => (
+                                            <tr key={vac.id} className="hover:bg-slate-50">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium text-slate-900">{new Date(vac.startDate).toLocaleDateString()}</span>
+                                                        <span className="text-slate-500 text-xs">hasta {new Date(vac.endDate).toLocaleDateString()}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-slate-600">
+                                                    {vac.hours ? `${vac.hours} horas` : `${vac.days} días`}
+                                                </td>
+                                                <td className="px-6 py-4 text-slate-600">{getTypeLabel(vac.type, vac.subtype)}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(vac.status)}`}>
+                                                        {vac.status === VacationStatus.APPROVED ? 'Aprobado' :
+                                                            vac.status === VacationStatus.PENDING_MANAGER ? 'Pendiente Manager' :
+                                                                vac.status === VacationStatus.PENDING_ADMIN ? 'Pendiente Admin' :
+                                                                    vac.status === VacationStatus.PENDING ? 'Pendiente' : 'Rechazado'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+
+                            {/* Mobile View (Cards) */}
+                            <div className="sm:hidden space-y-3 p-4 bg-slate-50">
                                 {loading ? (
-                                    <tr>
-                                        <td colSpan={4} className="px-6 py-4 text-center text-slate-500">Cargando...</td>
-                                    </tr>
+                                    <p className="text-center text-slate-500">Cargando...</p>
                                 ) : vacations.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={4} className="px-6 py-4 text-center text-slate-500">No hay solicitudes registradas.</td>
-                                    </tr>
+                                    <p className="text-center text-slate-500">No hay solicitudes registradas.</p>
                                 ) : (
                                     vacations.map(vac => (
-                                        <tr key={vac.id} className="hover:bg-slate-50">
-                                            <td className="px-6 py-4">
+                                        <div key={vac.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-100 flex flex-col gap-2">
+                                            <div className="flex justify-between items-start">
                                                 <div className="flex flex-col">
-                                                    <span className="font-medium text-slate-900">{new Date(vac.startDate).toLocaleDateString()}</span>
-                                                    <span className="text-slate-500 text-xs">hasta {new Date(vac.endDate).toLocaleDateString()}</span>
+                                                    <span className="font-bold text-slate-900 text-base">{getTypeLabel(vac.type, vac.subtype)}</span>
+                                                    <span className="text-xs text-slate-400 font-medium uppercase tracking-wide mt-1">
+                                                        {new Date(vac.startDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - {new Date(vac.endDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                    </span>
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-slate-600">
-                                                {vac.hours ? `${vac.hours} horas` : `${vac.days} días`}
-                                            </td>
-                                            <td className="px-6 py-4 text-slate-600">{getTypeLabel(vac.type, vac.subtype)}</td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(vac.status)}`}>
-                                                    {vac.status === VacationStatus.APPROVED ? 'Aprobado' :
-                                                        vac.status === VacationStatus.PENDING_MANAGER ? 'Pendiente Manager' :
-                                                            vac.status === VacationStatus.PENDING_ADMIN ? 'Pendiente Admin' :
-                                                                vac.status === VacationStatus.PENDING ? 'Pendiente' : 'Rechazado'}
+                                                <div className="text-right">
+                                                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(vac.status)}`}>
+                                                        {vac.status === VacationStatus.APPROVED ? 'Aprobado' :
+                                                            vac.status === VacationStatus.PENDING_MANAGER ? 'Pendiente' :
+                                                                vac.status === VacationStatus.PENDING_ADMIN ? 'Procesando' :
+                                                                    vac.status === VacationStatus.PENDING ? 'Enviado' : 'Rechazado'}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex justify-between items-center mt-2 border-t border-slate-50 pt-2">
+                                                <span className="text-sm text-slate-600 font-medium">
+                                                    {vac.hours ? `${vac.hours}h` : `${vac.days} días`}
                                                 </span>
-                                            </td>
-                                        </tr>
+                                                <span className="text-xs text-slate-400">
+                                                    {new Date(vac.createdAt).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                        </div>
                                     ))
                                 )}
-                            </tbody>
-                        </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
