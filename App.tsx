@@ -1,8 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { Layout } from './components/Layout';
-import { AdminLayout } from './components/AdminLayout';
+import { UnifiedLayout } from './components/UnifiedLayout'; // New Unified Layout
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
@@ -33,7 +32,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
-    return <Layout>{children}</Layout>;
+    return <UnifiedLayout>{children}</UnifiedLayout>;
 };
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
@@ -41,11 +40,11 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     if (!isAuthenticated) return <Navigate to="/login" replace />;
     if (user?.role !== 'ADMIN') return <Navigate to="/" replace />;
     return (
-        <AdminLayout>
+        <UnifiedLayout>
             <Suspense fallback={<div className="flex items-center justify-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>}>
                 {children}
             </Suspense>
-        </AdminLayout>
+        </UnifiedLayout>
     );
 };
 

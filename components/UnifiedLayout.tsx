@@ -1,0 +1,113 @@
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../hooks/useSettings';
+import { NotificationDropdown } from './NotificationDropdown';
+import { FloatingNavbar } from './FloatingNavbar';
+import { Link, useNavigate } from 'react-router-dom';
+import { LogOut, User } from 'lucide-react';
+import { getAbsoluteUrl } from '../utils/urlUtils';
+
+export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { user, logout } = useAuth();
+    const { settings } = useSettings();
+    const navigate = useNavigate();
+    const [logoError, setLogoError] = useState(false);
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+    const companyName = settings.companyName || 'Velilla';
+    const logoUrl = settings.logoUrl;
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
+
+    return (
+        <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+            {/* Top Bar - Minimal */}
+            <header className="fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm z-40 px-4 sm:px-8 flex items-center justify-between">
+
+                {/* Brand / Logo */}
+                <div className="flex items-center gap-3">
+                    {logoUrl && !logoError ? (
+                        <img
+                            src={logoUrl}
+                            alt={companyName}
+                            className="h-8 w-auto object-contain"
+                            onError={() => setLogoError(true)}
+                        />
+                    ) : (
+                        <div className="flex flex-col">
+                            <h1 className="text-xl font-bold tracking-tight text-slate-800">
+                                {companyName}<span className="text-blue-600">Portal</span>
+                            </h1>
+                        </div>
+                    )}
+                </div>
+
+                {/* Right Actions */}
+                <div className="flex items-center gap-4">
+                    <NotificationDropdown />
+
+                    {/* User Profile Trigger */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowProfileMenu(!showProfileMenu)}
+                            className="flex items-center gap-2 hover:bg-slate-100 p-1 rounded-full transition-colors"
+                        >
+                            <img
+                                src={getAbsoluteUrl(user?.avatarUrl)}
+                                alt="Profile"
+                                className="w-9 h-9 rounded-full object-cover ring-2 ring-white shadow-sm"
+                            />
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        {showProfileMenu && (
+                            <div className="absolute top-12 right-0 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 animate-fade-in z-50">
+                                <div className="px-4 py-3 border-b border-slate-50">
+                                    <p className="text-sm font-semibold text-slate-900">{user?.name}</p>
+                                    <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+                                </div>
+                                <Link
+                                    to={user?.role === 'ADMIN' ? '/admin/settings' : '/profile'}
+                                    className="flex items-center gap-2 px-4 py-2text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                                    onClick={() => setShowProfileMenu(false)}
+                                >
+                                    <div className="px-4 py-2 flex items-center gap-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer">
+                                        <User size={16} />
+                                        Mi Perfil / Ajustes
+                                    </div>
+                                </Link>
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                >
+                                    <LogOut size={16} />
+                                    Cerrar Sesión
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </header>
+
+            {/* Main Content Area */}
+            {/* Added pb-32 to account for floating header and bottom bar */}
+            <main className="flex-1 pt-24 pb-32 px-4 sm:px-8 max-w-7xl mx-auto w-full animate-fade-in">
+                {children}
+            </main>
+
+            {/* Floating Navigation */}
+            <FloatingNavbar />
+
+            {/* Mobile Overlay for Profile Menu closure if needed */}
+            {showProfileMenu && (
+                <div
+                    className="fixed inset-0 z-30 bg-transparent"
+                    onClick={() => setShowProfileMenu(false)}
+                />
+            )}
+        </div>
+    );
+};
