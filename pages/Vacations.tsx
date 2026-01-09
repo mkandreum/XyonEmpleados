@@ -93,7 +93,7 @@ export const VacationsPage: React.FC = () => {
 
         // Validate justification for non-vacation types
         if ((formData.type === 'SICK_LEAVE' || formData.type === 'PERSONAL') && !formData.justificationUrl) {
-            showAlert('El justificante es obligatorio para bajas médicas y ausencias justificadas', 'warning');
+            showAlert('El justificante es obligatorio para horas médicas y ausencias justificadas', 'warning');
             return;
         }
 

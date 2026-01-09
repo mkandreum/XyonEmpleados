@@ -13,7 +13,7 @@ export const AdminBenefits: React.FC = () => {
         department: '',
         vacationDays: 22,
         overtimeHoursBank: 40,
-        sickLeaveDays: 15,
+        sickLeaveDays: 24,
         paidAbsenceHours: 20
     });
 
@@ -43,7 +43,7 @@ export const AdminBenefits: React.FC = () => {
                 department: dept,
                 vacationDays: 22,
                 overtimeHoursBank: 40,
-                sickLeaveDays: 15,
+                sickLeaveDays: 24,
                 paidAbsenceHours: 20
             });
         }
@@ -66,7 +66,7 @@ export const AdminBenefits: React.FC = () => {
             department: dept,
             vacationDays: 22,
             overtimeHoursBank: 40,
-            sickLeaveDays: 15,
+            sickLeaveDays: 24,
             paidAbsenceHours: 20
         };
     };
@@ -87,7 +87,7 @@ export const AdminBenefits: React.FC = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Departamento</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Días Vacaciones</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Horas Exceso</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Días Baja Médica</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Horas Médicas</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Horas Retribuidas</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Acciones</th>
                         </tr>
@@ -133,7 +133,7 @@ export const AdminBenefits: React.FC = () => {
                                                 className="w-20 border border-slate-300 rounded px-2 py-1 text-sm"
                                             />
                                         ) : (
-                                            <span className="text-sm text-slate-900">{deptBenefits.sickLeaveDays} días</span>
+                                            <span className="text-sm text-slate-900">{deptBenefits.sickLeaveDays} horas</span>
                                         )}
                                     </td>
                                     <td className="px-6 py-4">

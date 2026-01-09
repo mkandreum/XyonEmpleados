@@ -296,7 +296,7 @@ export const Dashboard: React.FC = () => {
               <div className="border-b border-slate-200 p-4 flex justify-between items-center">
                 <h2 className="text-xl font-bold">
                   {showQuickAccessModal === 'vacation' && 'Solicitar Vacaciones'}
-                  {showQuickAccessModal === 'sick' && 'Solicitar Baja Médica'}
+                  {showQuickAccessModal === 'sick' && 'Solicitar Horas Médicas'}
                   {showQuickAccessModal === 'absence' && 'Solicitar Ausencia'}
                 </h2>
                 <button onClick={() => setShowQuickAccessModal(null)} className="p-2 hover:bg-slate-100 rounded-lg">
