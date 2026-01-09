@@ -30,18 +30,25 @@ export const ManagerFichajes: React.FC = () => {
                     console.log('Processing', response.users.length, 'users');
                     // Transformar datos para el formato esperado
                     const transformedData = response.users.map((userGroup: any) => {
-                        console.log('User:', userGroup.user.name, 'Fichajes groups:', userGroup.fichajes.length);
+                        console.log('User:', userGroup.user.name, 'Day groups:', userGroup.fichajes.length);
+
+                        // Aplanar fichajes pero mantener la fecha
+                        const allFichajes = userGroup.fichajes.flatMap((dayGroup: any) =>
+                            dayGroup.fichajes.map((f: any) => ({
+                                ...f,
+                                date: dayGroup.date, // Preservar la fecha
+                                isLate: dayGroup.isLate,
+                                isEarlyDeparture: dayGroup.isEarlyDeparture,
+                                hasNotification: false
+                            }))
+                        );
+
+                        console.log('User:', userGroup.user.name, 'Total fichajes:', allFichajes.length);
+
                         return {
                             userId: userGroup.user.id,
                             userName: userGroup.user.name,
-                            fichajes: userGroup.fichajes.flatMap((dayGroup: any) =>
-                                dayGroup.fichajes.map((f: any) => ({
-                                    ...f,
-                                    isLate: dayGroup.isLate,
-                                    isEarlyDeparture: dayGroup.isEarlyDeparture,
-                                    hasNotification: false // TODO: implementar check de notificaciones
-                                }))
-                            )
+                            fichajes: allFichajes
                         };
                     });
                     console.log('Transformed data:', transformedData);
@@ -214,41 +221,53 @@ export const ManagerFichajes: React.FC = () => {
                                                 f.timestamp && new Date(f.timestamp).toISOString().split('T')[0] === dayStr
                                             ) || [];
 
-                                            const entrada = dayFichajes.find((f: any) => f.tipo === 'ENTRADA');
-                                            const salida = dayFichajes.find((f: any) => f.tipo === 'SALIDA');
-                                            const isLate = entrada?.isLate;
-                                            const isEarlyDep = salida?.isEarlyDeparture;
-                                            const hasWarning = entrada?.hasNotification;
+                                            // Separar entradas y salidas
+                                            const entradas = dayFichajes.filter((f: any) => f.tipo === 'ENTRADA');
+                                            const salidas = dayFichajes.filter((f: any) => f.tipo === 'SALIDA');
+
+                                            // Determinar si hay problemas (tarde o salida temprana)
+                                            const hasIssues = dayFichajes.some((f: any) => f.isLate || f.isEarlyDeparture);
 
                                             return (
                                                 <td key={dayIndex} className="px-3 py-4 text-center">
                                                     {dayFichajes.length > 0 ? (
-                                                        <div className={`rounded-lg p-3 ${isLate || isEarlyDep ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'
-                                                            }`}>
-                                                            <div className="text-xs font-medium mb-1">
-                                                                <span className={isLate ? 'text-red-700' : 'text-green-700'}>
-                                                                    ↓ {formatTime(entrada?.timestamp)}
-                                                                </span>
-                                                            </div>
-                                                            <div className="text-xs font-medium">
-                                                                <span className={isEarlyDep ? 'text-red-700' : 'text-green-700'}>
-                                                                    ↑ {formatTime(salida?.timestamp)}
-                                                                </span>
-                                                            </div>
-                                                            {(isLate || isEarlyDep) && !hasWarning && (
+                                                        <div className={`rounded-lg p-2 ${hasIssues ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
+                                                            {/* Mostrar todos los pares de entrada/salida */}
+                                                            {Math.max(entradas.length, salidas.length) > 0 && (
+                                                                <div className="space-y-1">
+                                                                    {Array.from({ length: Math.max(entradas.length, salidas.length) }).map((_, i) => (
+                                                                        <div key={i} className="text-xs">
+                                                                            {entradas[i] && (
+                                                                                <div className={`font-medium ${entradas[i].isLate ? 'text-red-700' : 'text-green-700'}`}>
+                                                                                    ↓ {formatTime(entradas[i].timestamp)}
+                                                                                </div>
+                                                                            )}
+                                                                            {salidas[i] && (
+                                                                                <div className={`font-medium ${salidas[i].isEarlyDeparture ? 'text-red-700' : 'text-green-700'}`}>
+                                                                                    ↑ {formatTime(salidas[i].timestamp)}
+                                                                                </div>
+                                                                            )}
+                                                                            {i < Math.max(entradas.length, salidas.length) - 1 && (
+                                                                                <div className="border-t border-slate-300 my-1"></div>
+                                                                            )}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                            {hasIssues && !dayFichajes.some((f: any) => f.hasNotification) && (
                                                                 <button
                                                                     onClick={() => handleSendWarning(
                                                                         employee.userId,
-                                                                        entrada?.id || salida?.id,
+                                                                        entradas[0]?.id || salidas[0]?.id,
                                                                         dayStr,
                                                                         employee.userName
                                                                     )}
-                                                                    className="mt-2 text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 transition-colors"
+                                                                    className="mt-2 text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 transition-colors w-full"
                                                                 >
                                                                     Dar Aviso
                                                                 </button>
                                                             )}
-                                                            {hasWarning && (
+                                                            {dayFichajes.some((f: any) => f.hasNotification) && (
                                                                 <div className="mt-2 text-xs text-orange-600 font-medium">
                                                                     ⚠ Avisado
                                                                 </div>
