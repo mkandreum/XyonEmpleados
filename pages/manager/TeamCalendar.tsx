@@ -32,7 +32,7 @@ export const TeamCalendar: React.FC = () => {
     const uniqueUsers = Array.from(new Set(teamVacations.map(v => v.user?.id || 'unknown')))
         .map(id => {
             const vac = teamVacations.find(v => v.user?.id === id);
-            return vac?.user || { name: 'Desconocido', email: '', id };
+            return (vac?.user || { name: 'Desconocido', email: '', id }) as any;
         })
         .filter(u => u.name !== 'Desconocido'); // Filter out invalid users if any
 
@@ -49,39 +49,39 @@ export const TeamCalendar: React.FC = () => {
         });
     };
 
-    if (loading) return <div className="p-8 text-center text-slate-500">Cargando calendario...</div>;
+    if (loading) return <div className="p-8 text-center text-slate-500 dark:text-slate-400 transition-colors">Cargando calendario...</div>;
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center animate-slide-up">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Calendario de Equipo</h1>
-                    <p className="text-slate-500">Visualiza las ausencias y vacaciones de tu equipo.</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white transition-colors">Calendario de Equipo</h1>
+                    <p className="text-slate-500 dark:text-slate-400 transition-colors">Visualiza las ausencias y vacaciones de tu equipo.</p>
                 </div>
-                <div className="flex items-center gap-4 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-                    <button onClick={prevMonth} className="p-2 hover:bg-slate-100 rounded-lg text-slate-600">
+                <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+                    <button onClick={prevMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 transition-colors">
                         <ChevronLeft size={20} />
                     </button>
-                    <span className="font-semibold text-slate-900 capitalize min-w-[150px] text-center">
+                    <span className="font-semibold text-slate-900 dark:text-white capitalize min-w-[150px] text-center transition-colors">
                         {monthName}
                     </span>
-                    <button onClick={nextMonth} className="p-2 hover:bg-slate-100 rounded-lg text-slate-600">
+                    <button onClick={nextMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 transition-colors">
                         <ChevronRight size={20} />
                     </button>
                 </div>
             </div>
 
             {/* Desktop View (Gantt-like Table) */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden hidden sm:block">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden hidden sm:block transition-colors animate-slide-up delay-75">
                 <div className="overflow-x-auto pb-4"> {/* Added pb-4 for scrollbar space */}
                     <table className="w-full border-collapse">
                         <thead>
                             <tr>
-                                <th className="p-4 text-left min-w-[200px] border-b border-r border-slate-200 bg-slate-50 sticky left-0 z-20">
+                                <th className="p-4 text-left min-w-[200px] border-b border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 sticky left-0 z-20 transition-colors text-slate-900 dark:text-white">
                                     Empleado
                                 </th>
                                 {Array.from({ length: daysInMonth }).map((_, i) => (
-                                    <th key={i} className="p-2 text-center min-w-[36px] border-b border-slate-100 text-xs font-medium text-slate-500">
+                                    <th key={i} className="p-2 text-center min-w-[36px] border-b border-slate-100 dark:border-slate-800 text-xs font-medium text-slate-500 dark:text-slate-400 transition-colors">
                                         {i + 1}
                                     </th>
                                 ))}
@@ -90,21 +90,21 @@ export const TeamCalendar: React.FC = () => {
                         <tbody>
                             {uniqueUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={daysInMonth + 1} className="p-8 text-center text-slate-500">
+                                    <td colSpan={daysInMonth + 1} className="p-8 text-center text-slate-500 dark:text-slate-400 transition-colors">
                                         No hay datos de vacaciones para este equipo.
                                     </td>
                                 </tr>
                             ) : (
                                 uniqueUsers.map(user => (
-                                    <tr key={user.id || Math.random()} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="p-4 border-b border-r border-slate-200 bg-white sticky left-0 z-20">
+                                    <tr key={user.id || Math.random()} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                                        <td className="p-4 border-b border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky left-0 z-20 transition-colors">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs ring-2 ring-white">
+                                                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs ring-2 ring-white dark:ring-slate-800 transition-all">
                                                     {user.name?.charAt(0) || 'U'}
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-medium text-slate-900 truncate max-w-[140px]" title={user.name}>{user.name}</p>
-                                                    <p className="text-[11px] text-slate-500 truncate max-w-[140px]">{user.position || 'Empleado'}</p>
+                                                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[140px] transition-colors" title={user.name}>{user.name}</p>
+                                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[140px] transition-colors">{user.position || 'Empleado'}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -147,9 +147,9 @@ export const TeamCalendar: React.FC = () => {
                                             }
 
                                             return (
-                                                <td key={i} className="border-b border-slate-100 p-0 h-12 relative min-w-[36px]">
+                                                <td key={i} className="border-b border-slate-100 dark:border-slate-800 p-0 h-12 relative min-w-[36px]">
                                                     {/* Grid line helper - optional */}
-                                                    <div className="absolute inset-y-0 right-0 border-r border-slate-50 pointer-events-none"></div>
+                                                    <div className="absolute inset-y-0 right-0 border-r border-slate-50 dark:border-slate-800/50 pointer-events-none"></div>
 
                                                     {vacation && (
                                                         <div
@@ -168,23 +168,23 @@ export const TeamCalendar: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
-                <div className="p-4 border-t border-slate-200 flex flex-wrap gap-4 text-xs bg-slate-50">
+                <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex flex-wrap gap-4 text-xs bg-slate-50 dark:bg-slate-800/50 transition-colors animate-slide-up delay-150">
                     <div className="flex items-center gap-2">
                         <div className="w-6 h-3 bg-green-500 rounded-sm"></div>
-                        <span className="text-slate-600">Aprobado</span>
+                        <span className="text-slate-600 dark:text-slate-400">Aprobado</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="w-6 h-3 bg-amber-400 rounded-sm"></div>
-                        <span className="text-slate-600">Pendiente</span>
+                        <span className="text-slate-600 dark:text-slate-400">Pendiente</span>
                     </div>
-                    <div className="text-slate-400 ml-auto border-l pl-4 border-slate-200">
+                    <div className="text-slate-400 dark:text-slate-500 ml-auto border-l pl-4 border-slate-200 dark:border-slate-700 transition-colors">
                         V: Vacaciones, B: Baja, A: Ausencia
                     </div>
                 </div>
             </div>
 
             {/* Mobile View (Optimized Cards) */}
-            <div className="sm:hidden space-y-4">
+            <div className="sm:hidden space-y-4 animate-slide-up delay-75">
                 {(() => {
                     // Optimized: Only show users who have relevant vacations in this view
                     const activeUsers = uniqueUsers.map(user => {
@@ -207,49 +207,49 @@ export const TeamCalendar: React.FC = () => {
 
                     if (activeUsers.length === 0) {
                         return (
-                            <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100 text-center">
-                                <div className="inline-flex justify-center items-center w-12 h-12 bg-slate-100 rounded-full mb-3 text-slate-400">
+                            <div className="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 text-center transition-colors">
+                                <div className="inline-flex justify-center items-center w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full mb-3 text-slate-400 dark:text-slate-600 transition-colors">
                                     <User size={20} />
                                 </div>
-                                <h3 className="text-slate-900 font-medium">Todo el equipo disponible</h3>
-                                <p className="text-sm text-slate-500 mt-1">No hay ausencias registradas para {monthName}.</p>
+                                <h3 className="text-slate-900 dark:text-white font-medium transition-colors">Todo el equipo disponible</h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 transition-colors">No hay ausencias registradas para {monthName}.</p>
                             </div>
                         );
                     }
 
                     return activeUsers.map(({ user, vacations }) => (
-                        <div key={user.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 group transition-all hover:shadow-md">
-                            <div className="flex items-center justify-between mb-3 border-b border-slate-50 pb-2">
+                        <div key={user.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 group transition-all hover:shadow-md">
+                            <div className="flex items-center justify-between mb-3 border-b border-slate-50 dark:border-slate-800 pb-2 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center font-bold shadow-sm">
                                         {user.name?.charAt(0) || 'U'}
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-slate-900 text-sm">{user.name}</h3>
-                                        <p className="text-[11px] text-slate-500 uppercase tracking-wide">{user.position || 'Empleado'}</p>
+                                        <h3 className="font-semibold text-slate-900 dark:text-white text-sm transition-colors">{user.name}</h3>
+                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-wide transition-colors">{user.position || 'Empleado'}</p>
                                     </div>
                                 </div>
-                                <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-xs font-bold">
+                                <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-1 rounded-full text-xs font-bold transition-colors">
                                     {vacations.length} {vacations.length === 1 ? 'evento' : 'eventos'}
                                 </span>
                             </div>
 
                             <div className="space-y-2">
                                 {vacations.map(vac => (
-                                    <div key={vac.id} className="relative pl-3 border-l-2 border-slate-200 py-1">
-                                        <div className={`absolute left-[-2px] top-1/2 -translate-y-1/2 w-1 h-full rounded-full ${vac.status === 'APPROVED' ? 'bg-green-500' : 'bg-amber-400'}`}></div>
+                                    <div key={vac.id} className="relative pl-3 border-l-2 border-slate-200 dark:border-slate-700 py-1 transition-colors">
+                                        <div className={`absolute left-[-2px] top-1/2 -translate-y-1/2 w-1 h-full rounded-full transition-colors ${vac.status === 'APPROVED' ? 'bg-green-500' : 'bg-amber-400'}`}></div>
                                         <div className="flex justify-between items-center">
                                             <div>
-                                                <p className="text-sm font-medium text-slate-800">
+                                                <p className="text-sm font-medium text-slate-800 dark:text-slate-200 transition-colors">
                                                     {vac.type === 'VACATION' ? 'Vacaciones' : vac.type === 'SICK_LEAVE' ? 'Baja Médica' : 'Ausencia'}
                                                 </p>
-                                                <p className="text-xs text-slate-500">
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 transition-colors">
                                                     {new Date(vac.startDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - {new Date(vac.endDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                                                 </p>
                                             </div>
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${vac.status === 'APPROVED'
-                                                    ? 'bg-green-50 border-green-100 text-green-700'
-                                                    : 'bg-amber-50 border-amber-100 text-amber-700'
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border transition-colors ${vac.status === 'APPROVED'
+                                                ? 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-900/30 text-green-700 dark:text-green-400'
+                                                : 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900/30 text-amber-700 dark:text-amber-400'
                                                 }`}>
                                                 {vac.status === 'APPROVED' ? 'Aprobado' : 'Pendiente'}
                                             </span>

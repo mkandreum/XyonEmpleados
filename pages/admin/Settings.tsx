@@ -46,9 +46,9 @@ export const AdminSettings: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Configuración Global</h1>
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-white animate-slide-up">Configuración Global</h1>
 
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 max-w-2xl transition-colors">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 max-w-2xl transition-colors animate-slide-up delay-75">
                 <form onSubmit={handleSave} className="space-y-6">
                     <div>
                         <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">Apariencia</h3>

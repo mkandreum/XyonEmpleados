@@ -82,7 +82,7 @@ export const AdminPayrolls: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center animate-slide-up">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestión de Nóminas</h1>
                     <p className="text-slate-500 dark:text-slate-400">Carga nóminas para los empleados</p>
@@ -96,7 +96,7 @@ export const AdminPayrolls: React.FC = () => {
                 </button>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors animate-slide-up delay-75">
                 <div className="text-center py-12">
                     <FileText size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Carga de Nóminas</h3>
@@ -106,7 +106,7 @@ export const AdminPayrolls: React.FC = () => {
             </div>
 
             {/* Payrolls List (Desktop) */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden hidden sm:block transition-colors">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden hidden sm:block transition-colors animate-slide-up delay-150">
                 <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                     <h3 className="font-semibold text-slate-900 dark:text-white">Historial de Nóminas</h3>
                 </div>
@@ -163,7 +163,7 @@ export const AdminPayrolls: React.FC = () => {
             </div>
 
             {/* Mobile View (Cards) */}
-            <div className="sm:hidden space-y-4">
+            <div className="sm:hidden space-y-4 animate-slide-up delay-150">
                 <h3 className="font-semibold text-slate-900 dark:text-white px-1">Historial de Nóminas</h3>
                 {payrolls.map((payroll) => (
                     <div key={payroll.id} className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors">

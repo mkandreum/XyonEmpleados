@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ConfirmModal } from '../../components/ConfirmModal';
 
 export const ManagerFichajes: React.FC = () => {
-    const { user } = useAuth();
+    const { user } = useAuth() as any;
     const [weekData, setWeekData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedWeek, setSelectedWeek] = useState(0); // 0 = current week
@@ -115,7 +115,7 @@ export const ManagerFichajes: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-slide-up">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Fichajes del Equipo</h1>
                     <p className="text-slate-500 dark:text-slate-400">Departamento: {user?.department}</p>
@@ -145,7 +145,7 @@ export const ManagerFichajes: React.FC = () => {
             </div>
 
             {/* Week Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-slide-up delay-75">
                 <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
@@ -188,7 +188,7 @@ export const ManagerFichajes: React.FC = () => {
             </div>
 
             {/* Gantt Chart - Desktop */}
-            <div className="hidden md:block bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+            <div className="hidden md:block bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-150">
                 <div className="p-6 border-b border-slate-100 dark:border-slate-800 transition-colors">
                     <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Vista Semanal</h2>
                 </div>
@@ -310,7 +310,7 @@ export const ManagerFichajes: React.FC = () => {
             </div>
 
             {/* Mobile View - Cards */}
-            <div className="md:hidden space-y-4">
+            <div className="md:hidden space-y-4 animate-slide-up delay-150">
                 {loading ? (
                     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-12 text-center transition-colors">
                         <Clock className="animate-spin mx-auto text-blue-600 mb-4" size={48} />

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { adminService } from '../../services/api';
-import { User } from '../../types';
-import { Plus, Edit, Trash, Search, User as UserIcon } from 'lucide-react';
+import { User, UserRole } from '../../types';
+import { Plus, Edit2 as Edit, Trash2 as Trash, Search, User as UserIcon } from 'lucide-react';
 import { ConfirmModal } from '../../components/ConfirmModal';
 
 export const AdminUsers: React.FC = () => {
@@ -95,10 +95,10 @@ export const AdminUsers: React.FC = () => {
                 // Update
                 const updateData = { ...formData };
                 if (!updateData.password) delete (updateData as any).password;
-                await adminService.updateUser(editingUser.id, updateData);
+                await adminService.updateUser(editingUser.id, updateData as any);
             } else {
                 // Create
-                await adminService.createUser(formData);
+                await adminService.createUser(formData as any);
             }
             setIsModalOpen(false);
             fetchUsers();
@@ -111,7 +111,7 @@ export const AdminUsers: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-slide-up">
                 <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Gestión de Usuarios</h1>
                 <button
                     onClick={handleCreate}
@@ -123,7 +123,7 @@ export const AdminUsers: React.FC = () => {
             </div>
 
             {/* Search */}
-            <div className="relative">
+            <div className="relative animate-slide-up delay-75">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
                 <input
                     type="text"
@@ -135,7 +135,7 @@ export const AdminUsers: React.FC = () => {
             </div>
 
             {/* Users Table (Desktop) */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden hidden sm:block transition-colors">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden hidden sm:block transition-colors animate-slide-up delay-150">
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
                         <thead className="bg-slate-50 dark:bg-slate-800">
@@ -184,7 +184,7 @@ export const AdminUsers: React.FC = () => {
             </div>
 
             {/* Mobile View (Cards) */}
-            <div className="sm:hidden space-y-4">
+            <div className="sm:hidden space-y-4 animate-slide-up delay-150">
                 {filteredUsers.map((user) => (
                     <div key={user.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
                         <div className="flex justify-between items-start mb-4">

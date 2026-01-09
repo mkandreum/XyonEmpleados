@@ -73,59 +73,59 @@ export const TeamRequests: React.FC = () => {
     };
 
     if (isLoading) {
-        return <div className="p-8 text-center text-slate-500">Cargando solicitudes...</div>;
+        return <div className="p-8 text-center text-slate-500 dark:text-slate-400 transition-colors">Cargando solicitudes...</div>;
     }
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-slate-800">Gestión de Equipo</h1>
-                <div className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium">
+            <div className="flex justify-between items-center animate-slide-up">
+                <h1 className="text-2xl font-bold text-slate-800 dark:text-white transition-colors">Gestión de Equipo</h1>
+                <div className="px-4 py-2 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-lg font-medium transition-colors">
                     {requests.length} Solicitud{requests.length !== 1 ? 'es' : ''} Pendiente{requests.length !== 1 ? 's' : ''}
                 </div>
             </div>
 
             {requests.length === 0 ? (
-                <div className="bg-white p-12 rounded-xl shadow-sm border border-slate-100 text-center">
-                    <Calendar className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-                    <p className="text-slate-600 text-lg">No hay solicitudes pendientes de tu equipo</p>
+                <div className="bg-white dark:bg-slate-900 p-12 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 text-center transition-colors animate-slide-up delay-75">
+                    <Calendar className="h-16 w-16 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
+                    <p className="text-slate-600 dark:text-slate-400 text-lg">No hay solicitudes pendientes de tu equipo</p>
                 </div>
             ) : (
-                <div className="grid gap-4">
+                <div className="grid gap-4 animate-slide-up delay-75">
                     {requests.map((request) => (
-                        <div key={request.id} className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                        <div key={request.id} className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md transition-all">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                                        <UserIcon className="h-6 w-6 text-blue-600" />
+                                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center transition-colors">
+                                        <UserIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-semibold text-slate-800">{request.user?.name || 'Usuario'}</h3>
-                                        <p className="text-sm text-slate-500">{request.user?.position || ''}</p>
+                                        <h3 className="text-lg font-semibold text-slate-800 dark:text-white transition-colors">{request.user?.name || 'Usuario'}</h3>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 transition-colors">{(request.user as any)?.position || ''}</p>
                                     </div>
                                 </div>
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${getStatusColor(request.status)}`}>
                                     {getStatusText(request.status)}
                                 </span>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                <div className="flex items-center gap-2 text-sm text-slate-600">
+                                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 transition-colors">
                                     <Calendar className="h-4 w-4 text-blue-500" />
                                     <span>Desde: {new Date(request.startDate).toLocaleDateString()}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm text-slate-600">
+                                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 transition-colors">
                                     <Calendar className="h-4 w-4 text-blue-500" />
                                     <span>Hasta: {new Date(request.endDate).toLocaleDateString()}</span>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm text-slate-600">
+                                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 transition-colors">
                                     <Clock className="h-4 w-4 text-blue-500" />
                                     <span>{request.days} día{request.days !== 1 ? 's' : ''}</span>
                                 </div>
                             </div>
 
                             <div className="mb-4 flex justify-between items-center">
-                                <span className={`inline-block px-2 py-1 text-xs rounded ${getTypeColor(request.type)}`}>
+                                <span className={`inline-block px-2 py-1 text-xs rounded transition-colors ${getTypeColor(request.type)}`}>
                                     {getTypeLabel(request.type)}
                                 </span>
                                 {request.justificationUrl && (
@@ -133,10 +133,10 @@ export const TeamRequests: React.FC = () => {
                                         href={request.justificationUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline"
+                                        className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 hover:underline transition-colors"
                                     >
-                                        <div className="w-16 h-8 bg-blue-50 flex items-center justify-center rounded border border-blue-100">
-                                            Ver Doc
+                                        <div className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center rounded border border-blue-100 dark:border-blue-800 transition-colors">
+                                            Ver Documento
                                         </div>
                                     </a>
                                 )}
@@ -146,14 +146,14 @@ export const TeamRequests: React.FC = () => {
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => handleApprove(request.id)}
-                                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
                                     >
                                         <CheckCircle className="h-5 w-5" />
                                         Aprobar
                                     </button>
                                     <button
                                         onClick={() => handleReject(request.id)}
-                                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
                                     >
                                         <XCircle className="h-5 w-5" />
                                         Rechazar

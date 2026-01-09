@@ -6,7 +6,7 @@ import { useModal } from '../hooks/useModal';
 import { Modal } from '../components/Modal';
 
 export const ProfilePage: React.FC = () => {
-    const { user, login } = useAuth();
+    const { user, login } = useAuth() as any;
 
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -68,13 +68,13 @@ export const ProfilePage: React.FC = () => {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
-            <div>
+            <div className="animate-slide-up">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Mi Perfil</h1>
                 <p className="text-slate-500 dark:text-slate-400">Gestiona tu información personal y de contacto.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-1">
+                <div className="md:col-span-1 animate-slide-up delay-75">
                     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 flex flex-col items-center text-center transition-colors">
                         <div className="relative mb-4">
                             <img
@@ -127,8 +127,8 @@ export const ProfilePage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="md:col-span-2">
-                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+                <div className="md:col-span-2 space-y-6">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-150">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                             <h3 className="font-semibold text-slate-900 dark:text-white">Información de Contacto</h3>
                             <button
@@ -203,7 +203,7 @@ export const ProfilePage: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="mt-6 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors animate-slide-up delay-200">
                         <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Seguridad</h3>
                         <div className="flex items-center justify-between">
                             <div>

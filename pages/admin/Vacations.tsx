@@ -157,12 +157,12 @@ export const AdminVacations: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center animate-slide-up">
                 <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Gestión de Vacaciones</h1>
             </div>
 
             {/* Filters */}
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-4 items-center animate-slide-up delay-75">
                 <select
                     value={selectedDepartment}
                     onChange={(e) => setSelectedDepartment(e.target.value)}
@@ -177,7 +177,7 @@ export const AdminVacations: React.FC = () => {
 
             {/* Pending Requests Section */}
             {pendingRequests.length > 0 && (
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border-2 border-amber-200 dark:border-amber-800/50 rounded-lg p-4 md:p-6 transition-colors font-sans">
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border-2 border-amber-200 dark:border-amber-800/50 rounded-lg p-4 md:p-6 transition-colors font-sans animate-slide-up delay-150">
                     <div className="flex items-center gap-2 mb-4">
                         <AlertCircle className="text-amber-600 dark:text-amber-400" size={24} />
                         <h2 className="text-lg md:text-xl font-bold text-amber-900 dark:text-amber-100">
@@ -246,7 +246,7 @@ export const AdminVacations: React.FC = () => {
             )}
 
             {/* Historical Section */}
-            <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
+            <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 transition-colors animate-slide-up delay-200">
                 <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                     <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Historial de Solicitudes</h2>
                     <div className="flex gap-2">

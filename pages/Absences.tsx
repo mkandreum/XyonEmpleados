@@ -121,14 +121,14 @@ export const AbsencesPage: React.FC = () => {
 
     const currentYear = new Date().getFullYear();
 
-    if (loading) return <div className="flex items-center justify-center h-screen"><div className="text-slate-500">Cargando...</div></div>;
+    if (loading) return <div className="flex items-center justify-center h-screen transition-colors"><div className="text-slate-500 dark:text-slate-400">Cargando...</div></div>;
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-slide-up">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Ausencias y Permisos</h1>
-                    <p className="text-slate-500">Gestiona tus días libres y consulta tus beneficios.</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white transition-colors">Ausencias y Permisos</h1>
+                    <p className="text-slate-500 dark:text-slate-400 transition-colors">Gestiona tus días libres y consulta tus beneficios.</p>
                 </div>
                 <button
                     onClick={() => setShowRequestForm(!showRequestForm)}
@@ -142,7 +142,7 @@ export const AbsencesPage: React.FC = () => {
             {/* Benefits Summary Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Vacations */}
-                <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 text-white p-6 rounded-xl shadow-lg transition-all animate-slide-up delay-75">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-white/20 rounded-lg">
                             <Calendar size={24} />
@@ -154,7 +154,7 @@ export const AbsencesPage: React.FC = () => {
                 </div>
 
                 {/* Overtime Hours */}
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg">
+                <div className="bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700 text-white p-6 rounded-xl shadow-lg transition-all animate-slide-up delay-150">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-white/20 rounded-lg">
                             <Clock size={24} />
@@ -166,7 +166,7 @@ export const AbsencesPage: React.FC = () => {
                 </div>
 
                 {/* Sick Leave */}
-                <div className="bg-gradient-to-br from-red-500 to-red-600 text-white p-6 rounded-xl shadow-lg">
+                <div className="bg-gradient-to-br from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 text-white p-6 rounded-xl shadow-lg transition-all animate-slide-up delay-200">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-white/20 rounded-lg">
                             <Heart size={24} />
@@ -178,7 +178,7 @@ export const AbsencesPage: React.FC = () => {
                 </div>
 
                 {/* Paid Absence */}
-                <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-6 rounded-xl shadow-lg">
+                <div className="bg-gradient-to-br from-amber-500 to-amber-600 dark:from-amber-600 dark:to-amber-700 text-white p-6 rounded-xl shadow-lg transition-all animate-slide-up delay-300">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-white/20 rounded-lg">
                             <Briefcase size={24} />
@@ -192,66 +192,66 @@ export const AbsencesPage: React.FC = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Request History */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 lg:col-span-2 overflow-hidden flex flex-col">
-                    <div className="p-6 border-b border-slate-100">
-                        <h2 className="text-lg font-semibold text-slate-900">Historial de Solicitudes</h2>
+                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 lg:col-span-2 overflow-hidden flex flex-col transition-colors animate-slide-up delay-500">
+                    <div className="p-6 border-b border-slate-100 dark:border-slate-800 transition-colors">
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Historial de Solicitudes</h2>
                     </div>
 
                     {showRequestForm && (
-                        <div className="p-6 bg-blue-50 border-b border-blue-100">
-                            <h3 className="font-semibold text-blue-900 mb-4">Nueva Solicitud</h3>
+                        <div className="p-6 bg-blue-50/50 dark:bg-blue-900/10 border-b border-blue-100 dark:border-blue-900/30 transition-colors">
+                            <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-4 text-sm uppercase tracking-wide">Nueva Solicitud</h3>
                             <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleCreate}>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Inicio</label>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Fecha Inicio</label>
                                     <input
                                         type="date"
                                         value={formData.startDate}
                                         onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900 dark:text-white transition-colors"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Fecha Fin</label>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Fecha Fin</label>
                                     <input
                                         type="date"
                                         value={formData.endDate}
                                         onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900 dark:text-white transition-colors"
                                         required
                                     />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Tipo de Ausencia</label>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tipo de Ausencia</label>
                                     <select
                                         value={formData.type}
                                         onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900 dark:text-white transition-colors"
                                     >
                                         <option value="VACATION">Vacaciones</option>
                                         <option value="PERSONAL">Ausencia Justificada</option>
                                         <option value="SICK_LEAVE">Baja Médica</option>
                                     </select>
-                                    <p className="text-xs text-slate-500 mt-1">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 transition-colors">
                                         {requiresJustification ? '⚠️ Requiere justificante' : 'No requiere justificante'}
                                     </p>
                                 </div>
 
                                 {requiresJustification && (
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                             Justificante <span className="text-red-500">*</span>
                                         </label>
                                         <div className="space-y-3">
                                             {formData.justificationUrl && (
-                                                <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
-                                                    <FileText size={18} className="text-green-600" />
-                                                    <span className="text-sm text-green-700 flex-1">Justificante subido</span>
+                                                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-900/30 transition-colors">
+                                                    <FileText size={18} className="text-green-600 dark:text-green-400" />
+                                                    <span className="text-sm text-green-700 dark:text-green-300 flex-1">Justificante subido</span>
                                                 </div>
                                             )}
-                                            <div className="flex gap-2">
+                                            <div className="flex flex-col sm:flex-row gap-3">
                                                 <label className="flex-1 cursor-pointer">
-                                                    <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                                    <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                                                         <Upload size={18} />
                                                         {uploading ? 'Subiendo...' : 'Subir Justificante'}
                                                     </div>
@@ -267,26 +267,26 @@ export const AbsencesPage: React.FC = () => {
                                                     type="text"
                                                     value={formData.justificationUrl}
                                                     onChange={(e) => setFormData({ ...formData, justificationUrl: e.target.value })}
-                                                    className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                    placeholder="O pega URL del justificante"
+                                                    className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-900 dark:text-white transition-colors"
+                                                    placeholder="URL del justificante"
                                                 />
                                             </div>
                                         </div>
                                     </div>
                                 )}
 
-                                <div className="md:col-span-2 flex justify-end gap-3">
+                                <div className="md:col-span-2 flex justify-end gap-3 pt-2">
                                     <button
                                         type="button"
                                         onClick={() => setShowRequestForm(false)}
-                                        className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                        className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                                     >
                                         Cancelar
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-sm"
                                     >
                                         {submitting ? 'Enviando...' : 'Enviar Solicitud'}
                                     </button>
@@ -296,30 +296,30 @@ export const AbsencesPage: React.FC = () => {
                     )}
 
                     <div className="overflow-x-auto flex-1">
-                        <table className="min-w-full divide-y divide-slate-200">
-                            <thead className="bg-slate-50">
+                        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+                            <thead className="bg-slate-50 dark:bg-slate-800 transition-colors">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Tipo</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Fechas</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Días</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Estado</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tipo</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Fechas</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Días</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Estado</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-slate-200">
+                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
                                 {vacations.length > 0 ? (
                                     vacations.map((vacation) => (
-                                        <tr key={vacation.id} className="hover:bg-slate-50">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                                        <tr key={vacation.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-white">
                                                 {getTypeLabel(vacation.type)}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
                                                 {new Date(vacation.startDate).toLocaleDateString('es-ES')} - {new Date(vacation.endDate).toLocaleDateString('es-ES')}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-slate-300">
                                                 {vacation.days} días
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(vacation.status)}`}>
+                                                <span className={`px-2 py-1 text-xs font-medium rounded-full transition-colors ${getStatusColor(vacation.status)}`}>
                                                     {vacation.status === VacationStatus.APPROVED && 'Aprobado'}
                                                     {vacation.status === VacationStatus.PENDING && 'Pendiente'}
                                                     {vacation.status === VacationStatus.REJECTED && 'Rechazado'}
@@ -329,7 +329,7 @@ export const AbsencesPage: React.FC = () => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={4} className="px-6 py-8 text-center text-slate-500">
+                                        <td colSpan={4} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400 transition-colors">
                                             No tienes solicitudes registradas
                                         </td>
                                     </tr>

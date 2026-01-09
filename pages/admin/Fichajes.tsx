@@ -4,7 +4,7 @@ import { fichajeService, scheduleService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 export const AdminFichajes: React.FC = () => {
-    const { user } = useAuth();
+    const { user } = useAuth() as any;
     const [selectedDepartment, setSelectedDepartment] = useState('');
     const [selectedView, setSelectedView] = useState<'week' | 'month'>('week');
     const [fichajes, setFichajes] = useState<any[]>([]);
@@ -124,7 +124,7 @@ export const AdminFichajes: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-slide-up">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestión de Fichajes</h1>
                     <p className="text-slate-500 dark:text-slate-400">Administra horarios y visualiza fichajes por departamento</p>
@@ -136,7 +136,7 @@ export const AdminFichajes: React.FC = () => {
             </div>
 
             {/* Filters */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors animate-slide-up delay-75">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -175,7 +175,7 @@ export const AdminFichajes: React.FC = () => {
             {selectedDepartment && (
                 <>
                     {/* Schedule Configuration */}
-                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors animate-slide-up delay-150">
                         <div className="flex items-center gap-2 mb-6">
                             <Settings className="text-blue-600 dark:text-blue-400" size={24} />
                             <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Configuración de Horario - {selectedDepartment}</h2>
@@ -273,7 +273,7 @@ export const AdminFichajes: React.FC = () => {
                     </div>
 
                     {/* Fichajes Table */}
-                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-200">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-800 transition-colors">
                             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                                 Fichajes del Departamento - {selectedView === 'week' ? 'Semana Actual' : 'Mes Actual'}

@@ -105,7 +105,7 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
 
             {/* Main Content Area */}
             {/* Added pb-32 to account for floating header and bottom bar */}
-            <main className="flex-1 pt-24 pb-32 px-4 sm:px-8 max-w-7xl mx-auto w-full animate-fade-in text-slate-900 dark:text-slate-100">
+            <main className="flex-1 pt-24 pb-32 px-4 sm:px-8 max-w-7xl mx-auto w-full text-slate-900 dark:text-slate-100">
                 {children}
             </main>
 

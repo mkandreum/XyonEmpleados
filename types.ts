@@ -82,7 +82,7 @@ export interface Holiday {
 }
 
 export interface DepartmentBenefits {
-  id: string;
+  id?: string;
   department: string;
   vacationDays: number;
   overtimeHoursBank: number;

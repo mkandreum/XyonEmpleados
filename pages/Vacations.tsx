@@ -225,7 +225,7 @@ export const VacationsPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-slide-up">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Vacaciones y Ausencias</h1>
                     <p className="text-slate-500 dark:text-slate-400">Gestiona tus días libres y consulta tu saldo.</p>
@@ -240,7 +240,7 @@ export const VacationsPage: React.FC = () => {
             </div>
 
             {/* List Section - Full Width */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden flex flex-col transition-colors">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden flex flex-col transition-colors animate-slide-up delay-75">
                 <div className="p-6 border-b border-slate-100 dark:border-slate-800 transition-colors">
                     <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Historial de Solicitudes</h2>
                 </div>
@@ -370,7 +370,7 @@ export const VacationsPage: React.FC = () => {
                 )}
 
                 {/* Stats Summary Section */}
-                <div className="grid grid-cols-2 gap-4 p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 transition-colors">
+                <div className="grid grid-cols-2 gap-4 p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 transition-colors animate-slide-up delay-150">
                     <div className="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
                         <div className="flex items-center gap-2 mb-2">
                             <span className="p-1.5 bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg"><Calendar size={16} /></span>

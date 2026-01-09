@@ -21,7 +21,7 @@ interface NavItem {
 }
 
 export const FloatingNavbar: React.FC = () => {
-    const { user } = useAuth();
+    const { user } = useAuth() as any;
     const location = useLocation();
     const [showMore, setShowMore] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -125,12 +125,12 @@ export const FloatingNavbar: React.FC = () => {
                                 rounded-full transition-colors duration-200
                                 ${isActive
                                     ? 'text-blue-700 dark:text-blue-400'
-                                    : 'text-slate-500 dark:text-slate-400 hover:bg-white/20 dark:hover:bg-slate-800/30 hover:text-slate-700 dark:hover:text-slate-200'}
+                                    : 'text-blue-900 dark:text-blue-300 hover:bg-white/20 dark:hover:bg-slate-800/30 hover:text-blue-950 dark:hover:text-blue-200'}
                             `}
                         >
-                            <Icon size={isMobile ? 20 : 22} strokeWidth={isActive ? 2.5 : 2} className="transition-transform duration-200" />
+                            <Icon size={isMobile ? 20 : 22} strokeWidth={isActive ? 3 : 2} className="transition-transform duration-200" />
 
-                            <span className={`text-[10px] sm:text-xs font-medium leading-none ${isActive ? 'text-blue-900 dark:text-blue-200 font-bold' : ''}`}>
+                            <span className={`text-[10px] sm:text-xs font-semibold leading-none ${isActive ? 'text-blue-900 dark:text-blue-200 font-bold' : 'transition-colors'}`}>
                                 {item.label}
                             </span>
                         </Link>
@@ -149,7 +149,7 @@ export const FloatingNavbar: React.FC = () => {
                                 rounded-full transition-colors duration-200
                                 ${showMore
                                     ? 'text-blue-700 dark:text-blue-400 bg-white/50 dark:bg-slate-800/50'
-                                    : 'text-slate-500 dark:text-slate-400 hover:bg-white/20 dark:hover:bg-slate-800/30 hover:text-slate-700 dark:hover:text-slate-200'}
+                                    : 'text-blue-900 dark:text-blue-300 hover:bg-white/20 dark:hover:bg-slate-800/30 hover:text-blue-950 dark:hover:text-blue-200'}
                             `}
                         >
                             <MoreHorizontal size={22} />
@@ -179,7 +179,7 @@ export const FloatingNavbar: React.FC = () => {
                                                 flex items-center gap-3 px-4 py-3 rounded-xl transition-colors
                                                 ${isActive
                                                     ? 'bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400'
-                                                    : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/50'}
+                                                    : 'text-blue-900 dark:text-blue-300 hover:bg-white/50 dark:hover:bg-slate-800/50'}
                                             `}
                                         >
                                             <Icon size={18} />

@@ -94,27 +94,27 @@ export const NotificationDropdown: React.FC = () => {
     const getNotificationStyle = (title: string, message: string) => {
         const text = (title + message).toLowerCase();
         if (text.includes('aprobada') || text.includes('approved')) {
-            return 'border-l-4 border-l-green-500 bg-green-50/50';
+            return 'border-l-4 border-l-green-500 bg-green-50/50 dark:bg-green-900/10';
         }
         if (text.includes('rechazada') || text.includes('rejected')) {
-            return 'border-l-4 border-l-red-500 bg-red-50/50';
+            return 'border-l-4 border-l-red-500 bg-red-50/50 dark:bg-red-900/10';
         }
         if (text.includes('aviso') || text.includes('tarde') || text.includes('warning')) {
-            return 'border-l-4 border-l-amber-500 bg-amber-50/50';
+            return 'border-l-4 border-l-amber-500 bg-amber-50/50 dark:bg-amber-900/10';
         }
-        return 'border-l-4 border-l-blue-500 bg-blue-50/50';
+        return 'border-l-4 border-l-blue-500 bg-blue-50/50 dark:bg-blue-900/10';
     };
 
     return (
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
+                className="relative p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                 title="Notificaciones"
             >
                 <Bell size={20} />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border border-white animate-pulse"></span>
+                    <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-slate-900 animate-pulse"></span>
                 )}
             </button>
 

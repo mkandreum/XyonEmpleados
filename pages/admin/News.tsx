@@ -94,7 +94,7 @@ export const AdminNews: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center animate-slide-up">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestión de Noticias</h1>
                     <p className="text-slate-500 dark:text-slate-400">Crea y gestiona las noticias del portal</p>
@@ -112,7 +112,7 @@ export const AdminNews: React.FC = () => {
                 </button>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-75">
                 <table className="w-full">
                     <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                         <tr>

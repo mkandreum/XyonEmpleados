@@ -5,7 +5,7 @@ import { adminService } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 
 export const AdminDashboard: React.FC = () => {
-    const { isDark } = useTheme();
+    const { isDark } = useTheme() as any;
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -30,13 +30,13 @@ export const AdminDashboard: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div>
+            <div className="animate-slide-up">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Panel de Administración</h1>
                 <p className="text-slate-500 dark:text-slate-400">Vista general de la actividad y estadísticas</p>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up delay-75">
                 <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg">
@@ -87,7 +87,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
 
             {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up delay-150">
                 {/* Requests by Month */}
                 <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
                     <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Solicitudes por Mes</h2>
@@ -141,7 +141,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
 
             {/* Recent Activity */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors animate-slide-up delay-200">
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Actividad Reciente</h2>
                 <div className="space-y-4">
                     <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-700/50">

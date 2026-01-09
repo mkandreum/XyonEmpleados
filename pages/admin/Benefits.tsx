@@ -75,13 +75,13 @@ export const AdminBenefits: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div>
+            <div className="animate-slide-up">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Beneficios por Departamento</h1>
                 <p className="text-slate-500 dark:text-slate-400">Configura los días y horas disponibles para cada departamento</p>
             </div>
 
             {/* Desktop Table */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden hidden sm:block transition-colors">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden hidden sm:block transition-colors animate-slide-up delay-75">
                 <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
                     <thead className="bg-slate-50 dark:bg-slate-800">
                         <tr>
@@ -184,7 +184,7 @@ export const AdminBenefits: React.FC = () => {
             </div>
 
             {/* Mobile View (Cards) */}
-            <div className="sm:hidden space-y-4">
+            <div className="sm:hidden space-y-4 animate-slide-up delay-75">
                 {DEPARTMENTS.map(dept => {
                     const deptBenefits = getBenefitsForDept(dept);
                     const isEditing = editingDept === dept;
@@ -265,7 +265,7 @@ export const AdminBenefits: React.FC = () => {
                 })}
             </div>
 
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 transition-colors">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 transition-colors animate-slide-up delay-150">
                 <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-400 mb-2">ℹ️ Información</h3>
                 <ul className="text-sm text-blue-800 dark:text-blue-300/80 space-y-1">
                     <li>• Los beneficios se aplican a todos los empleados del departamento</li>

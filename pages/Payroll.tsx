@@ -78,7 +78,7 @@ export const PayrollPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="animate-slide-up">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Mis Nóminas</h1>
         <p className="text-slate-500 dark:text-slate-400">Consulta y descarga tus recibos de nómina</p>
       </div>
@@ -86,7 +86,7 @@ export const PayrollPage: React.FC = () => {
       {/* Summary Cards */}
       {lastPayroll && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors animate-slide-up delay-75">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg">
                 <DollarSign size={24} />
@@ -99,7 +99,7 @@ export const PayrollPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors animate-slide-up delay-150">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg">
                 <Calendar size={24} />
@@ -113,7 +113,7 @@ export const PayrollPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors animate-slide-up delay-200">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg">
                 <TrendingUp size={24} />
@@ -128,7 +128,7 @@ export const PayrollPage: React.FC = () => {
       )}
 
       {/* Payroll List */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-300">
         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-colors">
           <h2 className="font-semibold text-slate-900 dark:text-white">Historial de Nóminas</h2>
           <button
