@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -8,10 +8,8 @@ import {
     UserCircle,
     Users,
     Calendar,
-    Gift,
     Settings,
     Clock,
-    Menu,
     MoreHorizontal
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -26,6 +24,13 @@ export const FloatingNavbar: React.FC = () => {
     const { user } = useAuth();
     const location = useLocation();
     const [showMore, setShowMore] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Define all possible sections
     const employeeItems: NavItem[] = [
@@ -59,122 +64,128 @@ export const FloatingNavbar: React.FC = () => {
         if (user?.role === 'MANAGER') {
             items = [...items, ...managerItems];
         }
-        // Shared items for non-admins
-        items.push({ path: '/profile', label: 'Perfil', icon: UserCircle });
+        // User requested removing Profile button from here as it's repetitive
     }
 
-    // Mobile/Compact logic: Show first 4 + More button if > 5 items
-    const MAX_VISIBLE = 5;
+    // Collapse logic: On mobile, limit to 4 items + "More". On Desktop, show all.
+    const MAX_VISIBLE = isMobile ? 4 : 20;
     const visibleItems = items.slice(0, MAX_VISIBLE);
     const hiddenItems = items.slice(MAX_VISIBLE);
     const hasMore = hiddenItems.length > 0;
 
+    // Find active index for sliding effect
+    const activeIndex = visibleItems.findIndex(item => item.path === location.pathname);
+
+    // If active item is hidden (in "More" menu), we don't show sliding pill on main bar
+    const showSlider = activeIndex !== -1;
+
     return (
-        <>
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-[90vw] sm:max-w-fit">
-                {/* Glass Container */}
-                <div className="
-          relative flex items-center justify-between sm:justify-center gap-1 sm:gap-2 px-3 py-3 sm:px-6 
-          rounded-full 
-          bg-white/70 sm:bg-white/60 
-          backdrop-blur-2xl 
-          border border-white/40 
-          shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] 
-          bg-opacity-20 
-          bg-clip-padding 
-          transition-all duration-300
-        ">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-[95vw] sm:max-w-fit">
+            {/* Glass Container */}
+            <div className="
+                relative flex items-center p-1
+                rounded-2xl sm:rounded-full
+                bg-white/40
+                backdrop-blur-xl
+                border border-white/30
+                shadow-[0_8px_32px_0_rgba(31,38,135,0.1)]
+            ">
 
-                    {/* Shine/Reflection Effect */}
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/30 to-transparent pointer-events-none" />
+                {/* Sliding Active Indicator (The "Pill") */}
+                {/* 
+                   We use absolute positioning. 
+                   We assume each item has a fixed width of w-16 (64px) or w-20 (80px) on desktop to make math easy.
+                   Actually, let's use a percentage width if we knew the count, or just standard px width.
+                   Using standard px width is safer for the generic 'sliding' look.
+                */}
+                {showSlider && (
+                    <div
+                        className="absolute top-1 bottom-1 bg-white rounded-xl sm:rounded-full shadow-sm transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] pointer-events-none"
+                        style={{
+                            left: `calc(4px + ${activeIndex * (isMobile ? 64 : 96)}px)`, // 4px padding offset + index * itemWidth
+                            width: isMobile ? '64px' : '96px'
+                        }}
+                    />
+                )}
 
-                    {/* Navigation Items */}
-                    {visibleItems.map((item) => {
-                        const isActive = location.pathname === item.path;
-                        const Icon = item.icon;
+                {/* Navigation Items */}
+                {visibleItems.map((item) => {
+                    const isActive = location.pathname === item.path;
+                    const Icon = item.icon;
 
-                        return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className={`
-                  relative group flex flex-col items-center justify-center 
-                  w-12 h-12 sm:w-14 sm:h-14 
-                  rounded-full transition-all duration-300
-                  hover:bg-white/50
-                  ${isActive ? 'text-blue-600 bg-white/80 shadow-sm' : 'text-slate-500 hover:text-slate-800'}
-                `}
-                            >
-                                <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className="relative z-10 transition-transform duration-300 group-hover:-translate-y-1" />
+                    return (
+                        <Link
+                            key={item.path}
+                            to={item.path}
+                            className={`
+                                relative z-10 flex flex-col items-center justify-center gap-1
+                                h-14 sm:h-16
+                                ${isMobile ? 'w-16' : 'w-24'} // Fixed width for sliding calculation
+                                rounded-xl sm:rounded-full transition-colors duration-200
+                                ${isActive ? 'text-blue-700' : 'text-slate-500 hover:bg-white/20 hover:text-slate-700'}
+                            `}
+                        >
+                            <Icon size={isMobile ? 20 : 22} strokeWidth={isActive ? 2.5 : 2} className="transition-transform duration-200" />
 
-                                {/* Tooltip Label (Desktop) */}
-                                <span className="
-                  absolute -top-10 scale-0 group-hover:scale-100 transition-all duration-200 
-                  bg-slate-900 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100
-                  pointer-events-none
-                ">
-                                    {item.label}
-                                </span>
+                            {/* Label always visible now, below icon */}
+                            <span className={`text-[10px] sm:text-xs font-medium leading-none ${isActive ? 'text-blue-900 font-bold' : ''}`}>
+                                {item.label}
+                            </span>
+                        </Link>
+                    );
+                })}
 
-                                {/* Active Indicator Dot */}
-                                {isActive && (
-                                    <span className="absolute bottom-1 w-1 h-1 bg-blue-600 rounded-full" />
-                                )}
-                            </Link>
-                        );
-                    })}
+                {/* 'More' Button if needed */}
+                {hasMore && (
+                    <div className="relative z-10">
+                        <button
+                            onClick={() => setShowMore(!showMore)}
+                            className={`
+                                flex flex-col items-center justify-center gap-1
+                                h-14 sm:h-16
+                                ${isMobile ? 'w-16' : 'w-24'}
+                                rounded-xl sm:rounded-full transition-colors duration-200
+                                ${showMore ? 'text-blue-700 bg-white/50' : 'text-slate-500 hover:bg-white/20 hover:text-slate-700'}
+                            `}
+                        >
+                            <MoreHorizontal size={22} />
+                            <span className="text-[10px] sm:text-xs font-medium leading-none">Más</span>
+                        </button>
 
-                    {/* 'More' Button if needed */}
-                    {hasMore && (
-                        <div className="relative">
-                            <button
-                                onClick={() => setShowMore(!showMore)}
-                                className={`
-                  relative group flex flex-col items-center justify-center 
-                  w-12 h-12 sm:w-14 sm:h-14 
-                  rounded-full transition-all duration-300
-                  hover:bg-white/50
-                  ${showMore ? 'text-blue-600 bg-white/80 shadow-sm' : 'text-slate-500 hover:text-slate-800'}
-                `}
-                            >
-                                <MoreHorizontal size={22} className="relative z-10" />
-                            </button>
-
-                            {/* Popup Menu for Hidden Items */}
-                            {showMore && (
-                                <div className="
-                  absolute bottom-full right-0 mb-4 
-                  flex flex-col gap-2 p-2 
-                  bg-white/80 backdrop-blur-xl 
-                  border border-white/40 
-                  shadow-xl rounded-2xl
-                  min-w-[160px]
-                  animate-slide-up
-                ">
-                                    {hiddenItems.map((item) => {
-                                        const isActive = location.pathname === item.path;
-                                        const Icon = item.icon;
-                                        return (
-                                            <Link
-                                                key={item.path}
-                                                to={item.path}
-                                                onClick={() => setShowMore(false)}
-                                                className={`
-                          flex items-center gap-3 px-4 py-3 rounded-xl transition-colors
-                          ${isActive ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-white/50'}
-                        `}
-                                            >
-                                                <Icon size={18} />
-                                                <span className="text-sm font-medium">{item.label}</span>
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
+                        {/* Popup Menu for Hidden Items */}
+                        {showMore && (
+                            <div className="
+                                absolute bottom-full right-0 mb-4 
+                                flex flex-col gap-2 p-2 
+                                bg-white/80 backdrop-blur-xl 
+                                border border-white/40 
+                                shadow-xl rounded-2xl
+                                min-w-[160px]
+                                animate-slide-up origin-bottom-right
+                            ">
+                                {hiddenItems.map((item) => {
+                                    const isActive = location.pathname === item.path;
+                                    const Icon = item.icon;
+                                    return (
+                                        <Link
+                                            key={item.path}
+                                            to={item.path}
+                                            onClick={() => setShowMore(false)}
+                                            className={`
+                                                flex items-center gap-3 px-4 py-3 rounded-xl transition-colors
+                                                ${isActive ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-white/50'}
+                                            `}
+                                        >
+                                            <Icon size={18} />
+                                            <span className="text-sm font-medium">{item.label}</span>
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
-        </>
+        </div>
     );
 };

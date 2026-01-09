@@ -33,12 +33,12 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
                         <img
                             src={logoUrl}
                             alt={companyName}
-                            className="h-8 w-auto object-contain"
+                            className="h-16 w-auto object-contain"
                             onError={() => setLogoError(true)}
                         />
                     ) : (
                         <div className="flex flex-col">
-                            <h1 className="text-xl font-bold tracking-tight text-slate-800">
+                            <h1 className="text-3xl font-bold tracking-tight text-slate-800">
                                 {companyName}<span className="text-blue-600">Portal</span>
                             </h1>
                         </div>
