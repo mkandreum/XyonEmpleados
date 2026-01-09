@@ -91,11 +91,10 @@ export const FloatingNavbar: React.FC = () => {
             <div className="
                 relative flex items-center p-1
                 rounded-full
-                bg-white/40 dark:bg-slate-900/60
-                backdrop-blur-xl
-                border border-white/30 dark:border-slate-700/50
-                shadow-[0_8px_32px_0_rgba(31,38,135,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]
-                transition-colors duration-300
+                bg-white/20 dark:bg-black/20
+                backdrop-blur-[3px]
+                shadow-[0_6px_6px_rgba(0,0,0,0.2),0_0_20px_rgba(0,0,0,0.1),inset_2px_2px_1px_0_rgba(255,255,255,0.5),inset_-1px_-1px_1px_1px_rgba(255,255,255,0.5)]
+                transition-all duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]
             ">
 
                 {/* Sliding Active Indicator (The "Pill") */}

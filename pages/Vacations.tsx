@@ -227,8 +227,8 @@ export const VacationsPage: React.FC = () => {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Vacaciones y Ausencias</h1>
-                    <p className="text-slate-500">Gestiona tus días libres y consulta tu saldo.</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Vacaciones y Ausencias</h1>
+                    <p className="text-slate-500 dark:text-slate-400">Gestiona tus días libres y consulta tu saldo.</p>
                 </div>
                 <button
                     onClick={() => setShowRequestForm(!showRequestForm)}
@@ -240,22 +240,22 @@ export const VacationsPage: React.FC = () => {
             </div>
 
             {/* List Section - Full Width */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
-                <div className="p-6 border-b border-slate-100">
-                    <h2 className="text-lg font-semibold text-slate-900">Historial de Solicitudes</h2>
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden flex flex-col transition-colors">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-800 transition-colors">
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Historial de Solicitudes</h2>
                 </div>
 
                 {showRequestForm && (
-                    <div className={`p-6 bg-blue-50 border-b border-blue-100 transition-all duration-300 transform ${animateForm ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
-                        <h3 className="font-semibold text-blue-900 mb-4">Nueva Solicitud</h3>
+                    <div className={`p-6 bg-blue-50 dark:bg-blue-900/10 border-b border-blue-100 dark:border-blue-900/30 transition-all duration-300 transform ${animateForm ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+                        <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-4">Nueva Solicitud</h3>
                         <form className="space-y-4" onSubmit={handleCreate}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Tipo de Solicitud</label>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tipo de Solicitud</label>
                                     <select
                                         value={formData.type}
                                         onChange={(e) => setFormData({ ...formData, type: e.target.value, subtype: '' })}
-                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                                     >
                                         <option value="VACATION">Vacaciones</option>
                                         <option value="PERSONAL">Ausencias Retribuídas</option>
@@ -267,11 +267,11 @@ export const VacationsPage: React.FC = () => {
 
                                 {showSubtypeDropdown && (
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Motivo (Específico)</label>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Motivo (Específico)</label>
                                         <select
                                             value={formData.subtype}
                                             onChange={(e) => setFormData({ ...formData, subtype: e.target.value })}
-                                            className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                                            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                                         >
                                             <option value="">Selecciona un motivo...</option>
                                             {otherSubtypes.map(s => (
@@ -284,7 +284,7 @@ export const VacationsPage: React.FC = () => {
 
                             {/* Date Range Picker */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Selecciona las Fechas</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Selecciona las Fechas</label>
                                 <DateRangePicker
                                     startDate={formData.startDate}
                                     endDate={formData.endDate}
@@ -294,7 +294,7 @@ export const VacationsPage: React.FC = () => {
                                 {/* Less than one day checkbox - Only for Non-Vacation types usually? Or specifically requested for Other Permissions to measure hours */}
                                 {formData.type !== 'VACATION' && (
                                     <div className="mt-4 space-y-3">
-                                        <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                        <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
                                             <input
                                                 type="checkbox"
                                                 checked={formData.lessThanOneDay}
@@ -307,24 +307,24 @@ export const VacationsPage: React.FC = () => {
                                                         endDate: isChecked ? formData.startDate : formData.endDate
                                                     });
                                                 }}
-                                                className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
+                                                className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600"
                                             />
                                             Duración inferior a un día
                                         </label>
 
                                         {formData.lessThanOneDay && (
                                             <div className="pl-6 animate-fadeIn">
-                                                <label className="block text-sm font-medium text-slate-700 mb-1">Número de Horas</label>
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Número de Horas</label>
                                                 <input
                                                     type="number"
                                                     min="1"
                                                     max="8"
                                                     value={formData.hours}
                                                     onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
-                                                    className="w-32 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                    className="w-32 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                                                     placeholder="Ej: 2"
                                                 />
-                                                <p className="text-xs text-slate-500 mt-1">Si seleccionas horas, se contará como 1 día en términos de fechas, pero se restarán las horas del saldo correspondiente.</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Si seleccionas horas, se contará como 1 día en términos de fechas, pero se restarán las horas del saldo correspondiente.</p>
                                             </div>
                                         )}
                                     </div>
@@ -333,33 +333,34 @@ export const VacationsPage: React.FC = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Justificante (PDF/Imagen)</label>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Justificante (PDF/Imagen)</label>
                                     <div className="flex items-center gap-2">
                                         <input
                                             type="file"
                                             accept=".pdf,.jpg,.jpeg,.png"
                                             onChange={handleFileUpload}
                                             disabled={uploading}
-                                            className="block w-full text-sm text-slate-500
+                                            className="block w-full text-sm text-slate-500 dark:text-slate-400
                                                 file:mr-4 file:py-2 file:px-4
                                                 file:rounded-full file:border-0
                                                 file:text-sm file:font-semibold
                                                 file:bg-blue-50 file:text-blue-700
-                                                hover:file:bg-blue-100"
+                                                dark:file:bg-blue-900/30 dark:file:text-blue-300
+                                                hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50"
                                         />
-                                        {uploading && <span className="text-sm text-blue-600">Subiendo...</span>}
-                                        {formData.justificationUrl && <span className="text-sm text-green-600 font-medium">¡Archivo listo!</span>}
+                                        {uploading && <span className="text-sm text-blue-600 dark:text-blue-400">Subiendo...</span>}
+                                        {formData.justificationUrl && <span className="text-sm text-green-600 dark:text-green-400 font-medium">¡Archivo listo!</span>}
                                     </div>
                                     <input type="hidden" value={formData.justificationUrl} />
                                 </div>
                             </div>
 
                             <div className="flex justify-end gap-3 mt-2">
-                                <button type="button" onClick={() => setShowRequestForm(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg">Cancelar</button>
+                                <button type="button" onClick={() => setShowRequestForm(false)} className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">Cancelar</button>
                                 <button
                                     type="submit"
                                     disabled={submitting || (requiresJustification && !formData.justificationUrl)}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                                 >
                                     {submitting ? 'Enviando...' : 'Enviar Solicitud'}
                                 </button>
@@ -369,46 +370,46 @@ export const VacationsPage: React.FC = () => {
                 )}
 
                 {/* Stats Summary Section */}
-                <div className="grid grid-cols-2 gap-4 p-6 border-b border-slate-100 bg-slate-50">
-                    <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                <div className="grid grid-cols-2 gap-4 p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 transition-colors">
+                    <div className="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
                         <div className="flex items-center gap-2 mb-2">
-                            <span className="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><Calendar size={16} /></span>
-                            <h3 className="font-semibold text-slate-700 text-sm">Vacaciones</h3>
+                            <span className="p-1.5 bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg"><Calendar size={16} /></span>
+                            <h3 className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Vacaciones</h3>
                         </div>
-                        <p className="text-2xl font-bold text-slate-900">
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">
                             {remainingDays}
                         </p>
-                        <p className="text-xs text-slate-400">Días restantes de {totalDays}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">Días restantes de {totalDays}</p>
                     </div>
-                    <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                    <div className="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
                         <div className="flex items-center gap-2 mb-2">
-                            <span className="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><FileText size={16} /></span>
-                            <h3 className="font-semibold text-slate-700 text-sm">Exceso Jornada</h3>
+                            <span className="p-1.5 bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg"><FileText size={16} /></span>
+                            <h3 className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Exceso Jornada</h3>
                         </div>
-                        <p className="text-2xl font-bold text-slate-900">
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">
                             {deptBenefits?.overtimeHoursBank ? (deptBenefits.overtimeHoursBank - (userBenefits?.overtimeHoursUsed || 0)) : 0}h
                         </p>
-                        <p className="text-xs text-slate-400">Restantes de {deptBenefits?.overtimeHoursBank || 0}h</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">Restantes de {deptBenefits?.overtimeHoursBank || 0}h</p>
                     </div>
-                    <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                    <div className="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
                         <div className="flex items-center gap-2 mb-2">
-                            <span className="p-1.5 bg-red-100 text-red-600 rounded-lg"><AlertCircle size={16} /></span>
-                            <h3 className="font-semibold text-slate-700 text-sm">Horas Médicas</h3>
+                            <span className="p-1.5 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg"><AlertCircle size={16} /></span>
+                            <h3 className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Horas Médicas</h3>
                         </div>
-                        <p className="text-2xl font-bold text-slate-900">
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">
                             {deptBenefits?.sickLeaveDays ? (deptBenefits.sickLeaveDays - (userBenefits?.sickLeaveDaysUsed || 0)) : 0}h
                         </p>
-                        <p className="text-xs text-slate-400">Restantes de {deptBenefits?.sickLeaveDays || 0}h</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">Restantes de {deptBenefits?.sickLeaveDays || 0}h</p>
                     </div>
-                    <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                    <div className="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
                         <div className="flex items-center gap-2 mb-2">
-                            <span className="p-1.5 bg-green-100 text-green-600 rounded-lg"><Calendar size={16} /></span>
-                            <h3 className="font-semibold text-slate-700 text-sm">Ausencias Retrib.</h3>
+                            <span className="p-1.5 bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg"><Calendar size={16} /></span>
+                            <h3 className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Ausencias Retrib.</h3>
                         </div>
-                        <p className="text-2xl font-bold text-slate-900">
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">
                             {deptBenefits?.paidAbsenceHours ? (deptBenefits.paidAbsenceHours - (userBenefits?.paidAbsenceHoursUsed || 0)) : 0}h
                         </p>
-                        <p className="text-xs text-slate-400">Restantes de {deptBenefits?.paidAbsenceHours || 0}h</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">Restantes de {deptBenefits?.paidAbsenceHours || 0}h</p>
                     </div>
                 </div>
 
@@ -416,7 +417,7 @@ export const VacationsPage: React.FC = () => {
                     <div className="flex-1 overflow-auto">
                         {/* Desktop View (Table) */}
                         <table className="w-full text-sm text-left hidden sm:table">
-                            <thead className="text-xs text-slate-500 uppercase bg-slate-50">
+                            <thead className="text-xs text-slate-500 dark:text-slate-400 uppercase bg-slate-50 dark:bg-slate-800 transition-colors">
                                 <tr>
                                     <th className="px-6 py-3">Fechas</th>
                                     <th className="px-6 py-3">Duración</th>
@@ -424,28 +425,28 @@ export const VacationsPage: React.FC = () => {
                                     <th className="px-6 py-3">Estado</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 transition-colors">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={4} className="px-6 py-4 text-center text-slate-500">Cargando...</td>
+                                        <td colSpan={4} className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">Cargando...</td>
                                     </tr>
                                 ) : vacations.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4} className="px-6 py-4 text-center text-slate-500">No hay solicitudes registradas.</td>
+                                        <td colSpan={4} className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">No hay solicitudes registradas.</td>
                                     </tr>
                                 ) : (
                                     vacations.map(vac => (
-                                        <tr key={vac.id} className="hover:bg-slate-50">
+                                        <tr key={vac.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col">
-                                                    <span className="font-medium text-slate-900">{new Date(vac.startDate).toLocaleDateString()}</span>
-                                                    <span className="text-slate-500 text-xs">hasta {new Date(vac.endDate).toLocaleDateString()}</span>
+                                                    <span className="font-medium text-slate-900 dark:text-white">{new Date(vac.startDate).toLocaleDateString()}</span>
+                                                    <span className="text-slate-500 dark:text-slate-400 text-xs">hasta {new Date(vac.endDate).toLocaleDateString()}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-slate-600">
+                                            <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
                                                 {vac.hours ? `${vac.hours} horas` : `${vac.days} días`}
                                             </td>
-                                            <td className="px-6 py-4 text-slate-600">{getTypeLabel(vac.type, vac.subtype)}</td>
+                                            <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{getTypeLabel(vac.type, vac.subtype)}</td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(vac.status)}`}>
                                                     {vac.status === VacationStatus.APPROVED ? 'Aprobado' :
@@ -461,18 +462,18 @@ export const VacationsPage: React.FC = () => {
                         </table>
 
                         {/* Mobile View (Cards) */}
-                        <div className="sm:hidden space-y-3 p-4 bg-slate-50">
+                        <div className="sm:hidden space-y-3 p-4 bg-slate-50 dark:bg-slate-950/50 transition-colors">
                             {loading ? (
-                                <p className="text-center text-slate-500">Cargando...</p>
+                                <p className="text-center text-slate-500 dark:text-slate-400">Cargando...</p>
                             ) : vacations.length === 0 ? (
-                                <p className="text-center text-slate-500">No hay solicitudes registradas.</p>
+                                <p className="text-center text-slate-500 dark:text-slate-400">No hay solicitudes registradas.</p>
                             ) : (
                                 vacations.map(vac => (
-                                    <div key={vac.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-100 flex flex-col gap-2">
+                                    <div key={vac.id} className="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2 transition-colors">
                                         <div className="flex justify-between items-start">
                                             <div className="flex flex-col">
-                                                <span className="font-bold text-slate-900 text-base">{getTypeLabel(vac.type, vac.subtype)}</span>
-                                                <span className="text-xs text-slate-400 font-medium uppercase tracking-wide mt-1">
+                                                <span className="font-bold text-slate-900 dark:text-white text-base">{getTypeLabel(vac.type, vac.subtype)}</span>
+                                                <span className="text-xs text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wide mt-1">
                                                     {new Date(vac.startDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - {new Date(vac.endDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
                                                 </span>
                                             </div>
@@ -486,11 +487,11 @@ export const VacationsPage: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex justify-between items-center mt-2 border-t border-slate-50 pt-2">
-                                            <span className="text-sm text-slate-600 font-medium">
+                                        <div className="flex justify-between items-center mt-2 border-t border-slate-50 dark:border-slate-800 pt-2 transition-colors">
+                                            <span className="text-sm text-slate-600 dark:text-slate-300 font-medium">
                                                 {vac.hours ? `${vac.hours}h` : `${vac.days} días`}
                                             </span>
-                                            <span className="text-xs text-slate-400">
+                                            <span className="text-xs text-slate-400 dark:text-slate-500">
                                                 {new Date(vac.createdAt).toLocaleDateString()}
                                             </span>
                                         </div>
@@ -502,11 +503,11 @@ export const VacationsPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-                <AlertCircle className="text-amber-600 mt-0.5" size={20} />
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 rounded-lg p-4 flex items-start gap-3 transition-colors">
+                <AlertCircle className="text-amber-600 dark:text-amber-400 mt-0.5" size={20} />
                 <div>
-                    <h4 className="font-semibold text-amber-800 text-sm">Política de Vacaciones</h4>
-                    <p className="text-amber-700 text-sm mt-1">Recuerda solicitar tus vacaciones con al menos 15 días de antelación. Los días no disfrutados antes del 31 de Enero del año siguiente expirarán.</p>
+                    <h4 className="font-semibold text-amber-800 dark:text-amber-200 text-sm">Política de Vacaciones</h4>
+                    <p className="text-amber-700 dark:text-amber-300 text-sm mt-1">Recuerda solicitar tus vacaciones con al menos 15 días de antelación. Los días no disfrutados antes del 31 de Enero del año siguiente expirarán.</p>
                 </div>
             </div>
 

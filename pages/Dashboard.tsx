@@ -82,30 +82,30 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">¡Hola, {user?.name?.split(' ')[0]}! 👋</h1>
-        <p className="text-slate-500 mt-1">{new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">¡Hola, {user?.name?.split(' ')[0]}! 👋</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">{new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
 
       {/* Warning Alert Widget */}
       {pendingWarnings.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6 relative overflow-hidden">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-xl p-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-10">
             <AlertTriangle size={100} className="text-red-500" />
           </div>
           <div className="relative z-10">
-            <h2 className="text-red-700 font-bold text-lg flex items-center gap-2 mb-2">
-              <AlertTriangle className="text-red-600" />
+            <h2 className="text-red-700 dark:text-red-300 font-bold text-lg flex items-center gap-2 mb-2">
+              <AlertTriangle className="text-red-600 dark:text-red-400" />
               Tienes {pendingWarnings.length} {pendingWarnings.length === 1 ? 'Aviso' : 'Avisos'} de Asistencia
             </h2>
             <div className="space-y-3 mt-4">
               {pendingWarnings.slice(0, 2).map((warning) => (
-                <div key={warning.id} className="bg-white/60 p-3 rounded-lg border border-red-100 backdrop-blur-sm">
+                <div key={warning.id} className="bg-white/60 dark:bg-slate-800/60 p-3 rounded-lg border border-red-100 dark:border-red-900/30 backdrop-blur-sm">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                      <p className="text-sm font-semibold text-red-800">
+                      <p className="text-sm font-semibold text-red-800 dark:text-red-200">
                         {new Date(warning.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
                       </p>
-                      <p className="text-xs text-red-600">
+                      <p className="text-xs text-red-600 dark:text-red-300">
                         Reclamado por: {warning.manager?.name || 'Manager'}
                       </p>
                     </div>
@@ -113,14 +113,14 @@ export const Dashboard: React.FC = () => {
                 </div>
               ))}
               {pendingWarnings.length > 2 && (
-                <p className="text-xs text-red-600 font-medium pl-1">
+                <p className="text-xs text-red-600 dark:text-red-300 font-medium pl-1">
                   ... y {pendingWarnings.length - 2} más.
                 </p>
               )}
             </div>
             <button
               onClick={() => navigate('/news?tab=attendance')}
-              className="mt-4 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2"
+              className="mt-4 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2"
             >
               Ver y Justificar
               <ChevronRight size={16} />
@@ -130,38 +130,38 @@ export const Dashboard: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg">
               <Briefcase size={24} />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">Días de Vacaciones</p>
-              <p className="text-2xl font-bold text-slate-900">{remainingVacations}</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Días de Vacaciones</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{remainingVacations}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-yellow-50 text-yellow-600 rounded-lg">
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 rounded-lg">
               <Clock size={24} />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">Solicitudes Pendientes</p>
-              <p className="text-2xl font-bold text-slate-900">{pendingVacations.length}</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Solicitudes Pendientes</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{pendingVacations.length}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-amber-50 text-amber-600 rounded-lg">
+            <div className="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-lg">
               <Clock size={24} />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">Próxima Nómina</p>
-              <p className="text-lg font-bold text-slate-900">{nextPayrollStr}</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Próxima Nómina</p>
+              <p className="text-lg font-bold text-slate-900 dark:text-white">{nextPayrollStr}</p>
             </div>
           </div>
         </div>
@@ -169,8 +169,8 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Fichaje Section */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl shadow-sm border border-blue-100">
-        <h2 className="text-xl font-bold text-slate-900 mb-6">Control de Asistencia</h2>
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 p-6 rounded-xl shadow-sm border border-blue-100 dark:border-slate-700 transition-colors">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Control de Asistencia</h2>
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <DigitalClock />
           <FichajeButton />
@@ -185,7 +185,7 @@ export const Dashboard: React.FC = () => {
           {/* Quick Access Button */}
           <button
             onClick={() => navigate('/vacations')}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl p-6 shadow-sm shadow-blue-200 transition-all transform hover:-translate-y-1 flex items-center justify-between group"
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-700 dark:to-blue-900 text-white rounded-xl p-6 shadow-sm shadow-blue-200 dark:shadow-none transition-all transform hover:-translate-y-1 flex items-center justify-between group"
           >
             <div className="flex items-center gap-4">
               <div className="p-3 bg-white/20 rounded-lg">
@@ -202,17 +202,17 @@ export const Dashboard: React.FC = () => {
           </button>
 
           {/* Last Payroll Widget */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 flex items-center justify-between transition-colors">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-50 text-green-600 rounded-lg border border-green-100">
+              <div className="p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg border border-green-100 dark:border-green-900/30">
                 <FileText size={28} />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-lg">Última Nómina Disponible</h3>
+                <h3 className="font-bold text-slate-900 dark:text-white text-lg">Última Nómina Disponible</h3>
                 {lastPayroll ? (
-                  <p className="text-slate-500 text-sm capitalize">{lastPayroll.month} {lastPayroll.year}</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm capitalize">{lastPayroll.month} {lastPayroll.year}</p>
                 ) : (
-                  <p className="text-slate-400 text-sm">No hay nóminas disponibles</p>
+                  <p className="text-slate-400 dark:text-slate-500 text-sm">No hay nóminas disponibles</p>
                 )}
               </div>
             </div>
@@ -222,7 +222,7 @@ export const Dashboard: React.FC = () => {
                 href={lastPayroll.pdfUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-lg hover:bg-slate-800 transition-colors font-medium shadow-sm"
+                className="flex items-center gap-2 bg-slate-900 dark:bg-slate-800 text-white px-5 py-3 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors font-medium shadow-sm"
               >
                 <Download size={18} />
                 Descargar PDF
@@ -235,29 +235,29 @@ export const Dashboard: React.FC = () => {
         {/* Right Column: Events and Info */}
         <div className="space-y-6">
           {/* Upcoming Events */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 h-full">
-            <h2 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 h-full transition-colors">
+            <h2 className="font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
               <Calendar size={18} className="text-slate-400" />
               Eventos Próximos
             </h2>
             {events.length > 0 ? (
               <div className="space-y-3">
                 {events.slice(0, 3).map(event => (
-                  <div key={event.id} className="flex gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                    <div className="flex-shrink-0 w-12 h-12 bg-white border border-slate-200 rounded-lg flex flex-col items-center justify-center">
-                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{new Date(event.date).toLocaleDateString('es-ES', { month: 'short' })}</span>
-                      <span className="text-lg font-bold text-slate-900">{new Date(event.date).getDate()}</span>
+                  <div key={event.id} className="flex gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                    <div className="flex-shrink-0 w-12 h-12 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg flex flex-col items-center justify-center">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{new Date(event.date).toLocaleDateString('es-ES', { month: 'short' })}</span>
+                      <span className="text-lg font-bold text-slate-900 dark:text-white">{new Date(event.date).getDate()}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-slate-900 text-sm truncate">{event.title}</h4>
-                      <p className="text-xs text-slate-500 truncate">{event.location || 'Ubicación pendiente'}</p>
+                      <h4 className="font-semibold text-slate-900 dark:text-white text-sm truncate">{event.title}</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{event.location || 'Ubicación pendiente'}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="text-center py-8">
-                <p className="text-slate-400 text-sm">No hay eventos próximos</p>
+                <p className="text-slate-400 dark:text-slate-500 text-sm">No hay eventos próximos</p>
               </div>
             )}
           </div>
@@ -266,4 +266,5 @@ export const Dashboard: React.FC = () => {
 
     </div >
   );
+
 };

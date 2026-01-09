@@ -92,14 +92,14 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
 
         return (
             <div className="flex-1">
-                <h3 className="text-center font-semibold text-slate-700 mb-3 capitalize">
+                <h3 className="text-center font-semibold text-slate-700 dark:text-slate-300 mb-3 capitalize">
                     {monthNames[displayMonth.getMonth()]} {displayMonth.getFullYear()}
                 </h3>
 
                 {/* Day headers */}
                 <div className="grid grid-cols-7 gap-1 mb-2">
                     {dayNames.map(day => (
-                        <div key={day} className="text-center text-xs font-medium text-slate-500 py-1">
+                        <div key={day} className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 py-1">
                             {day}
                         </div>
                     ))}
@@ -128,10 +128,10 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
                   ${isStart || isEnd
                                         ? 'bg-blue-600 text-white font-semibold hover:bg-blue-700'
                                         : inRange
-                                            ? 'bg-blue-100 text-blue-900 hover:bg-blue-200'
+                                            ? 'bg-blue-100 text-blue-900 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-800/60'
                                             : weekend
-                                                ? 'text-slate-400 hover:bg-slate-100'
-                                                : 'text-slate-700 hover:bg-slate-100'
+                                                ? 'text-slate-400 hover:bg-slate-100 dark:text-slate-600 dark:hover:bg-slate-800'
+                                                : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
                                     }
                 `}
                             >
@@ -145,26 +145,26 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
     };
 
     return (
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-sm transition-colors">
             <div className="flex items-center justify-between mb-4">
                 <button
                     type="button"
                     onClick={prevMonth}
-                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 >
-                    <ChevronLeft className="h-5 w-5 text-slate-600" />
+                    <ChevronLeft className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                 </button>
 
-                <div className="text-sm text-slate-600">
+                <div className="text-sm text-slate-600 dark:text-slate-400">
                     {selectingStart ? 'Selecciona fecha de inicio' : 'Selecciona fecha de fin'}
                 </div>
 
                 <button
                     type="button"
                     onClick={nextMonth}
-                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 >
-                    <ChevronRight className="h-5 w-5 text-slate-600" />
+                    <ChevronRight className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                 </button>
             </div>
 

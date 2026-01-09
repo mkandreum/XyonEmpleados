@@ -117,13 +117,13 @@ export const ManagerFichajes: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Fichajes del Equipo</h1>
-                    <p className="text-slate-500">Departamento: {user?.department}</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Fichajes del Equipo</h1>
+                    <p className="text-slate-500 dark:text-slate-400">Departamento: {user?.department}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setSelectedWeek(selectedWeek - 1)}
-                        className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                        className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
                     >
                         ← Anterior
                     </button>
@@ -137,7 +137,7 @@ export const ManagerFichajes: React.FC = () => {
                     <button
                         onClick={() => setSelectedWeek(selectedWeek + 1)}
                         disabled={selectedWeek >= 0}
-                        className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Siguiente →
                     </button>
@@ -146,40 +146,40 @@ export const ManagerFichajes: React.FC = () => {
 
             {/* Week Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-blue-100 rounded-lg">
-                            <Users className="text-blue-600" size={24} />
+                        <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                            <Users className="text-blue-600 dark:text-blue-400" size={24} />
                         </div>
                         <div>
-                            <p className="text-sm text-slate-500">Empleados</p>
-                            <p className="text-2xl font-bold text-slate-900">{weekData.length}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Empleados</p>
+                            <p className="text-2xl font-bold text-slate-900 dark:text-white">{weekData.length}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-green-100 rounded-lg">
-                            <Clock className="text-green-600" size={24} />
+                        <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                            <Clock className="text-green-600 dark:text-green-400" size={24} />
                         </div>
                         <div>
-                            <p className="text-sm text-slate-500">Fichajes Correctos</p>
-                            <p className="text-2xl font-bold text-slate-900">
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Fichajes Correctos</p>
+                            <p className="text-2xl font-bold text-slate-900 dark:text-white">
                                 {weekData.filter(d => d.fichajes?.every((f: any) => !f.isLate && !f.isEarlyDeparture)).length}
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-red-100 rounded-lg">
-                            <AlertCircle className="text-red-600" size={24} />
+                        <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-lg">
+                            <AlertCircle className="text-red-600 dark:text-red-400" size={24} />
                         </div>
                         <div>
-                            <p className="text-sm text-slate-500">Llegadas Tarde</p>
-                            <p className="text-2xl font-bold text-slate-900">
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Llegadas Tarde</p>
+                            <p className="text-2xl font-bold text-slate-900 dark:text-white">
                                 {weekData.filter(d => d.fichajes?.some((f: any) => f.isLate)).length}
                             </p>
                         </div>
@@ -188,41 +188,41 @@ export const ManagerFichajes: React.FC = () => {
             </div>
 
             {/* Gantt Chart - Desktop */}
-            <div className="hidden md:block bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="p-6 border-b border-slate-100">
-                    <h2 className="text-lg font-semibold text-slate-900">Vista Semanal</h2>
+            <div className="hidden md:block bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-800 transition-colors">
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Vista Semanal</h2>
                 </div>
 
                 {loading ? (
                     <div className="p-12 text-center">
                         <Clock className="animate-spin mx-auto text-blue-600 mb-4" size={48} />
-                        <p className="text-slate-500">Cargando fichajes...</p>
+                        <p className="text-slate-500 dark:text-slate-400">Cargando fichajes...</p>
                     </div>
                 ) : weekData.length === 0 ? (
                     <div className="p-12 text-center">
-                        <Users className="mx-auto text-slate-300 mb-4" size={48} />
-                        <p className="text-slate-500">No hay empleados en este departamento</p>
+                        <Users className="mx-auto text-slate-300 dark:text-slate-600 mb-4" size={48} />
+                        <p className="text-slate-500 dark:text-slate-400">No hay empleados en este departamento</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-slate-50">
+                            <thead className="bg-slate-50 dark:bg-slate-800 transition-colors">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider sticky left-0 bg-slate-50 z-10">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider sticky left-0 bg-slate-50 dark:bg-slate-800 z-10 transition-colors">
                                         Empleado
                                     </th>
                                     {weekDays.map((day, index) => (
-                                        <th key={index} className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                            <div>{day.toLocaleDateString('es-ES', { weekday: 'short' })}</div>
-                                            <div className="text-slate-400">{day.getDate()}</div>
+                                        <th key={index} className="px-6 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                            <div className="text-slate-700 dark:text-slate-300">{day.toLocaleDateString('es-ES', { weekday: 'short' })}</div>
+                                            <div className="text-slate-400 dark:text-slate-500">{day.getDate()}</div>
                                         </th>
                                     ))}
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-slate-200">
+                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
                                 {weekData.map((employee: any, empIndex: number) => (
-                                    <tr key={empIndex} className="hover:bg-slate-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 sticky left-0 bg-white z-10 border-r border-slate-100 shadow-[2px_0_5px_-3px_rgba(0,0,0,0.1)]">
+                                    <tr key={empIndex} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-white sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-100 dark:border-slate-800 shadow-[2px_0_5px_-3px_rgba(0,0,0,0.1)] transition-colors">
                                             {employee.userName || 'N/A'}
                                         </td>
                                         {weekDays.map((day, dayIndex) => {
@@ -239,25 +239,25 @@ export const ManagerFichajes: React.FC = () => {
                                                 <td key={dayIndex} className="px-3 py-4 text-center align-top">
                                                     {dayFichajes.length > 0 ? (
                                                         <div className={`rounded-xl p-3 border transition-all hover:shadow-sm ${hasIssues
-                                                            ? 'bg-red-50 border-red-100'
-                                                            : 'bg-green-50 border-green-100'
+                                                            ? 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-900/30'
+                                                            : 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-900/30'
                                                             }`}>
                                                             {/* Fichaje Slots */}
                                                             <div className="flex flex-col gap-2">
                                                                 {Array.from({ length: Math.max(entradas.length, salidas.length) }).map((_, i) => (
-                                                                    <div key={i} className="flex justify-between items-center text-xs bg-white/50 rounded-lg p-1.5 border border-black/5">
+                                                                    <div key={i} className="flex justify-between items-center text-xs bg-white/50 dark:bg-slate-800/50 rounded-lg p-1.5 border border-black/5 dark:border-white/10">
                                                                         {entradas[i] && (
-                                                                            <span className={`font-mono font-medium ${entradas[i].isLate ? 'text-red-700' : 'text-slate-700'}`}>
+                                                                            <span className={`font-mono font-medium ${entradas[i].isLate ? 'text-red-700 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'}`}>
                                                                                 {formatTime(entradas[i].timestamp)}
                                                                             </span>
                                                                         )}
-                                                                        <span className="text-slate-300 mx-1">→</span>
+                                                                        <span className="text-slate-300 dark:text-slate-600 mx-1">→</span>
                                                                         {salidas[i] ? (
-                                                                            <span className={`font-mono font-medium ${salidas[i].isEarlyDeparture ? 'text-red-700' : 'text-slate-700'}`}>
+                                                                            <span className={`font-mono font-medium ${salidas[i].isEarlyDeparture ? 'text-red-700 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'}`}>
                                                                                 {formatTime(salidas[i].timestamp)}
                                                                             </span>
                                                                         ) : (
-                                                                            <span className="text-slate-400 font-mono">--:--</span>
+                                                                            <span className="text-slate-400 dark:text-slate-600 font-mono">--:--</span>
                                                                         )}
                                                                     </div>
                                                                 ))}
@@ -272,7 +272,7 @@ export const ManagerFichajes: React.FC = () => {
                                                                         dayStr,
                                                                         employee.userName
                                                                     )}
-                                                                    className="mt-3 w-full bg-red-100 hover:bg-red-200 text-red-700 text-[10px] font-bold uppercase tracking-wider py-1.5 rounded-lg transition-colors border border-red-200"
+                                                                    className="mt-3 w-full bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 text-[10px] font-bold uppercase tracking-wider py-1.5 rounded-lg transition-colors border border-red-200 dark:border-red-800"
                                                                 >
                                                                     Dar Aviso
                                                                 </button>
@@ -280,13 +280,13 @@ export const ManagerFichajes: React.FC = () => {
 
                                                             {/* Status Badges */}
                                                             {dayFichajes.some((f: any) => f.hasNotification) && (
-                                                                <div className="mt-2 pt-2 border-t border-black/5">
+                                                                <div className="mt-2 pt-2 border-t border-black/5 dark:border-white/10">
                                                                     {dayFichajes.some((f: any) => f.notificationRead) ? (
-                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-700 bg-green-100/50 px-2 py-0.5 rounded-full">
+                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-700 dark:text-green-300 bg-green-100/50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
                                                                             ✓ Leído
                                                                         </span>
                                                                     ) : (
-                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-orange-700 bg-orange-100/50 px-2 py-0.5 rounded-full">
+                                                                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-orange-700 dark:text-orange-300 bg-orange-100/50 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">
                                                                             ⚠ Enviado
                                                                         </span>
                                                                     )}
@@ -295,7 +295,7 @@ export const ManagerFichajes: React.FC = () => {
                                                         </div>
                                                     ) : (
                                                         <div className="h-full flex items-center justify-center">
-                                                            <div className="w-1.5 h-1.5 bg-slate-200 rounded-full"></div>
+                                                            <div className="w-1.5 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
                                                         </div>
                                                     )}
                                                 </td>
@@ -312,20 +312,20 @@ export const ManagerFichajes: React.FC = () => {
             {/* Mobile View - Cards */}
             <div className="md:hidden space-y-4">
                 {loading ? (
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-12 text-center">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-12 text-center transition-colors">
                         <Clock className="animate-spin mx-auto text-blue-600 mb-4" size={48} />
-                        <p className="text-slate-500">Cargando fichajes...</p>
+                        <p className="text-slate-500 dark:text-slate-400">Cargando fichajes...</p>
                     </div>
                 ) : weekData.length === 0 ? (
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-12 text-center">
-                        <Users className="mx-auto text-slate-300 mb-4" size={48} />
-                        <p className="text-slate-500">No hay empleados</p>
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-12 text-center transition-colors">
+                        <Users className="mx-auto text-slate-300 dark:text-slate-600 mb-4" size={48} />
+                        <p className="text-slate-500 dark:text-slate-400">No hay empleados</p>
                     </div>
                 ) : (
                     weekData.map((employee: any, index: number) => (
-                        <div key={index} className="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
-                            <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
+                        <div key={index} className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-4 transition-colors">
+                            <h3 className="font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold">
                                     {employee.userName.charAt(0)}
                                 </div>
                                 {employee.userName}
@@ -344,14 +344,14 @@ export const ManagerFichajes: React.FC = () => {
                                     const hasIssues = dayFichajes.some((f: any) => f.isLate || f.isEarlyDeparture);
 
                                     return (
-                                        <div key={dayIndex} className={`p-4 rounded-xl border ${hasIssues ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-100'
+                                        <div key={dayIndex} className={`p-4 rounded-xl border ${hasIssues ? 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-900/30' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700'
                                             }`}>
                                             <div className="flex justify-between items-start mb-3">
-                                                <span className="text-sm font-bold text-slate-700 uppercase tracking-wide">
-                                                    {day.toLocaleDateString('es-ES', { weekday: 'long' })} <span className="text-slate-400 font-normal ml-1">{day.getDate()}</span>
+                                                <span className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                                                    {day.toLocaleDateString('es-ES', { weekday: 'long' })} <span className="text-slate-400 dark:text-slate-500 font-normal ml-1">{day.getDate()}</span>
                                                 </span>
                                                 {hasIssues && (
-                                                    <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                                    <span className="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
                                                         INCIDENCIA
                                                     </span>
                                                 )}
@@ -359,15 +359,15 @@ export const ManagerFichajes: React.FC = () => {
 
                                             <div className="space-y-2">
                                                 {Array.from({ length: Math.max(entradas.length, salidas.length) }).map((_, i) => (
-                                                    <div key={i} className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-200 shadow-sm text-sm">
+                                                    <div key={i} className="flex justify-between items-center bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-200 dark:border-slate-600 shadow-sm text-sm">
                                                         <div className="flex flex-col">
                                                             <span className="text-[10px] text-slate-400 uppercase">Entrada</span>
-                                                            <span className={`font-mono font-medium ${entradas[i]?.isLate ? 'text-red-600' : 'text-slate-900'}`}>{formatTime(entradas[i]?.timestamp)}</span>
+                                                            <span className={`font-mono font-medium ${entradas[i]?.isLate ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'}`}>{formatTime(entradas[i]?.timestamp)}</span>
                                                         </div>
-                                                        <div className="text-slate-300">→</div>
+                                                        <div className="text-slate-300 dark:text-slate-600">→</div>
                                                         <div className="flex flex-col items-end">
                                                             <span className="text-[10px] text-slate-400 uppercase">Salida</span>
-                                                            <span className={`font-mono font-medium ${salidas[i]?.isEarlyDeparture ? 'text-red-600' : 'text-slate-900'}`}>{formatTime(salidas[i]?.timestamp)}</span>
+                                                            <span className={`font-mono font-medium ${salidas[i]?.isEarlyDeparture ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'}`}>{formatTime(salidas[i]?.timestamp)}</span>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -381,20 +381,20 @@ export const ManagerFichajes: React.FC = () => {
                                                         dayStr,
                                                         employee.userName
                                                     )}
-                                                    className="mt-3 w-full bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 rounded-lg transition-colors shadow-sm"
+                                                    className="mt-3 w-full bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white text-xs font-bold py-2 rounded-lg transition-colors shadow-sm"
                                                 >
                                                     DAR AVISO
                                                 </button>
                                             )}
 
                                             {dayFichajes.some((f: any) => f.hasNotification) && (
-                                                <div className="mt-3 pt-3 border-t border-black/5 text-center">
+                                                <div className="mt-3 pt-3 border-t border-black/5 dark:border-white/10 text-center">
                                                     {dayFichajes.some((f: any) => f.notificationRead) ? (
-                                                        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
+                                                        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-300">
                                                             ✓ Aviso Leído
                                                         </span>
                                                     ) : (
-                                                        <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-700">
+                                                        <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-700 dark:text-orange-300">
                                                             ⚠ Aviso Enviado
                                                         </span>
                                                     )}

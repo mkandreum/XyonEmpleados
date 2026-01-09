@@ -126,8 +126,8 @@ export const AdminFichajes: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Gestión de Fichajes</h1>
-                    <p className="text-slate-500">Administra horarios y visualiza fichajes por departamento</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestión de Fichajes</h1>
+                    <p className="text-slate-500 dark:text-slate-400">Administra horarios y visualiza fichajes por departamento</p>
                 </div>
                 <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                     <Download size={18} />
@@ -136,17 +136,17 @@ export const AdminFichajes: React.FC = () => {
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                             <Users size={16} className="inline mr-1" />
                             Departamento
                         </label>
                         <select
                             value={selectedDepartment}
                             onChange={(e) => setSelectedDepartment(e.target.value)}
-                            className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                         >
                             <option value="">Seleccionar departamento</option>
                             {departments.map(dept => (
@@ -156,14 +156,14 @@ export const AdminFichajes: React.FC = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                             <Calendar size={16} className="inline mr-1" />
                             Vista
                         </label>
                         <select
                             value={selectedView}
                             onChange={(e) => setSelectedView(e.target.value as 'week' | 'month')}
-                            className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                         >
                             <option value="week">Semana actual</option>
                             <option value="month">Mes actual</option>
@@ -175,10 +175,10 @@ export const AdminFichajes: React.FC = () => {
             {selectedDepartment && (
                 <>
                     {/* Schedule Configuration */}
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors">
                         <div className="flex items-center gap-2 mb-6">
-                            <Settings className="text-blue-600" size={24} />
-                            <h2 className="text-xl font-semibold text-slate-900">Configuración de Horario - {selectedDepartment}</h2>
+                            <Settings className="text-blue-600 dark:text-blue-400" size={24} />
+                            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Configuración de Horario - {selectedDepartment}</h2>
                         </div>
 
                         <div className="space-y-4">
@@ -188,75 +188,75 @@ export const AdminFichajes: React.FC = () => {
                                     id="isPartido"
                                     checked={scheduleForm.isPartido}
                                     onChange={(e) => setScheduleForm({ ...scheduleForm, isPartido: e.target.checked })}
-                                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                    className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-slate-800"
                                 />
-                                <label htmlFor="isPartido" className="text-sm font-medium text-slate-700">
+                                <label htmlFor="isPartido" className="text-sm font-medium text-slate-700 dark:text-slate-300">
                                     Horario partido (mañana y tarde)
                                 </label>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                         Hora Entrada {scheduleForm.isPartido && 'Mañana'}
                                     </label>
                                     <input
                                         type="time"
                                         value={scheduleForm.horaEntrada}
                                         onChange={(e) => setScheduleForm({ ...scheduleForm, horaEntrada: e.target.value })}
-                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                                     />
                                 </div>
 
                                 {scheduleForm.isPartido && (
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                             Hora Salida Mañana
                                         </label>
                                         <input
                                             type="time"
                                             value={scheduleForm.horaSalidaMañana}
                                             onChange={(e) => setScheduleForm({ ...scheduleForm, horaSalidaMañana: e.target.value })}
-                                            className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                                         />
                                     </div>
                                 )}
 
                                 {scheduleForm.isPartido && (
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                             Hora Entrada Tarde
                                         </label>
                                         <input
                                             type="time"
                                             value={scheduleForm.horaEntradaTarde}
                                             onChange={(e) => setScheduleForm({ ...scheduleForm, horaEntradaTarde: e.target.value })}
-                                            className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                                         />
                                     </div>
                                 )}
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                         Hora Salida {scheduleForm.isPartido && 'Tarde'}
                                     </label>
                                     <input
                                         type="time"
                                         value={scheduleForm.horaSalida}
                                         onChange={(e) => setScheduleForm({ ...scheduleForm, horaSalida: e.target.value })}
-                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                         Tolerancia (minutos)
                                     </label>
                                     <input
                                         type="number"
                                         value={scheduleForm.toleranciaMinutos}
                                         onChange={(e) => setScheduleForm({ ...scheduleForm, toleranciaMinutos: parseInt(e.target.value) })}
-                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
                                         min="0"
                                         max="60"
                                     />
@@ -273,9 +273,9 @@ export const AdminFichajes: React.FC = () => {
                     </div>
 
                     {/* Fichajes Table */}
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                        <div className="p-6 border-b border-slate-100">
-                            <h2 className="text-lg font-semibold text-slate-900">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-800 transition-colors">
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                                 Fichajes del Departamento - {selectedView === 'week' ? 'Semana Actual' : 'Mes Actual'}
                             </h2>
                         </div>
@@ -283,73 +283,75 @@ export const AdminFichajes: React.FC = () => {
                         {loading ? (
                             <div className="p-12 text-center">
                                 <Clock className="animate-spin mx-auto text-blue-600 mb-4" size={48} />
-                                <p className="text-slate-500">Cargando fichajes...</p>
+                                <p className="text-slate-500 dark:text-slate-400">Cargando fichajes...</p>
                             </div>
                         ) : fichajes.length === 0 ? (
                             <div className="p-12 text-center">
-                                <Clock className="mx-auto text-slate-300 mb-4" size={48} />
-                                <p className="text-slate-500">No hay fichajes registrados</p>
+                                <Clock className="mx-auto text-slate-300 dark:text-slate-600 mb-4" size={48} />
+                                <p className="text-slate-500 dark:text-slate-400">No hay fichajes registrados</p>
                             </div>
                         ) : (
                             <>
                                 {/* Desktop View */}
                                 <div className="hidden md:block overflow-x-auto">
                                     <table className="w-full">
-                                        <thead className="bg-slate-50">
+                                        <thead className="bg-slate-50 dark:bg-slate-800 transition-colors">
                                             <tr>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                                     Empleado
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                                     Fecha
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                                     Turno
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                                     Entrada
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                                     Salida
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                                     Horas Total
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                                     Aviso
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                                     Estado
                                                 </th>
                                             </tr>
                                         </thead>
-                                        <tbody className="bg-white divide-y divide-slate-200">
+                                        <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
                                             {fichajes.map((fichaje: any, index: number) => (
-                                                <tr key={index} className="hover:bg-slate-50">
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                                                <tr key={index} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-white">
                                                         {fichaje.userName || 'N/A'}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
                                                         {new Date(fichaje.date).toLocaleDateString('es-ES')}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                                        <span className={`px-2 py-1 text-xs font-medium rounded ${fichaje.pairIndex === 1 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                                                        <span className={`px-2 py-1 text-xs font-medium rounded ${fichaje.pairIndex === 1
+                                                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                                                            : 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300'
                                                             }`}>
                                                             {fichaje.pairIndex === 1 ? 'Mañana' : 'Tarde'}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
                                                         {fichaje.entrada || '-'}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
                                                         {fichaje.salida || '-'}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-700">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-700 dark:text-slate-300">
                                                         {fichaje.horasTrabajadas ? `${fichaje.horasTrabajadas}h` : '-'}
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         {fichaje.hasWarning && (
-                                                            <div className="flex items-center text-orange-600 gap-1" title="Aviso enviado por manager">
+                                                            <div className="flex items-center text-orange-600 dark:text-orange-400 gap-1" title="Aviso enviado por manager">
                                                                 <AlertCircle size={16} />
                                                                 <span className="text-xs font-medium">Enviado</span>
                                                             </div>
@@ -358,22 +360,22 @@ export const AdminFichajes: React.FC = () => {
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="flex gap-2">
                                                             {fichaje.isLate && (
-                                                                <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                                                                <span className="px-2 py-1 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-full">
                                                                     Tarde
                                                                 </span>
                                                             )}
                                                             {fichaje.isEarlyDeparture && (
-                                                                <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                                                                <span className="px-2 py-1 text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded-full">
                                                                     Salida anticipada
                                                                 </span>
                                                             )}
                                                             {fichaje.isComplete && !fichaje.isLate && !fichaje.isEarlyDeparture && (
-                                                                <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                                                <span className="px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full">
                                                                     Correcto
                                                                 </span>
                                                             )}
                                                             {!fichaje.isComplete && !fichaje.isLate && !fichaje.isEarlyDeparture && (
-                                                                <span className="px-2 py-1 text-xs font-medium bg-slate-100 text-slate-800 rounded-full">
+                                                                <span className="px-2 py-1 text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 rounded-full">
                                                                     Incompleto
                                                                 </span>
                                                             )}
@@ -386,15 +388,17 @@ export const AdminFichajes: React.FC = () => {
                                 </div>
 
                                 {/* Mobile Card View */}
-                                <div className="md:hidden grid grid-cols-1 gap-4 p-4 bg-slate-50">
+                                <div className="md:hidden grid grid-cols-1 gap-4 p-4 bg-slate-50 dark:bg-slate-950/50">
                                     {fichajes.map((fichaje: any, index: number) => (
-                                        <div key={index} className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+                                        <div key={index} className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-4 transition-colors">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
-                                                    <div className="font-semibold text-slate-900">{fichaje.userName}</div>
-                                                    <div className="text-xs text-slate-500">{new Date(fichaje.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                                                    <div className="font-semibold text-slate-900 dark:text-white">{fichaje.userName}</div>
+                                                    <div className="text-xs text-slate-500 dark:text-slate-400">{new Date(fichaje.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
                                                 </div>
-                                                <span className={`px-2 py-1 text-xs font-medium rounded ${fichaje.pairIndex === 1 ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                                                <span className={`px-2 py-1 text-xs font-medium rounded ${fichaje.pairIndex === 1
+                                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                                                    : 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300'
                                                     }`}>
                                                     {fichaje.pairIndex === 1 ? 'Mañana' : 'Tarde'}
                                                 </span>
@@ -402,43 +406,43 @@ export const AdminFichajes: React.FC = () => {
 
                                             <div className="grid grid-cols-2 gap-4 mb-3">
                                                 <div>
-                                                    <div className="text-xs text-slate-500 mb-1">Entrada</div>
-                                                    <div className="font-medium">{fichaje.entrada}</div>
+                                                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Entrada</div>
+                                                    <div className="font-medium text-slate-900 dark:text-white">{fichaje.entrada}</div>
                                                 </div>
                                                 <div>
-                                                    <div className="text-xs text-slate-500 mb-1">Salida</div>
-                                                    <div className="font-medium">{fichaje.salida}</div>
+                                                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Salida</div>
+                                                    <div className="font-medium text-slate-900 dark:text-white">{fichaje.salida}</div>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                                                <div className="text-sm font-semibold text-slate-700">
+                                            <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                                                <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                                                     {fichaje.horasTrabajadas ? `${fichaje.horasTrabajadas}h` : '-'}
                                                 </div>
                                                 <div className="flex flex-wrap gap-2 justify-end">
                                                     {fichaje.hasWarning && (
-                                                        <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-orange-50 text-orange-600 rounded-full border border-orange-100">
+                                                        <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-full border border-orange-100 dark:border-orange-900/30">
                                                             <AlertCircle size={12} />
                                                             Aviso
                                                         </span>
                                                     )}
                                                     {fichaje.isLate && (
-                                                        <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                                                        <span className="px-2 py-1 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 rounded-full">
                                                             Tarde
                                                         </span>
                                                     )}
                                                     {fichaje.isEarlyDeparture && (
-                                                        <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                                                        <span className="px-2 py-1 text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300 rounded-full">
                                                             Salida anticipada
                                                         </span>
                                                     )}
                                                     {fichaje.isComplete && !fichaje.isLate && !fichaje.isEarlyDeparture && (
-                                                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                                        <span className="px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full">
                                                             Correcto
                                                         </span>
                                                     )}
                                                     {!fichaje.isComplete && !fichaje.isLate && !fichaje.isEarlyDeparture && (
-                                                        <span className="px-2 py-1 text-xs font-medium bg-slate-100 text-slate-800 rounded-full">
+                                                        <span className="px-2 py-1 text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 rounded-full">
                                                             Incompleto
                                                         </span>
                                                     )}
