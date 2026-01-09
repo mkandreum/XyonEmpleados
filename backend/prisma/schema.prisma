@@ -66,6 +66,7 @@ model VacationRequest {
   startDate DateTime
   endDate   DateTime
   days      Int
+  hours     Int?
   status    VacationStatus @default(PENDING)
   type      String         // 'VACATION' | 'PERSONAL' | 'SICK_LEAVE'
   justificationUrl String?
