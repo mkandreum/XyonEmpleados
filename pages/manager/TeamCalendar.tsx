@@ -71,17 +71,17 @@ export const TeamCalendar: React.FC = () => {
                 </div>
             </div>
 
-            {/* Desktop View (Table) */}
+            {/* Desktop View (Gantt-like Table) */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden hidden sm:block">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto pb-4"> {/* Added pb-4 for scrollbar space */}
                     <table className="w-full border-collapse">
                         <thead>
                             <tr>
-                                <th className="p-4 text-left min-w-[200px] border-b border-r border-slate-200 bg-slate-50 sticky left-0 z-10">
+                                <th className="p-4 text-left min-w-[200px] border-b border-r border-slate-200 bg-slate-50 sticky left-0 z-20">
                                     Empleado
                                 </th>
                                 {Array.from({ length: daysInMonth }).map((_, i) => (
-                                    <th key={i} className="p-2 text-center min-w-[40px] border-b border-slate-100 text-xs font-medium text-slate-500">
+                                    <th key={i} className="p-2 text-center min-w-[36px] border-b border-slate-100 text-xs font-medium text-slate-500">
                                         {i + 1}
                                     </th>
                                 ))}
@@ -96,36 +96,67 @@ export const TeamCalendar: React.FC = () => {
                                 </tr>
                             ) : (
                                 uniqueUsers.map(user => (
-                                    <tr key={user.id || Math.random()} className="hover:bg-slate-50/50">
-                                        <td className="p-4 border-b border-r border-slate-200 bg-white sticky left-0 z-10">
+                                    <tr key={user.id || Math.random()} className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="p-4 border-b border-r border-slate-200 bg-white sticky left-0 z-20">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
+                                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs ring-2 ring-white">
                                                     {user.name?.charAt(0) || 'U'}
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-medium text-slate-900">{user.name}</p>
-                                                    <p className="text-xs text-slate-500">{user.position || 'Empleado'}</p>
+                                                    <p className="text-sm font-medium text-slate-900 truncate max-w-[140px]" title={user.name}>{user.name}</p>
+                                                    <p className="text-[11px] text-slate-500 truncate max-w-[140px]">{user.position || 'Empleado'}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         {Array.from({ length: daysInMonth }).map((_, i) => {
-                                            const vacation = isVacationDay(user.id, i + 1);
-                                            let cellClass = "";
+                                            const day = i + 1;
+                                            const vacation = isVacationDay(user.id, day);
+                                            const prevVacation = day > 1 ? isVacationDay(user.id, day - 1) : null;
+                                            const nextVacation = day < daysInMonth ? isVacationDay(user.id, day + 1) : null;
+
+                                            const isSameVacationPrev = prevVacation && vacation && prevVacation.id === vacation.id;
+                                            const isSameVacationNext = nextVacation && vacation && nextVacation.id === vacation.id;
+
+                                            let cellContent = null;
+
+                                            // Determine visual style considering continuity
+                                            let barClass = "";
                                             if (vacation) {
-                                                cellClass = vacation.status === 'APPROVED'
-                                                    ? 'bg-green-500 text-white'
-                                                    : 'bg-yellow-400 text-white'; // Pending
+                                                const baseColor = vacation.status === 'APPROVED'
+                                                    ? 'bg-green-500'
+                                                    : 'bg-amber-400'; // Amber for pending
+
+                                                barClass = `${baseColor} h-6 relative top-0`; // h-6 for thinner Gantt bar
+
+                                                // Borders radius logic
+                                                if (!isSameVacationPrev) barClass += " rounded-l-md ml-1";
+                                                if (!isSameVacationNext) barClass += " rounded-r-md mr-1";
+                                                if (isSameVacationPrev && !isSameVacationNext) barClass += " pr-1"; // End of bar
+                                                if (!isSameVacationPrev && isSameVacationNext) barClass += " pl-1"; // Start of bar
+                                                if (isSameVacationPrev && isSameVacationNext) barClass += ""; // Middle
+
+                                                // Only show icon/text if it's the start of the bar or a single day
+                                                if (!isSameVacationPrev) {
+                                                    cellContent = (
+                                                        <span className="text-[10px] font-bold text-white pl-1 drop-shadow-sm">
+                                                            {vacation.type === 'VACATION' ? 'V' :
+                                                                vacation.type === 'SICK_LEAVE' ? 'B' : 'A'}
+                                                        </span>
+                                                    );
+                                                }
                                             }
 
                                             return (
-                                                <td key={i} className={`border-b border-slate-100 text-center p-1 relative group`}>
+                                                <td key={i} className="border-b border-slate-100 p-0 h-12 relative min-w-[36px]">
+                                                    {/* Grid line helper - optional */}
+                                                    <div className="absolute inset-y-0 right-0 border-r border-slate-50 pointer-events-none"></div>
+
                                                     {vacation && (
                                                         <div
-                                                            className={`w-full h-8 rounded-md flex items-center justify-center text-[10px] font-bold cursor-pointer transition-transform hover:scale-110 ${cellClass}`}
+                                                            className={`flex items-center ${barClass} transition-all hover:brightness-95 cursor-pointer`}
                                                             title={`${user.name}: ${vacation.type} (${vacation.status})`}
                                                         >
-                                                            {vacation.type === 'VACATION' ? 'V' :
-                                                                vacation.type === 'SICK_LEAVE' ? 'B' : 'A'}
+                                                            {cellContent}
                                                         </div>
                                                     )}
                                                 </td>
@@ -137,81 +168,98 @@ export const TeamCalendar: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
-                <div className="p-4 border-t border-slate-200 flex gap-6 text-sm">
+                <div className="p-4 border-t border-slate-200 flex flex-wrap gap-4 text-xs bg-slate-50">
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-green-500 rounded"></div>
-                        <span>Aprobado</span>
+                        <div className="w-6 h-3 bg-green-500 rounded-sm"></div>
+                        <span className="text-slate-600">Aprobado</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-yellow-400 rounded"></div>
-                        <span>Pendiente</span>
+                        <div className="w-6 h-3 bg-amber-400 rounded-sm"></div>
+                        <span className="text-slate-600">Pendiente</span>
                     </div>
-                    <div className="text-slate-400 text-xs ml-auto">
+                    <div className="text-slate-400 ml-auto border-l pl-4 border-slate-200">
                         V: Vacaciones, B: Baja, A: Ausencia
                     </div>
                 </div>
             </div>
 
-            {/* Mobile View (List) */}
+            {/* Mobile View (Optimized Cards) */}
             <div className="sm:hidden space-y-4">
-                {uniqueUsers.map(user => {
-                    // Filter vacations for this user in current month (simplified check)
-                    const userVacations = teamVacations.filter(v => {
-                        if (v.user?.id !== user.id) return false;
-                        if (v.status === 'REJECTED') return false;
+                {(() => {
+                    // Optimized: Only show users who have relevant vacations in this view
+                    const activeUsers = uniqueUsers.map(user => {
+                        const userVacations = teamVacations.filter(v => {
+                            if (v.user?.id !== user.id) return false;
+                            if (v.status === 'REJECTED') return false;
 
-                        const start = new Date(v.startDate);
-                        const end = new Date(v.endDate);
-                        const currentMonth = currentDate.getMonth();
-                        const currentYear = currentDate.getFullYear();
+                            const start = new Date(v.startDate);
+                            const end = new Date(v.endDate);
+                            const currentMonth = currentDate.getMonth();
+                            const currentYear = currentDate.getFullYear();
 
-                        // Check if vacation overlaps with current month
-                        const startInMonth = start.getMonth() === currentMonth && start.getFullYear() === currentYear;
-                        const endInMonth = end.getMonth() === currentMonth && end.getFullYear() === currentYear;
+                            // Check overlapping
+                            return (start.getMonth() === currentMonth && start.getFullYear() === currentYear) ||
+                                (end.getMonth() === currentMonth && end.getFullYear() === currentYear) ||
+                                (start < new Date(currentYear, currentMonth, 1) && end > new Date(currentYear, currentMonth + 1, 0));
+                        });
+                        return { user, vacations: userVacations };
+                    }).filter(item => item.vacations.length > 0);
 
-                        // Check if vacation spans over the entire month
-                        const spansMonth = start < new Date(currentYear, currentMonth, 1) && end > new Date(currentYear, currentMonth + 1, 0);
-
-                        return startInMonth || endInMonth || spansMonth;
-                    });
-
-                    return (
-                        <div key={user.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-50">
-                                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
-                                    {user.name?.charAt(0) || 'U'}
+                    if (activeUsers.length === 0) {
+                        return (
+                            <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100 text-center">
+                                <div className="inline-flex justify-center items-center w-12 h-12 bg-slate-100 rounded-full mb-3 text-slate-400">
+                                    <User size={20} />
                                 </div>
-                                <div>
-                                    <h3 className="font-semibold text-slate-900">{user.name}</h3>
-                                    <p className="text-xs text-slate-500">{user.position || 'Empleado'}</p>
+                                <h3 className="text-slate-900 font-medium">Todo el equipo disponible</h3>
+                                <p className="text-sm text-slate-500 mt-1">No hay ausencias registradas para {monthName}.</p>
+                            </div>
+                        );
+                    }
+
+                    return activeUsers.map(({ user, vacations }) => (
+                        <div key={user.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 group transition-all hover:shadow-md">
+                            <div className="flex items-center justify-between mb-3 border-b border-slate-50 pb-2">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center font-bold shadow-sm">
+                                        {user.name?.charAt(0) || 'U'}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-slate-900 text-sm">{user.name}</h3>
+                                        <p className="text-[11px] text-slate-500 uppercase tracking-wide">{user.position || 'Empleado'}</p>
+                                    </div>
                                 </div>
+                                <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-xs font-bold">
+                                    {vacations.length} {vacations.length === 1 ? 'evento' : 'eventos'}
+                                </span>
                             </div>
 
-                            {userVacations.length > 0 ? (
-                                <div className="space-y-3">
-                                    {userVacations.map(vac => (
-                                        <div key={vac.id} className="bg-slate-50 p-3 rounded-lg flex items-center justify-between">
+                            <div className="space-y-2">
+                                {vacations.map(vac => (
+                                    <div key={vac.id} className="relative pl-3 border-l-2 border-slate-200 py-1">
+                                        <div className={`absolute left-[-2px] top-1/2 -translate-y-1/2 w-1 h-full rounded-full ${vac.status === 'APPROVED' ? 'bg-green-500' : 'bg-amber-400'}`}></div>
+                                        <div className="flex justify-between items-center">
                                             <div>
-                                                <p className="text-sm font-medium text-slate-900">
+                                                <p className="text-sm font-medium text-slate-800">
                                                     {vac.type === 'VACATION' ? 'Vacaciones' : vac.type === 'SICK_LEAVE' ? 'Baja Médica' : 'Ausencia'}
                                                 </p>
                                                 <p className="text-xs text-slate-500">
-                                                    {new Date(vac.startDate).getDate()} - {new Date(vac.endDate).toLocaleDateString()}
+                                                    {new Date(vac.startDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - {new Date(vac.endDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                                                 </p>
                                             </div>
-                                            <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${vac.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${vac.status === 'APPROVED'
+                                                    ? 'bg-green-50 border-green-100 text-green-700'
+                                                    : 'bg-amber-50 border-amber-100 text-amber-700'
                                                 }`}>
                                                 {vac.status === 'APPROVED' ? 'Aprobado' : 'Pendiente'}
                                             </span>
                                         </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-sm text-slate-400 text-center py-2">Sin ausencias este mes</p>
-                            )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    );
-                })}
+                    ));
+                })()}
             </div>
         </div>
     );
