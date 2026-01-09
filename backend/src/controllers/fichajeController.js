@@ -312,9 +312,12 @@ exports.getDepartmentWeek = async (req, res) => {
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(startOfWeek.getDate() + 7);
 
-        // Obtener todos los usuarios del departamento
+        // Obtener todos los usuarios del departamento (excluyendo admins)
         const users = await prisma.user.findMany({
-            where: { department: dept },
+            where: {
+                department: dept,
+                role: { not: 'ADMIN' }
+            },
             select: {
                 id: true,
                 name: true,

@@ -42,7 +42,8 @@ export const ManagerFichajes: React.FC = () => {
                                 date: dayGroup.date, // Preservar la fecha
                                 isLate: dayGroup.isLate,
                                 isEarlyDeparture: dayGroup.isEarlyDeparture,
-                                hasNotification: false
+                                hasNotification: dayGroup.fichajes.some((fInner: any) => fInner.id === f.id && fInner.lateNotifications && fInner.lateNotifications.length > 0),
+                                notificationRead: dayGroup.fichajes.some((fInner: any) => fInner.id === f.id && fInner.lateNotifications?.some((n: any) => n.leido))
                             }))
                         );
 
@@ -292,8 +293,16 @@ export const ManagerFichajes: React.FC = () => {
                                                                 </button>
                                                             )}
                                                             {dayFichajes.some((f: any) => f.hasNotification) && (
-                                                                <div className="mt-2 text-xs text-orange-600 font-medium">
-                                                                    ⚠ Avisado
+                                                                <div className="mt-2 flex flex-col items-center">
+                                                                    {dayFichajes.some((f: any) => f.notificationRead) ? (
+                                                                        <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                                                                            ✓ Leído
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="text-xs text-orange-600 font-medium flex items-center gap-1">
+                                                                            ⚠ Enviado
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                         </div>
