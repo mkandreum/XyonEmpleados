@@ -125,8 +125,8 @@ export const TeamRequests: React.FC = () => {
                             </div>
 
                             <div className="mb-4 flex justify-between items-center">
-                                <span className="inline-block px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded">
-                                    Tipo: {request.type === 'VACATION' ? 'Vacaciones' : request.type === 'SICK_LEAVE' ? 'Horas médicas' : 'Personal'}
+                                <span className={`inline-block px-2 py-1 text-xs rounded ${getTypeColor(request.type)}`}>
+                                    {getTypeLabel(request.type)}
                                 </span>
                                 {request.justificationUrl && (
                                     <a
