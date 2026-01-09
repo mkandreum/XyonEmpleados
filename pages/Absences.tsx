@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { vacationService, benefitsService, uploadService } from '../services/api';
 import { VacationRequest, VacationStatus } from '../types';
 import { Plus, Calendar, AlertCircle, Upload, FileText, Clock, Briefcase, Heart } from 'lucide-react';
@@ -106,11 +105,7 @@ export const AbsencesPage: React.FC = () => {
         .reduce((acc, curr) => acc + curr.days, 0);
     const remainingDays = totalVacationDays - takenDays - pendingDays;
 
-    const vacationData = [
-        { name: 'Disfrutados', value: takenDays, color: '#94a3b8' },
-        { name: 'Pendientes', value: pendingDays, color: '#f59e0b' },
-        { name: 'Disponibles', value: remainingDays, color: '#2563eb' },
-    ];
+
 
     const getStatusColor = (status: VacationStatus) => {
         switch (status) {
