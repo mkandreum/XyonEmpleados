@@ -2,6 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const bcrypt = require('bcryptjs');
 const { createNotification } = require('./notificationController');
+const { updateUserBalanceLogic } = require('./benefitsController');
 
 // --- User Management ---
 
@@ -171,6 +172,15 @@ exports.updateVacationStatus = async (req, res) => {
             where: { id },
             data: { status }
         });
+
+        if (status === 'APPROVED') {
+            try {
+                await updateUserBalanceLogic(vacation.userId, vacation.type, vacation.days, vacation.hours);
+            } catch (err) {
+                console.error("Failed to update user balance on approval:", err);
+                // Don't fail the request, but log error. Maybe notify admin?
+            }
+        }
 
         // NOTIFICATION: Notify User
         let title = 'Actualización de Solicitud';
