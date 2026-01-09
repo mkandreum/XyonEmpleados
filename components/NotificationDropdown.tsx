@@ -119,13 +119,13 @@ export const NotificationDropdown: React.FC = () => {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-fadeIn">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50 bg-slate-50/50">
-                        <h3 className="font-semibold text-slate-900 text-sm">Notificaciones</h3>
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden z-50 animate-fadeIn">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+                        <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Notificaciones</h3>
                         {unreadCount > 0 && (
                             <button
                                 onClick={handleMarkAllRead}
-                                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                             >
                                 Marcar todo leído
                             </button>
@@ -134,7 +134,7 @@ export const NotificationDropdown: React.FC = () => {
 
                     <div className="max-h-96 overflow-y-auto custom-scrollbar">
                         {notifications.length === 0 ? (
-                            <div className="px-4 py-8 text-center text-slate-500">
+                            <div className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
                                 <p className="text-sm">No tienes notificaciones</p>
                             </div>
                         ) : (
@@ -149,17 +149,17 @@ export const NotificationDropdown: React.FC = () => {
                                                 setIsOpen(false);
                                             }
                                         }}
-                                        className={`px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer ${getNotificationStyle(notification.title, notification.message)} ${!notification.read ? 'opacity-100' : 'opacity-70'}`}
+                                        className={`px-4 py-3 border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer ${getNotificationStyle(notification.title, notification.message)} ${!notification.read ? 'opacity-100' : 'opacity-70 dark:opacity-60'}`}
                                     >
                                         <div className="flex justify-between items-start gap-3">
                                             <div className="flex-1">
-                                                <h4 className={`text-sm ${!notification.read ? 'font-semibold text-slate-900' : 'font-medium text-slate-700'}`}>
+                                                <h4 className={`text-sm ${!notification.read ? 'font-semibold text-slate-900 dark:text-white' : 'font-medium text-slate-700 dark:text-slate-300'}`}>
                                                     {notification.title}
                                                 </h4>
-                                                <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">
                                                     {notification.message}
                                                 </p>
-                                                <span className="text-[10px] text-slate-400 mt-2 block">
+                                                <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 block">
                                                     {new Date(notification.date).toLocaleDateString()} {new Date(notification.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                             </div>
@@ -167,7 +167,7 @@ export const NotificationDropdown: React.FC = () => {
                                                 {!notification.read && (
                                                     <button
                                                         onClick={(e) => handleMarkAsRead(notification.id, e)}
-                                                        className="text-slate-400 hover:text-blue-600 p-1 hover:bg-white rounded-full transition-all"
+                                                        className="text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 p-1 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all"
                                                         title="Marcar como leída"
                                                     >
                                                         <Check size={14} />
@@ -175,7 +175,7 @@ export const NotificationDropdown: React.FC = () => {
                                                 )}
                                                 <button
                                                     onClick={(e) => handleDelete(notification.id, e)}
-                                                    className="text-slate-400 hover:text-red-500 p-1 hover:bg-white rounded-full transition-all"
+                                                    className="text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 p-1 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all"
                                                     title="Eliminar"
                                                 >
                                                     <X size={14} />

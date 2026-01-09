@@ -159,12 +159,16 @@ const AppRoutes = () => {
     );
 }
 
+import { ThemeProvider } from './context/ThemeContext';
+
 function App() {
     return (
         <AuthProvider>
-            <Router>
-                <AppRoutes />
-            </Router>
+            <ThemeProvider>
+                <Router>
+                    <AppRoutes />
+                </Router>
+            </ThemeProvider>
         </AuthProvider>
     );
 }

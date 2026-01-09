@@ -79,30 +79,31 @@ export const FloatingNavbar: React.FC = () => {
     // If active item is hidden (in "More" menu), we don't show sliding pill on main bar
     const showSlider = activeIndex !== -1;
 
+    // Helper to handle click: Close menu & Scroll top
+    const handleNavClick = () => {
+        setShowMore(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     return (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-[95vw] sm:max-w-fit">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-[95vw] sm:max-w-fit transition-all duration-300">
             {/* Glass Container */}
             <div className="
                 relative flex items-center p-1
                 rounded-2xl sm:rounded-full
-                bg-white/40
+                bg-white/40 dark:bg-slate-900/60
                 backdrop-blur-xl
-                border border-white/30
-                shadow-[0_8px_32px_0_rgba(31,38,135,0.1)]
+                border border-white/30 dark:border-slate-700/50
+                shadow-[0_8px_32px_0_rgba(31,38,135,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.3)]
+                transition-colors duration-300
             ">
 
                 {/* Sliding Active Indicator (The "Pill") */}
-                {/* 
-                   We use absolute positioning. 
-                   We assume each item has a fixed width of w-16 (64px) or w-20 (80px) on desktop to make math easy.
-                   Actually, let's use a percentage width if we knew the count, or just standard px width.
-                   Using standard px width is safer for the generic 'sliding' look.
-                */}
                 {showSlider && (
                     <div
-                        className="absolute top-1 bottom-1 bg-white rounded-xl sm:rounded-full shadow-sm transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] pointer-events-none"
+                        className="absolute top-1 bottom-1 bg-white dark:bg-slate-800 rounded-xl sm:rounded-full shadow-sm transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] pointer-events-none"
                         style={{
-                            left: `calc(4px + ${activeIndex * (isMobile ? 64 : 96)}px)`, // 4px padding offset + index * itemWidth
+                            left: `calc(4px + ${activeIndex * (isMobile ? 64 : 96)}px)`,
                             width: isMobile ? '64px' : '96px'
                         }}
                     />
@@ -117,18 +118,20 @@ export const FloatingNavbar: React.FC = () => {
                         <Link
                             key={item.path}
                             to={item.path}
+                            onClick={handleNavClick}
                             className={`
                                 relative z-10 flex flex-col items-center justify-center gap-1
                                 h-14 sm:h-16
-                                ${isMobile ? 'w-16' : 'w-24'} // Fixed width for sliding calculation
+                                ${isMobile ? 'w-16' : 'w-24'}
                                 rounded-xl sm:rounded-full transition-colors duration-200
-                                ${isActive ? 'text-blue-700' : 'text-slate-500 hover:bg-white/20 hover:text-slate-700'}
+                                ${isActive
+                                    ? 'text-blue-700 dark:text-blue-400'
+                                    : 'text-slate-500 dark:text-slate-400 hover:bg-white/20 dark:hover:bg-slate-800/30 hover:text-slate-700 dark:hover:text-slate-200'}
                             `}
                         >
                             <Icon size={isMobile ? 20 : 22} strokeWidth={isActive ? 2.5 : 2} className="transition-transform duration-200" />
 
-                            {/* Label always visible now, below icon */}
-                            <span className={`text-[10px] sm:text-xs font-medium leading-none ${isActive ? 'text-blue-900 font-bold' : ''}`}>
+                            <span className={`text-[10px] sm:text-xs font-medium leading-none ${isActive ? 'text-blue-900 dark:text-blue-200 font-bold' : ''}`}>
                                 {item.label}
                             </span>
                         </Link>
@@ -145,7 +148,9 @@ export const FloatingNavbar: React.FC = () => {
                                 h-14 sm:h-16
                                 ${isMobile ? 'w-16' : 'w-24'}
                                 rounded-xl sm:rounded-full transition-colors duration-200
-                                ${showMore ? 'text-blue-700 bg-white/50' : 'text-slate-500 hover:bg-white/20 hover:text-slate-700'}
+                                ${showMore
+                                    ? 'text-blue-700 dark:text-blue-400 bg-white/50 dark:bg-slate-800/50'
+                                    : 'text-slate-500 dark:text-slate-400 hover:bg-white/20 dark:hover:bg-slate-800/30 hover:text-slate-700 dark:hover:text-slate-200'}
                             `}
                         >
                             <MoreHorizontal size={22} />
@@ -157,8 +162,8 @@ export const FloatingNavbar: React.FC = () => {
                             <div className="
                                 absolute bottom-full right-0 mb-4 
                                 flex flex-col gap-2 p-2 
-                                bg-white/80 backdrop-blur-xl 
-                                border border-white/40 
+                                bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl 
+                                border border-white/40 dark:border-slate-700
                                 shadow-xl rounded-2xl
                                 min-w-[160px]
                                 animate-slide-up origin-bottom-right
@@ -170,10 +175,12 @@ export const FloatingNavbar: React.FC = () => {
                                         <Link
                                             key={item.path}
                                             to={item.path}
-                                            onClick={() => setShowMore(false)}
+                                            onClick={handleNavClick}
                                             className={`
                                                 flex items-center gap-3 px-4 py-3 rounded-xl transition-colors
-                                                ${isActive ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-white/50'}
+                                                ${isActive
+                                                    ? 'bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400'
+                                                    : 'text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/50'}
                                             `}
                                         >
                                             <Icon size={18} />

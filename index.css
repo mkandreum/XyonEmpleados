@@ -3,7 +3,16 @@
 @tailwind utilities;
 
 body {
-  @apply bg-slate-50 text-slate-900;
+  @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300;
+}
+
+@layer base {
+
+  input,
+  select,
+  textarea {
+    @apply bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white;
+  }
 }
 
 /* Custom Scrollbar */
