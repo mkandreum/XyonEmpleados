@@ -153,7 +153,7 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <p className="mt-6 text-center text-xs text-slate-500">
-          &copy; 2024 Velilla Corporate. Todos los derechos reservados.
+          &copy; 2026 XyonPlatforms. Todos los derechos reservados.
         </p>
       </div>
     </div>
