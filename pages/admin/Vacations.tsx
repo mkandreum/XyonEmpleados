@@ -310,8 +310,9 @@ export const AdminVacations: React.FC = () => {
                                     {expandedUsers.has(group.userId) && (
                                         <div className="divide-y divide-slate-100">
                                             {group.requests.map(request => (
-                                                <div key={request.id} className="px-3 md:px-4 py-3 bg-white hover:bg-slate-50">
-                                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                                <div key={request.id} className="p-3 bg-white hover:bg-slate-50">
+                                                    {/* Desktop View */}
+                                                    <div className="hidden sm:flex sm:flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                                         <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm">
                                                             <span className="text-slate-600">
                                                                 {formatDate(request.startDate)} - {formatDate(request.endDate)}
@@ -340,6 +341,52 @@ export const AdminVacations: React.FC = () => {
                                                                 Ver
                                                             </a>
                                                         )}
+                                                    </div>
+
+                                                    {/* Mobile View - Same as List Mode */}
+                                                    <div className="sm:hidden">
+                                                        <div className="flex items-start justify-between mb-2">
+                                                            <span className={`px-2 py-1 rounded-md text-xs font-medium ${request.status === 'APPROVED'
+                                                                ? 'bg-green-100 text-green-700'
+                                                                : 'bg-red-100 text-red-700'
+                                                                }`}>
+                                                                {getStatusLabel(request.status)}
+                                                            </span>
+                                                        </div>
+
+                                                        <div className="space-y-1.5 text-xs">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-slate-500">Fechas:</span>
+                                                                <span className="text-slate-700 font-medium">
+                                                                    {formatDate(request.startDate)} - {formatDate(request.endDate)}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-slate-500">Duración:</span>
+                                                                <span className="text-slate-700 font-medium">
+                                                                    {request.days ? `${request.days} días` : `${request.hours} horas`}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-slate-500">Tipo:</span>
+                                                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                                                    {getTypeLabel(request.type)}
+                                                                </span>
+                                                            </div>
+                                                            {request.justificationUrl && (
+                                                                <div className="pt-1 border-t border-slate-100">
+                                                                    <a
+                                                                        href={request.justificationUrl}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-xs"
+                                                                    >
+                                                                        <FileText size={14} />
+                                                                        Ver justificante
+                                                                    </a>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))}
