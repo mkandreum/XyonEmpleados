@@ -32,7 +32,8 @@ const fileFilter = (req, file, cb) => {
         'logos': /jpeg|jpg|png|gif|svg/,
         'payrolls': /pdf/,
         'justifications': /jpeg|jpg|png|pdf/,
-        'avatars': /jpeg|jpg|png/
+        'avatars': /jpeg|jpg|png/,
+        'news': /jpeg|jpg|png|gif/ // Added news
     };
 
     const fieldType = file.fieldname;
@@ -57,6 +58,7 @@ exports.uploadLogo = upload.single('logos');
 exports.uploadPayroll = upload.single('payrolls');
 exports.uploadJustification = upload.single('justifications');
 exports.uploadAvatar = upload.single('avatars');
+exports.uploadNewsImage = upload.single('news'); // Added handler
 
 // Get file URL
 exports.handleUpload = (req, res) => {

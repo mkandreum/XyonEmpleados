@@ -31,6 +31,7 @@ router.post('/upload/logo', isAdmin, uploadController.uploadLogo, uploadControll
 router.post('/upload/payroll', isAdmin, uploadController.uploadPayroll, uploadController.handleUpload);
 router.post('/upload/justification', uploadController.uploadJustification, uploadController.handleUpload);
 router.post('/upload/avatar', uploadController.uploadAvatar, uploadController.handleUpload);
+router.post('/upload/news', isAdmin, uploadController.uploadNewsImage, uploadController.handleUpload);
 router.delete('/upload/file', uploadController.deleteFile);
 
 // Benefits Routes

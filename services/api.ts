@@ -202,6 +202,14 @@ export const uploadService = {
         });
         return response.data;
     },
+    uploadNewsImage: async (file: File) => {
+        const formData = new FormData();
+        formData.append('news', file);
+        const response = await api.post('/upload/news', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
     deleteFile: async (fileUrl: string) => {
         const response = await api.delete('/upload/file', { data: { fileUrl } });
         return response.data;
