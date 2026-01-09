@@ -129,19 +129,20 @@ export const PayrollPage: React.FC = () => {
 
       {/* Payroll List */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+        <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="font-semibold text-slate-900">Historial de Nóminas</h2>
           <button
             onClick={downloadSelected}
             disabled={selectedPayrolls.size === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Download size={18} />
-            Descargar Seleccionadas ({selectedPayrolls.size})
+            Descargar ({selectedPayrolls.size})
           </button>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
               <tr>
@@ -150,7 +151,7 @@ export const PayrollPage: React.FC = () => {
                     onClick={toggleAll}
                     className="flex items-center gap-2 text-xs font-medium text-slate-500 uppercase hover:text-slate-700"
                   >
-                    {selectedPayrolls.size === payrolls.length ? (
+                    {selectedPayrolls.size === payrolls.length && payrolls.length > 0 ? (
                       <CheckSquare size={18} className="text-blue-600" />
                     ) : (
                       <Square size={18} />
@@ -224,6 +225,66 @@ export const PayrollPage: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile View */}
+        <div className="md:hidden">
+          {payrolls.length > 0 ? (
+            <div className="divide-y divide-slate-100">
+              {payrolls.map((payroll) => (
+                <div key={payroll.id} className="p-4 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => togglePayroll(payroll.id)}
+                        className="text-slate-600 hover:text-blue-600"
+                      >
+                        {selectedPayrolls.has(payroll.id) ? (
+                          <CheckSquare size={20} className="text-blue-600" />
+                        ) : (
+                          <Square size={20} />
+                        )}
+                      </button>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                          <FileText size={18} />
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-slate-900">{payroll.month} {payroll.year}</div>
+                          <div className="text-xs text-slate-500">Nómina mensual</div>
+                        </div>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${payroll.status === 'PAID'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-amber-100 text-amber-800'
+                      }`}>
+                      {payroll.status === 'PAID' ? 'Pagado' : 'Pendiente'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between pl-8">
+                    <div className="text-base font-bold text-slate-900">
+                      {payroll.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€
+                    </div>
+                    <a
+                      href={payroll.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 text-sm font-medium hover:bg-slate-50 hover:text-blue-600 transition-colors"
+                    >
+                      <Download size={14} />
+                      Descargar PDF
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center text-slate-500">
+              No hay nóminas disponibles
+            </div>
+          )}
         </div>
       </div>
       {/* Global Modal */}
