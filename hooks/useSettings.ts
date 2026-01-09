@@ -23,7 +23,7 @@ export const useSettings = () => {
                 console.error('❌ Error fetching settings:', error);
                 // Use defaults if fetch fails
                 setSettings({
-                    companyName: 'Velilla',
+                    companyName: 'XyonEmpleados',
                     logoUrl: '',
                     adminLogoUrl: ''
                 });

@@ -51,7 +51,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     { path: '/profile', label: 'Mi Perfil', icon: UserCircle },
   ];
 
-  const companyName = settings.companyName || 'Velilla';
+  const companyName = settings.companyName || 'XyonEmpleados';
   const logoUrl = settings.logoUrl;
 
   return (

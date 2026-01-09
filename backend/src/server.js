@@ -72,7 +72,7 @@ const prisma = new PrismaClient();
 
 async function ensureAdminExists() {
     try {
-        const adminEmail = 'admin@velilla.com';
+        const adminEmail = 'admin@xyonempleados.com';
 
         // Check if admin exists first to NOT reset password
         const existingAdmin = await prisma.user.findUnique({

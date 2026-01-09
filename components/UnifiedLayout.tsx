@@ -16,7 +16,7 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
     const [logoError, setLogoError] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-    const companyName = settings.companyName || 'Velilla';
+    const companyName = settings.companyName || 'XyonEmpleados';
     const logoUrl = settings.logoUrl;
 
     const handleLogout = () => {

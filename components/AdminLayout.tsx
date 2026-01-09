@@ -66,7 +66,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
     ];
 
     const logoUrl = settings.logoUrl;
-    const companyName = settings.companyName || 'Velilla';
+    const companyName = settings.companyName || 'XyonEmpleados';
 
     return (
         <div className="flex h-screen bg-slate-100 overflow-hidden">

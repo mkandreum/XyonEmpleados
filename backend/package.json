@@ -1,7 +1,7 @@
 {
-  "name": "velilla-backend",
+  "name": "xyonempleados-backend",
   "version": "1.0.0",
-  "description": "Backend API for VelillaEmpleado Portal",
+  "description": "Backend API for XyonEmpleados Portal",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

@@ -62,7 +62,7 @@ export const AdminSettings: React.FC = () => {
                                     name="companyName"
                                     value={settings.companyName || ''}
                                     onChange={handleChange}
-                                    placeholder="Velilla"
+                                    placeholder="XyonEmpleados"
                                     className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
                                 />
                                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">

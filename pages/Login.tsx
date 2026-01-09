@@ -43,7 +43,7 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const companyName = settings.companyName || 'Velilla';
+  const companyName = settings.companyName || 'XyonEmpleados';
   const loginLogoUrl = settings.loginLogoUrl || settings.logoUrl; // Fallback to logoUrl if loginLogoUrl not set
 
   return (
