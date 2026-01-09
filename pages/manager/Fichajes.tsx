@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Clock, AlertCircle, Users, Calendar } from 'lucide-react';
 import { fichajeService, lateNotificationService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { ConfirmModal } from '../../components/ConfirmModal';
 
 export const ManagerFichajes: React.FC = () => {
     const { user } = useAuth();
     const [weekData, setWeekData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedWeek, setSelectedWeek] = useState(0); // 0 = current week
+    const [showModal, setShowModal] = useState(false);
+    const [modalData, setModalData] = useState<{ userId: string; fichajeId: string; fecha: string; userName: string } | null>(null);
 
     useEffect(() => {
         loadWeekData();
@@ -68,15 +71,36 @@ export const ManagerFichajes: React.FC = () => {
         }
     };
 
-    const handleSendWarning = async (userId: string, fichajeId: string, fecha: string, userName: string) => {
-        if (!confirm(`¿Enviar aviso de llegada tarde a ${userName}?`)) return;
+    const handleSendWarning = (userId: string, fichajeId: string, fecha: string, userName: string) => {
+        setModalData({ userId, fichajeId, fecha, userName });
+        setShowModal(true);
+    };
+
+    const confirmSendWarning = async () => {
+        if (!modalData) return;
 
         try {
-            await lateNotificationService.send({ userId, fichajeId, fecha });
-            alert('Aviso enviado correctamente');
+            await lateNotificationService.send({
+                userId: modalData.userId,
+                fichajeId: modalData.fichajeId,
+                fecha: modalData.fecha
+            });
+
+            // Success toast
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in';
+            toast.textContent = '✓ Aviso enviado correctamente';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+
             loadWeekData();
         } catch (error: any) {
-            alert(error.response?.data?.error || 'Error al enviar aviso');
+            // Error toast
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+            toast.textContent = error.response?.data?.error || 'Error al enviar aviso';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
         }
     };
 
@@ -354,6 +378,18 @@ export const ManagerFichajes: React.FC = () => {
                     ))
                 )}
             </div>
+
+            {/* Confirmation Modal */}
+            <ConfirmModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                onConfirm={confirmSendWarning}
+                title="Enviar Aviso"
+                message={`¿Estás seguro de que deseas enviar un aviso de llegada tarde a ${modalData?.userName}?`}
+                confirmText="Enviar Aviso"
+                cancelText="Cancelar"
+                type="warning"
+            />
         </div>
     );
 };
