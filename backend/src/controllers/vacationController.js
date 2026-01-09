@@ -103,7 +103,9 @@ exports.getTeamVacations = async (req, res) => {
         // Fetch all PENDING_MANAGER requests from the same department
         const teamRequests = await prisma.vacationRequest.findMany({
             where: {
-                status: 'PENDING_MANAGER',
+                status: {
+                    in: ['PENDING_MANAGER', 'PENDING_ADMIN', 'APPROVED']
+                },
                 user: {
                     department: manager.department
                 }
