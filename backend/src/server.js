@@ -2,14 +2,33 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Security Middleware
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow images to be loaded
+}));
+app.disable('x-powered-by'); // Hide Express signature
+
+// Rate Limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 500, // Limit each IP to 500 requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: 'Too many requests from this IP, please try again after 15 minutes'
+});
+// Apply rate limiter to all requests
+app.use(limiter);
+
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors()); // Configure this restrictively in production!
+app.use(express.json({ limit: '10kb' })); // Body limit to prevent DoS
 app.use(morgan('dev'));
 
 // Serve uploaded files statically
@@ -43,25 +62,29 @@ const prisma = new PrismaClient();
 async function ensureAdminExists() {
     try {
         const adminEmail = 'admin@velilla.com';
-        const hashedPassword = await bcrypt.hash('admin_password_123', 10);
 
-        await prisma.user.upsert({
-            where: { email: adminEmail },
-            update: {
-                password: hashedPassword,
-                role: 'ADMIN'
-            },
-            create: {
-                email: adminEmail,
-                name: 'Admin User',
-                password: hashedPassword,
-                role: 'ADMIN',
-                department: 'IT',
-                position: 'System Administrator',
-                joinDate: new Date(),
-            }
+        // Check if admin exists first to NOT reset password
+        const existingAdmin = await prisma.user.findUnique({
+            where: { email: adminEmail }
         });
-        console.log('✓ Admin user verified/updated');
+
+        if (!existingAdmin) {
+            const hashedPassword = await bcrypt.hash('admin_password_123', 10);
+            await prisma.user.create({
+                data: {
+                    email: adminEmail,
+                    name: 'Admin User',
+                    password: hashedPassword,
+                    role: 'ADMIN',
+                    department: 'IT',
+                    position: 'System Administrator',
+                    joinDate: new Date(),
+                }
+            });
+            console.log('✓ Admin user created');
+        } else {
+            console.log('✓ Admin user already exists');
+        }
     } catch (error) {
         console.error('Error ensuring admin exists:', error);
     }
