@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { adminService } from '../../services/api';
-import { Check, X } from 'lucide-react';
+import { Check, X, FileText } from 'lucide-react';
 
 export const AdminVacations: React.FC = () => {
     const [vacations, setVacations] = useState<any[]>([]);
