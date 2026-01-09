@@ -11,7 +11,11 @@ const uploadController = require('./controllers/uploadController');
 const benefitsController = require('./controllers/benefitsController');
 const statsController = require('./controllers/statsController');
 const notificationController = require('./controllers/notificationController');
+const fichajeController = require('./controllers/fichajeController');
+const scheduleController = require('./controllers/scheduleController');
+const lateNotificationController = require('./controllers/lateNotificationController');
 const { isAdmin } = require('./middleware/auth');
+
 
 // Public Routes (NO AUTH REQUIRED)
 router.post('/auth/register', authController.register);
@@ -88,4 +92,25 @@ router.put('/notifications/:id/read', notificationController.markAsRead);
 router.delete('/notifications/:id', notificationController.deleteNotification);
 router.put('/notifications/read-all', notificationController.markAllAsRead);
 
+// Fichajes Routes
+router.post('/fichajes', fichajeController.createFichaje);
+router.get('/fichajes/current', fichajeController.getCurrentFichaje);
+router.get('/fichajes/history', fichajeController.getHistory);
+router.get('/fichajes/week/:userId', fichajeController.getWeek);
+router.get('/fichajes/month/:userId', fichajeController.getMonth);
+router.get('/fichajes/department/:dept/week', fichajeController.getDepartmentWeek);
+
+// Department Schedules Routes
+router.get('/department-schedules/:department', scheduleController.getSchedule);
+router.get('/department-schedules', isAdmin, scheduleController.getAllSchedules);
+router.post('/department-schedules', isAdmin, scheduleController.upsertSchedule);
+
+// Late Arrival Notifications Routes
+router.post('/late-notifications', lateNotificationController.createLateNotification);
+router.get('/late-notifications', lateNotificationController.getLateNotifications);
+router.get('/late-notifications/sent', lateNotificationController.getSentNotifications);
+router.post('/late-notifications/:id/justify', lateNotificationController.justifyLateArrival);
+router.put('/late-notifications/:id/read', lateNotificationController.markAsRead);
+
 module.exports = router;
+

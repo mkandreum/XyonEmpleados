@@ -47,7 +47,11 @@ model User {
   payrolls    Payroll[]
   notifications Notification[]
   benefitsBalance UserBenefitsBalance?
+  fichajes    Fichaje[]
+  lateNotificationsReceived LateArrivalNotification[] @relation("UserLateNotifications")
+  lateNotificationsSent     LateArrivalNotification[] @relation("ManagerNotifications")
 }
+
 
 model Payroll {
   id        String   @id @default(uuid())
@@ -142,6 +146,61 @@ model UserBenefitsBalance {
   year                  Int
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
+}
+
+enum FichajeTipo {
+  ENTRADA
+  SALIDA
+}
+
+model Fichaje {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tipo        FichajeTipo
+  timestamp   DateTime @default(now())
+  department  String
+  createdAt   DateTime @default(now())
+  
+  lateNotifications LateArrivalNotification[]
+  
+  @@index([userId, timestamp])
+  @@index([department, timestamp])
+}
+
+model DepartmentSchedule {
+  id                  String   @id @default(uuid())
+  department          String   @unique
+  
+  // Horario principal (mañana completa o jornada continua)
+  horaEntrada         String   // Formato "HH:mm" ej: "09:00"
+  horaSalida          String   // Formato "HH:mm" ej: "18:00"
+  
+  // Horario partido (opcional - para jornada partida)
+  horaEntradaTarde    String?  // Formato "HH:mm" ej: "15:00"
+  horaSalidaMañana    String?  // Formato "HH:mm" ej: "14:00"
+  
+  toleranciaMinutos   Int      @default(10)
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model LateArrivalNotification {
+  id                  String   @id @default(uuid())
+  userId              String
+  user                User     @relation("UserLateNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  managerId           String
+  manager             User     @relation("ManagerNotifications", fields: [managerId], references: [id])
+  fichajeId           String
+  fichaje             Fichaje  @relation(fields: [fichajeId], references: [id])
+  fecha               DateTime
+  justificado         Boolean  @default(false)
+  justificacionTexto  String?  @db.Text
+  leido               Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  
+  @@index([userId, leido])
 }
 
 

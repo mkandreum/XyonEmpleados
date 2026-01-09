@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { vacationService, eventsService, holidayService, benefitsService, payrollService } from '../services/api';
 import { VacationRequest, Event, Holiday, UserBenefitsBalance, DepartmentBenefits, Payroll } from '../types';
 import { Calendar, Clock, Briefcase, FileText, Download, ChevronRight, Plane } from 'lucide-react';
+import { DigitalClock } from '../components/DigitalClock';
+import { FichajeButton } from '../components/FichajeButton';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -123,6 +125,15 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* Fichaje Section */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl shadow-sm border border-blue-100">
+        <h2 className="text-xl font-bold text-slate-900 mb-6">Control de Asistencia</h2>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <DigitalClock />
+          <FichajeButton />
+        </div>
       </div>
 
       {/* Main Content Area */}

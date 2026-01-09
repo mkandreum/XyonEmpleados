@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User, Payroll, VacationRequest, NewsItem, Notification, Event, Holiday, DepartmentBenefits, UserBenefitsBalance, GlobalSettings, AdminStats } from '../types';
+import { User, Payroll, VacationRequest, NewsItem, Notification, Event, Holiday, DepartmentBenefits, UserBenefitsBalance, GlobalSettings, AdminStats, Fichaje, FichajeTipo, FichajeStatus, FichajeDayStats, DepartmentSchedule, LateArrivalNotification } from '../types';
 
 // The API URL will depend on where the backend is served. 
 // In development, Vite proxy can handle /api.
@@ -288,6 +288,71 @@ export const managerService = {
         const res = await api.patch(`/manager/vacations/${id}/reject`);
         return res.data;
     }
+};
+
+export const fichajeService = {
+    create: async (tipo: FichajeTipo) => {
+        const response = await api.post<{ fichaje: Fichaje; status: FichajeStatus }>('/fichajes', { tipo });
+        return response.data;
+    },
+    getCurrent: async () => {
+        const response = await api.get<FichajeStatus>('/fichajes/current');
+        return response.data;
+    },
+    getHistory: async (filters?: { userId?: string; startDate?: string; endDate?: string; department?: string }) => {
+        const response = await api.get<Fichaje[]>('/fichajes/history', { params: filters });
+        return response.data;
+    },
+    getWeek: async (userId: string) => {
+        const response = await api.get<FichajeDayStats[]>(`/fichajes/week/${userId}`);
+        return response.data;
+    },
+    getMonth: async (userId: string) => {
+        const response = await api.get<FichajeDayStats[]>(`/fichajes/month/${userId}`);
+        return response.data;
+    },
+    getDepartmentWeek: async (department: string) => {
+        const response = await api.get(`/fichajes/department/${department}/week`);
+        return response.data;
+    },
+};
+
+export const scheduleService = {
+    get: async (department: string) => {
+        const response = await api.get<DepartmentSchedule>(`/department-schedules/${department}`);
+        return response.data;
+    },
+    getAll: async () => {
+        const response = await api.get<DepartmentSchedule[]>('/department-schedules');
+        return response.data;
+    },
+    update: async (schedule: Partial<DepartmentSchedule> & { department: string }) => {
+        const response = await api.post<DepartmentSchedule>('/department-schedules', schedule);
+        return response.data;
+    },
+};
+
+export const lateNotificationService = {
+    getAll: async () => {
+        const response = await api.get<LateArrivalNotification[]>('/late-notifications');
+        return response.data;
+    },
+    getSent: async () => {
+        const response = await api.get<LateArrivalNotification[]>('/late-notifications/sent');
+        return response.data;
+    },
+    send: async (data: { userId: string; fichajeId: string; fecha: string }) => {
+        const response = await api.post<LateArrivalNotification>('/late-notifications', data);
+        return response.data;
+    },
+    justify: async (id: string, justificacion: string) => {
+        const response = await api.post<LateArrivalNotification>(`/late-notifications/${id}/justify`, { justificacion });
+        return response.data;
+    },
+    markAsRead: async (id: string) => {
+        const response = await api.put<LateArrivalNotification>(`/late-notifications/${id}/read`);
+        return response.data;
+    },
 };
 
 export default api;

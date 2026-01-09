@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { vacationService, benefitsService, uploadService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { VacationRequest, VacationStatus, DepartmentBenefits, UserBenefitsBalance } from '../types';
@@ -240,323 +239,270 @@ export const VacationsPage: React.FC = () => {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Chart Section */}
-                {/* Chart Section */}
-                {/* Chart Section */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 lg:col-span-1 flex flex-col">
-                    <h2 className="text-lg font-semibold text-slate-900 mb-6">Balance Anual {currentYear}</h2>
-
-                    <div className="flex-1 flex flex-col items-center justify-center min-h-[250px]">
-                        <div className="w-full h-64 relative">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={data}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={80}
-                                        outerRadius={100}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                        stroke="none"
-                                    >
-                                        {data.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                    />
-                                    <Legend
-                                        verticalAlign="bottom"
-                                        height={36}
-                                        iconSize={8}
-                                        iconType="circle"
-                                        wrapperStyle={{ paddingTop: '20px' }}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            {/* Center Text Overlay */}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-12">
-                                <span className="text-4xl font-bold text-slate-900">{remainingDays}</span>
-                                <span className="text-sm text-slate-500 font-medium">Días Libres</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Mobile Button - Visible only on mobile */}
-                    <button
-                        onClick={() => setShowRequestForm(!showRequestForm)}
-                        className="md:hidden w-full mt-6 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
-                    >
-                        {showRequestForm ? <><X size={20} /> Cancelar</> : <><Plus size={20} /> Nueva Solicitud</>}
-                    </button>
+            {/* List Section - Full Width */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                <div className="p-6 border-b border-slate-100">
+                    <h2 className="text-lg font-semibold text-slate-900">Historial de Solicitudes</h2>
                 </div>
 
-                {/* List Section */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 lg:col-span-2 overflow-hidden flex flex-col">
-                    <div className="p-6 border-b border-slate-100">
-                        <h2 className="text-lg font-semibold text-slate-900">Historial de Solicitudes</h2>
-                    </div>
+                {showRequestForm && (
+                    <div className={`p-6 bg-blue-50 border-b border-blue-100 transition-all duration-300 transform ${animateForm ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
+                        <h3 className="font-semibold text-blue-900 mb-4">Nueva Solicitud</h3>
+                        <form className="space-y-4" onSubmit={handleCreate}>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Tipo de Solicitud</label>
+                                    <select
+                                        value={formData.type}
+                                        onChange={(e) => setFormData({ ...formData, type: e.target.value, subtype: '' })}
+                                        className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
+                                    >
+                                        <option value="VACATION">Vacaciones</option>
+                                        <option value="PERSONAL">Ausencias Retribuídas</option>
+                                        <option value="SICK_LEAVE">Horas Médicas</option>
+                                        <option value="OVERTIME">Horas Exceso de Jornada</option>
+                                        <option value="OTHER">Otros Permisos</option>
+                                    </select>
+                                </div>
 
-                    {showRequestForm && (
-                        <div className={`p-6 bg-blue-50 border-b border-blue-100 transition-all duration-300 transform ${animateForm ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
-                            <h3 className="font-semibold text-blue-900 mb-4">Nueva Solicitud</h3>
-                            <form className="space-y-4" onSubmit={handleCreate}>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {showSubtypeDropdown && (
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Tipo de Solicitud</label>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Motivo (Específico)</label>
                                         <select
-                                            value={formData.type}
-                                            onChange={(e) => setFormData({ ...formData, type: e.target.value, subtype: '' })}
+                                            value={formData.subtype}
+                                            onChange={(e) => setFormData({ ...formData, subtype: e.target.value })}
                                             className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
                                         >
-                                            <option value="VACATION">Vacaciones</option>
-                                            <option value="PERSONAL">Ausencias Retribuídas</option>
-                                            <option value="SICK_LEAVE">Horas Médicas</option>
-                                            <option value="OVERTIME">Horas Exceso de Jornada</option>
-                                            <option value="OTHER">Otros Permisos</option>
+                                            <option value="">Selecciona un motivo...</option>
+                                            {otherSubtypes.map(s => (
+                                                <option key={s} value={s}>{s}</option>
+                                            ))}
                                         </select>
                                     </div>
+                                )}
+                            </div>
 
-                                    {showSubtypeDropdown && (
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-1">Motivo (Específico)</label>
-                                            <select
-                                                value={formData.subtype}
-                                                onChange={(e) => setFormData({ ...formData, subtype: e.target.value })}
-                                                className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
-                                            >
-                                                <option value="">Selecciona un motivo...</option>
-                                                {otherSubtypes.map(s => (
-                                                    <option key={s} value={s}>{s}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    )}
-                                </div>
+                            {/* Date Range Picker */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Selecciona las Fechas</label>
+                                <DateRangePicker
+                                    startDate={formData.startDate}
+                                    endDate={formData.endDate}
+                                    onChange={(start, end) => setFormData({ ...formData, startDate: start, endDate: end })}
+                                />
 
-                                {/* Date Range Picker */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Selecciona las Fechas</label>
-                                    <DateRangePicker
-                                        startDate={formData.startDate}
-                                        endDate={formData.endDate}
-                                        onChange={(start, end) => setFormData({ ...formData, startDate: start, endDate: end })}
-                                    />
-
-                                    {/* Less than one day checkbox - Only for Non-Vacation types usually? Or specifically requested for Other Permissions to measure hours */}
-                                    {formData.type !== 'VACATION' && (
-                                        <div className="mt-4 space-y-3">
-                                            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={formData.lessThanOneDay}
-                                                    onChange={(e) => {
-                                                        const isChecked = e.target.checked;
-                                                        setFormData({
-                                                            ...formData,
-                                                            lessThanOneDay: isChecked,
-                                                            hours: isChecked ? formData.hours : '',
-                                                            endDate: isChecked ? formData.startDate : formData.endDate
-                                                        });
-                                                    }}
-                                                    className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
-                                                />
-                                                Duración inferior a un día
-                                            </label>
-
-                                            {formData.lessThanOneDay && (
-                                                <div className="pl-6 animate-fadeIn">
-                                                    <label className="block text-sm font-medium text-slate-700 mb-1">Número de Horas</label>
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        max="8"
-                                                        value={formData.hours}
-                                                        onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
-                                                        className="w-32 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                                        placeholder="Ej: 2"
-                                                    />
-                                                    <p className="text-xs text-slate-500 mt-1">Si seleccionas horas, se contará como 1 día en términos de fechas, pero se restarán las horas del saldo correspondiente.</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">Justificante (PDF/Imagen)</label>
-                                        <div className="flex items-center gap-2">
+                                {/* Less than one day checkbox - Only for Non-Vacation types usually? Or specifically requested for Other Permissions to measure hours */}
+                                {formData.type !== 'VACATION' && (
+                                    <div className="mt-4 space-y-3">
+                                        <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
                                             <input
-                                                type="file"
-                                                accept=".pdf,.jpg,.jpeg,.png"
-                                                onChange={handleFileUpload}
-                                                disabled={uploading}
-                                                className="block w-full text-sm text-slate-500
+                                                type="checkbox"
+                                                checked={formData.lessThanOneDay}
+                                                onChange={(e) => {
+                                                    const isChecked = e.target.checked;
+                                                    setFormData({
+                                                        ...formData,
+                                                        lessThanOneDay: isChecked,
+                                                        hours: isChecked ? formData.hours : '',
+                                                        endDate: isChecked ? formData.startDate : formData.endDate
+                                                    });
+                                                }}
+                                                className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
+                                            />
+                                            Duración inferior a un día
+                                        </label>
+
+                                        {formData.lessThanOneDay && (
+                                            <div className="pl-6 animate-fadeIn">
+                                                <label className="block text-sm font-medium text-slate-700 mb-1">Número de Horas</label>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    max="8"
+                                                    value={formData.hours}
+                                                    onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
+                                                    className="w-32 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                    placeholder="Ej: 2"
+                                                />
+                                                <p className="text-xs text-slate-500 mt-1">Si seleccionas horas, se contará como 1 día en términos de fechas, pero se restarán las horas del saldo correspondiente.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Justificante (PDF/Imagen)</label>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="file"
+                                            accept=".pdf,.jpg,.jpeg,.png"
+                                            onChange={handleFileUpload}
+                                            disabled={uploading}
+                                            className="block w-full text-sm text-slate-500
                                                 file:mr-4 file:py-2 file:px-4
                                                 file:rounded-full file:border-0
                                                 file:text-sm file:font-semibold
                                                 file:bg-blue-50 file:text-blue-700
                                                 hover:file:bg-blue-100"
-                                            />
-                                            {uploading && <span className="text-sm text-blue-600">Subiendo...</span>}
-                                            {formData.justificationUrl && <span className="text-sm text-green-600 font-medium">¡Archivo listo!</span>}
-                                        </div>
-                                        <input type="hidden" value={formData.justificationUrl} />
+                                        />
+                                        {uploading && <span className="text-sm text-blue-600">Subiendo...</span>}
+                                        {formData.justificationUrl && <span className="text-sm text-green-600 font-medium">¡Archivo listo!</span>}
                                     </div>
+                                    <input type="hidden" value={formData.justificationUrl} />
                                 </div>
+                            </div>
 
-                                <div className="flex justify-end gap-3 mt-2">
-                                    <button type="button" onClick={() => setShowRequestForm(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg">Cancelar</button>
-                                    <button
-                                        type="submit"
-                                        disabled={submitting || (requiresJustification && !formData.justificationUrl)}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                                    >
-                                        {submitting ? 'Enviando...' : 'Enviar Solicitud'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    )}
-
-                    {/* Stats Summary Section */}
-                    <div className="grid grid-cols-2 gap-4 p-6 border-b border-slate-100 bg-slate-50">
-                        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><Calendar size={16} /></span>
-                                <h3 className="font-semibold text-slate-700 text-sm">Vacaciones</h3>
+                            <div className="flex justify-end gap-3 mt-2">
+                                <button type="button" onClick={() => setShowRequestForm(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg">Cancelar</button>
+                                <button
+                                    type="submit"
+                                    disabled={submitting || (requiresJustification && !formData.justificationUrl)}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                                >
+                                    {submitting ? 'Enviando...' : 'Enviar Solicitud'}
+                                </button>
                             </div>
-                            <p className="text-2xl font-bold text-slate-900">
-                                {remainingDays}
-                            </p>
-                            <p className="text-xs text-slate-400">Días restantes de {totalDays}</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><FileText size={16} /></span>
-                                <h3 className="font-semibold text-slate-700 text-sm">Exceso Jornada</h3>
-                            </div>
-                            <p className="text-2xl font-bold text-slate-900">
-                                {deptBenefits?.overtimeHoursBank ? (deptBenefits.overtimeHoursBank - (userBenefits?.overtimeHoursUsed || 0)) : 0}h
-                            </p>
-                            <p className="text-xs text-slate-400">Restantes de {deptBenefits?.overtimeHoursBank || 0}h</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="p-1.5 bg-red-100 text-red-600 rounded-lg"><AlertCircle size={16} /></span>
-                                <h3 className="font-semibold text-slate-700 text-sm">Horas Médicas</h3>
-                            </div>
-                            <p className="text-2xl font-bold text-slate-900">
-                                {deptBenefits?.sickLeaveDays ? (deptBenefits.sickLeaveDays - (userBenefits?.sickLeaveDaysUsed || 0)) : 0}h
-                            </p>
-                            <p className="text-xs text-slate-400">Restantes de {deptBenefits?.sickLeaveDays || 0}h</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="p-1.5 bg-green-100 text-green-600 rounded-lg"><Calendar size={16} /></span>
-                                <h3 className="font-semibold text-slate-700 text-sm">Ausencias Retrib.</h3>
-                            </div>
-                            <p className="text-2xl font-bold text-slate-900">
-                                {deptBenefits?.paidAbsenceHours ? (deptBenefits.paidAbsenceHours - (userBenefits?.paidAbsenceHoursUsed || 0)) : 0}h
-                            </p>
-                            <p className="text-xs text-slate-400">Restantes de {deptBenefits?.paidAbsenceHours || 0}h</p>
-                        </div>
+                        </form>
                     </div>
+                )}
 
+                {/* Stats Summary Section */}
+                <div className="grid grid-cols-2 gap-4 p-6 border-b border-slate-100 bg-slate-50">
+                    <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><Calendar size={16} /></span>
+                            <h3 className="font-semibold text-slate-700 text-sm">Vacaciones</h3>
+                        </div>
+                        <p className="text-2xl font-bold text-slate-900">
+                            {remainingDays}
+                        </p>
+                        <p className="text-xs text-slate-400">Días restantes de {totalDays}</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><FileText size={16} /></span>
+                            <h3 className="font-semibold text-slate-700 text-sm">Exceso Jornada</h3>
+                        </div>
+                        <p className="text-2xl font-bold text-slate-900">
+                            {deptBenefits?.overtimeHoursBank ? (deptBenefits.overtimeHoursBank - (userBenefits?.overtimeHoursUsed || 0)) : 0}h
+                        </p>
+                        <p className="text-xs text-slate-400">Restantes de {deptBenefits?.overtimeHoursBank || 0}h</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="p-1.5 bg-red-100 text-red-600 rounded-lg"><AlertCircle size={16} /></span>
+                            <h3 className="font-semibold text-slate-700 text-sm">Horas Médicas</h3>
+                        </div>
+                        <p className="text-2xl font-bold text-slate-900">
+                            {deptBenefits?.sickLeaveDays ? (deptBenefits.sickLeaveDays - (userBenefits?.sickLeaveDaysUsed || 0)) : 0}h
+                        </p>
+                        <p className="text-xs text-slate-400">Restantes de {deptBenefits?.sickLeaveDays || 0}h</p>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="p-1.5 bg-green-100 text-green-600 rounded-lg"><Calendar size={16} /></span>
+                            <h3 className="font-semibold text-slate-700 text-sm">Ausencias Retrib.</h3>
+                        </div>
+                        <p className="text-2xl font-bold text-slate-900">
+                            {deptBenefits?.paidAbsenceHours ? (deptBenefits.paidAbsenceHours - (userBenefits?.paidAbsenceHoursUsed || 0)) : 0}h
+                        </p>
+                        <p className="text-xs text-slate-400">Restantes de {deptBenefits?.paidAbsenceHours || 0}h</p>
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-auto">
                     <div className="flex-1 overflow-auto">
-                        <div className="flex-1 overflow-auto">
-                            {/* Desktop View (Table) */}
-                            <table className="w-full text-sm text-left hidden sm:table">
-                                <thead className="text-xs text-slate-500 uppercase bg-slate-50">
-                                    <tr>
-                                        <th className="px-6 py-3">Fechas</th>
-                                        <th className="px-6 py-3">Duración</th>
-                                        <th className="px-6 py-3">Tipo</th>
-                                        <th className="px-6 py-3">Estado</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {loading ? (
-                                        <tr>
-                                            <td colSpan={4} className="px-6 py-4 text-center text-slate-500">Cargando...</td>
-                                        </tr>
-                                    ) : vacations.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={4} className="px-6 py-4 text-center text-slate-500">No hay solicitudes registradas.</td>
-                                        </tr>
-                                    ) : (
-                                        vacations.map(vac => (
-                                            <tr key={vac.id} className="hover:bg-slate-50">
-                                                <td className="px-6 py-4">
-                                                    <div className="flex flex-col">
-                                                        <span className="font-medium text-slate-900">{new Date(vac.startDate).toLocaleDateString()}</span>
-                                                        <span className="text-slate-500 text-xs">hasta {new Date(vac.endDate).toLocaleDateString()}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-slate-600">
-                                                    {vac.hours ? `${vac.hours} horas` : `${vac.days} días`}
-                                                </td>
-                                                <td className="px-6 py-4 text-slate-600">{getTypeLabel(vac.type, vac.subtype)}</td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(vac.status)}`}>
-                                                        {vac.status === VacationStatus.APPROVED ? 'Aprobado' :
-                                                            vac.status === VacationStatus.PENDING_MANAGER ? 'Pendiente Manager' :
-                                                                vac.status === VacationStatus.PENDING_ADMIN ? 'Pendiente Admin' :
-                                                                    vac.status === VacationStatus.PENDING ? 'Pendiente' : 'Rechazado'}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-
-                            {/* Mobile View (Cards) */}
-                            <div className="sm:hidden space-y-3 p-4 bg-slate-50">
+                        {/* Desktop View (Table) */}
+                        <table className="w-full text-sm text-left hidden sm:table">
+                            <thead className="text-xs text-slate-500 uppercase bg-slate-50">
+                                <tr>
+                                    <th className="px-6 py-3">Fechas</th>
+                                    <th className="px-6 py-3">Duración</th>
+                                    <th className="px-6 py-3">Tipo</th>
+                                    <th className="px-6 py-3">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
                                 {loading ? (
-                                    <p className="text-center text-slate-500">Cargando...</p>
+                                    <tr>
+                                        <td colSpan={4} className="px-6 py-4 text-center text-slate-500">Cargando...</td>
+                                    </tr>
                                 ) : vacations.length === 0 ? (
-                                    <p className="text-center text-slate-500">No hay solicitudes registradas.</p>
+                                    <tr>
+                                        <td colSpan={4} className="px-6 py-4 text-center text-slate-500">No hay solicitudes registradas.</td>
+                                    </tr>
                                 ) : (
                                     vacations.map(vac => (
-                                        <div key={vac.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-100 flex flex-col gap-2">
-                                            <div className="flex justify-between items-start">
+                                        <tr key={vac.id} className="hover:bg-slate-50">
+                                            <td className="px-6 py-4">
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-slate-900 text-base">{getTypeLabel(vac.type, vac.subtype)}</span>
-                                                    <span className="text-xs text-slate-400 font-medium uppercase tracking-wide mt-1">
-                                                        {new Date(vac.startDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - {new Date(vac.endDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                                    </span>
+                                                    <span className="font-medium text-slate-900">{new Date(vac.startDate).toLocaleDateString()}</span>
+                                                    <span className="text-slate-500 text-xs">hasta {new Date(vac.endDate).toLocaleDateString()}</span>
                                                 </div>
-                                                <div className="text-right">
-                                                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(vac.status)}`}>
-                                                        {vac.status === VacationStatus.APPROVED ? 'Aprobado' :
-                                                            vac.status === VacationStatus.PENDING_MANAGER ? 'Pendiente' :
-                                                                vac.status === VacationStatus.PENDING_ADMIN ? 'Procesando' :
-                                                                    vac.status === VacationStatus.PENDING ? 'Enviado' : 'Rechazado'}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex justify-between items-center mt-2 border-t border-slate-50 pt-2">
-                                                <span className="text-sm text-slate-600 font-medium">
-                                                    {vac.hours ? `${vac.hours}h` : `${vac.days} días`}
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-600">
+                                                {vac.hours ? `${vac.hours} horas` : `${vac.days} días`}
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-600">{getTypeLabel(vac.type, vac.subtype)}</td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(vac.status)}`}>
+                                                    {vac.status === VacationStatus.APPROVED ? 'Aprobado' :
+                                                        vac.status === VacationStatus.PENDING_MANAGER ? 'Pendiente Manager' :
+                                                            vac.status === VacationStatus.PENDING_ADMIN ? 'Pendiente Admin' :
+                                                                vac.status === VacationStatus.PENDING ? 'Pendiente' : 'Rechazado'}
                                                 </span>
-                                                <span className="text-xs text-slate-400">
-                                                    {new Date(vac.createdAt).toLocaleDateString()}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+
+                        {/* Mobile View (Cards) */}
+                        <div className="sm:hidden space-y-3 p-4 bg-slate-50">
+                            {loading ? (
+                                <p className="text-center text-slate-500">Cargando...</p>
+                            ) : vacations.length === 0 ? (
+                                <p className="text-center text-slate-500">No hay solicitudes registradas.</p>
+                            ) : (
+                                vacations.map(vac => (
+                                    <div key={vac.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-100 flex flex-col gap-2">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-slate-900 text-base">{getTypeLabel(vac.type, vac.subtype)}</span>
+                                                <span className="text-xs text-slate-400 font-medium uppercase tracking-wide mt-1">
+                                                    {new Date(vac.startDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - {new Date(vac.endDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                </span>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(vac.status)}`}>
+                                                    {vac.status === VacationStatus.APPROVED ? 'Aprobado' :
+                                                        vac.status === VacationStatus.PENDING_MANAGER ? 'Pendiente' :
+                                                            vac.status === VacationStatus.PENDING_ADMIN ? 'Procesando' :
+                                                                vac.status === VacationStatus.PENDING ? 'Enviado' : 'Rechazado'}
                                                 </span>
                                             </div>
                                         </div>
-                                    ))
-                                )}
-                            </div>
+
+                                        <div className="flex justify-between items-center mt-2 border-t border-slate-50 pt-2">
+                                            <span className="text-sm text-slate-600 font-medium">
+                                                {vac.hours ? `${vac.hours}h` : `${vac.days} días`}
+                                            </span>
+                                            <span className="text-xs text-slate-400">
+                                                {new Date(vac.createdAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+            </div >
 
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
                 <AlertCircle className="text-amber-600 mt-0.5" size={20} />
@@ -574,6 +520,6 @@ export const VacationsPage: React.FC = () => {
                 type={modalState.type}
                 onConfirm={modalState.onConfirm}
             />
-        </div>
+        </div >
     );
 };

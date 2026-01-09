@@ -112,3 +112,57 @@ export interface AdminStats {
   pendingVacations: number;
   totalPayrollAmount: number; // For current month
 }
+
+export enum FichajeTipo {
+  ENTRADA = 'ENTRADA',
+  SALIDA = 'SALIDA'
+}
+
+export interface Fichaje {
+  id: string;
+  userId: string;
+  user?: User;
+  tipo: FichajeTipo;
+  timestamp: string;
+  department: string;
+  createdAt: string;
+}
+
+export interface DepartmentSchedule {
+  id: string;
+  department: string;
+  horaEntrada: string;
+  horaSalida: string;
+  horaEntradaTarde?: string;
+  horaSalidaMañana?: string;
+  toleranciaMinutos: number;
+}
+
+export interface LateArrivalNotification {
+  id: string;
+  userId: string;
+  user?: User;
+  managerId: string;
+  manager?: User;
+  fichajeId: string;
+  fichaje?: Fichaje;
+  fecha: string;
+  justificado: boolean;
+  justificacionTexto?: string;
+  leido: boolean;
+  createdAt: string;
+}
+
+export interface FichajeStatus {
+  hasActiveEntry: boolean;
+  currentFichaje?: Fichaje;
+}
+
+export interface FichajeDayStats {
+  date: string;
+  fichajes: Fichaje[];
+  horasTrabajadas: number;
+  isComplete: boolean;
+  isLate: boolean;
+  isEarlyDeparture: boolean;
+}
