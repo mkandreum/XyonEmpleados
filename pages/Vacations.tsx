@@ -252,57 +252,52 @@ export const VacationsPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Chart Section */}
                 {/* Chart Section */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 lg:col-span-1 flex flex-col justify-between">
-                    <div>
-                        <h2 className="text-lg font-semibold text-slate-900 mb-2">Balance Anual {currentYear}</h2>
-                        <div className="w-full h-56 relative">
+                {/* Chart Section */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 lg:col-span-1 flex flex-col">
+                    <h2 className="text-lg font-semibold text-slate-900 mb-6">Balance Anual {currentYear}</h2>
+
+                    <div className="flex-1 flex flex-col items-center justify-center min-h-[250px]">
+                        <div className="w-full h-64 relative">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
                                         data={data}
                                         cx="50%"
                                         cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
+                                        innerRadius={80}
+                                        outerRadius={100}
                                         paddingAngle={5}
                                         dataKey="value"
+                                        stroke="none"
                                     >
                                         {data.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
                                         ))}
                                     </Pie>
-                                    <Tooltip />
-                                    <Legend verticalAlign="bottom" height={36} iconSize={10} wrapperStyle={{ fontSize: '12px' }} />
+                                    <Tooltip
+                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Legend
+                                        verticalAlign="bottom"
+                                        height={36}
+                                        iconSize={8}
+                                        iconType="circle"
+                                        wrapperStyle={{ paddingTop: '20px' }}
+                                    />
                                 </PieChart>
                             </ResponsiveContainer>
                             {/* Center Text Overlay */}
-                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
-                                <span className="text-3xl font-bold text-slate-900">{remainingDays}</span>
-                                <span className="text-xs text-slate-500 font-medium">Disponibles</span>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-12">
+                                <span className="text-4xl font-bold text-slate-900">{remainingDays}</span>
+                                <span className="text-sm text-slate-500 font-medium">Días Libres</span>
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Additional Stats Grid */}
-                    <div className="grid grid-cols-2 gap-3 mt-2 border-t border-slate-100 pt-4">
-                        <div className="flex flex-col items-center p-2 bg-slate-50 rounded-lg">
-                            <span className="text-xs text-slate-500 mb-1">Días Aprobados</span>
-                            <span className="text-lg font-bold text-green-600">
-                                {vacations.filter(v => v.type === 'VACATION' && v.status === VacationStatus.APPROVED).reduce((acc, curr) => acc + curr.days, 0)}
-                            </span>
-                        </div>
-                        <div className="flex flex-col items-center p-2 bg-slate-50 rounded-lg">
-                            <span className="text-xs text-slate-500 mb-1">Exceso Jornada</span>
-                            <span className="text-lg font-bold text-purple-600">
-                                {deptBenefits?.overtimeHoursBank ? (deptBenefits.overtimeHoursBank - (userBenefits?.overtimeHoursUsed || 0)) : 0}h
-                            </span>
                         </div>
                     </div>
 
                     {/* Mobile Button - Visible only on mobile */}
                     <button
                         onClick={() => setShowRequestForm(!showRequestForm)}
-                        className="md:hidden w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
+                        className="md:hidden w-full mt-6 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
                     >
                         {showRequestForm ? <><X size={20} /> Cancelar</> : <><Plus size={20} /> Nueva Solicitud</>}
                     </button>
@@ -438,7 +433,17 @@ export const VacationsPage: React.FC = () => {
                     )}
 
                     {/* Stats Summary Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 border-b border-slate-100 bg-slate-50">
+                    <div className="grid grid-cols-2 gap-4 p-6 border-b border-slate-100 bg-slate-50">
+                        <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="p-1.5 bg-blue-100 text-blue-600 rounded-lg"><Calendar size={16} /></span>
+                                <h3 className="font-semibold text-slate-700 text-sm">Vacaciones</h3>
+                            </div>
+                            <p className="text-2xl font-bold text-slate-900">
+                                {remainingDays}
+                            </p>
+                            <p className="text-xs text-slate-400">Días restantes de {totalDays}</p>
+                        </div>
                         <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-100">
                             <div className="flex items-center gap-2 mb-2">
                                 <span className="p-1.5 bg-purple-100 text-purple-600 rounded-lg"><FileText size={16} /></span>
