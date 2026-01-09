@@ -252,28 +252,30 @@ export const AdminVacations: React.FC = () => {
                 </div>
             )}
 
-            {/* Historical Section - Desktop Only */}
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 hidden md:block">
-                <div className="p-4 border-b border-slate-200 flex justify-between items-center">
+            {/* Historical Section */}
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200">
+                <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                     <h2 className="text-lg font-semibold text-slate-800">Historial de Solicitudes</h2>
                     <div className="flex gap-2">
                         <button
                             onClick={() => setViewMode('grouped')}
-                            className={`px-4 py-2 rounded-lg transition-colors ${viewMode === 'grouped'
+                            className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm ${viewMode === 'grouped'
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                 }`}
                         >
-                            👥 Agrupado
+                            <span className="hidden sm:inline">👥 Agrupado</span>
+                            <span className="sm:hidden">👥</span>
                         </button>
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`px-4 py-2 rounded-lg transition-colors ${viewMode === 'list'
+                            className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm ${viewMode === 'list'
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                 }`}
                         >
-                            📋 Lista
+                            <span className="hidden sm:inline">📋 Lista</span>
+                            <span className="sm:hidden">📋</span>
                         </button>
                     </div>
                 </div>
@@ -287,19 +289,19 @@ export const AdminVacations: React.FC = () => {
                                 <div key={group.userId} className="border border-slate-200 rounded-lg overflow-hidden">
                                     <button
                                         onClick={() => toggleUserExpanded(group.userId)}
-                                        className="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-between"
+                                        className="w-full px-3 md:px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-between gap-2"
                                     >
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                                             {expandedUsers.has(group.userId) ? (
-                                                <ChevronDown size={20} className="text-slate-600" />
+                                                <ChevronDown size={18} className="text-slate-600 flex-shrink-0" />
                                             ) : (
-                                                <ChevronRight size={20} className="text-slate-600" />
+                                                <ChevronRight size={18} className="text-slate-600 flex-shrink-0" />
                                             )}
-                                            <span className="font-semibold text-slate-800">{group.userName}</span>
-                                            <span className="text-sm text-slate-500">({group.requests.length})</span>
-                                            <span className="text-sm text-slate-600">• {group.department}</span>
+                                            <span className="font-semibold text-slate-800 text-sm md:text-base truncate">{group.userName}</span>
+                                            <span className="text-xs md:text-sm text-slate-500">({group.requests.length})</span>
+                                            <span className="text-xs md:text-sm text-slate-600 hidden sm:inline">• {group.department}</span>
                                         </div>
-                                        <div className="flex gap-3 text-sm">
+                                        <div className="flex gap-2 md:gap-3 text-xs md:text-sm flex-shrink-0">
                                             <span className="text-green-600">{group.approved} ✓</span>
                                             <span className="text-red-600">{group.rejected} ✗</span>
                                         </div>
@@ -308,9 +310,9 @@ export const AdminVacations: React.FC = () => {
                                     {expandedUsers.has(group.userId) && (
                                         <div className="divide-y divide-slate-100">
                                             {group.requests.map(request => (
-                                                <div key={request.id} className="px-4 py-3 bg-white hover:bg-slate-50">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-4 text-sm">
+                                                <div key={request.id} className="px-3 md:px-4 py-3 bg-white hover:bg-slate-50">
+                                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                                        <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm">
                                                             <span className="text-slate-600">
                                                                 {formatDate(request.startDate)} - {formatDate(request.endDate)}
                                                             </span>
@@ -332,9 +334,9 @@ export const AdminVacations: React.FC = () => {
                                                                 href={request.justificationUrl}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
-                                                                className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm"
+                                                                className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-xs md:text-sm"
                                                             >
-                                                                <FileText size={16} />
+                                                                <FileText size={14} />
                                                                 Ver
                                                             </a>
                                                         )}
