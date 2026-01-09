@@ -109,11 +109,9 @@ export const VacationsPage: React.FC = () => {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validate justification for non-vacation types and specific subtypes
-        const isVacation = formData.type === 'VACATION';
-        if (!isVacation && !formData.justificationUrl) {
-            // For "Otros Permisos", justification is generally required unless implied otherwise? User said "El justificante es obligatorio..."
-            // Assuming required for all non-vacation.
+        // Validate justification for non-vacation/non-overtime types
+        const isExempt = formData.type === 'VACATION' || formData.type === 'OVERTIME';
+        if (!isExempt && !formData.justificationUrl) {
             showAlert('El justificante es obligatorio para este tipo de solicitud', 'warning');
             return;
         }
@@ -173,7 +171,7 @@ export const VacationsPage: React.FC = () => {
     };
 
     // Derived states
-    const requiresJustification = formData.type !== 'VACATION';
+    const requiresJustification = formData.type !== 'VACATION' && formData.type !== 'OVERTIME';
     const showSubtypeDropdown = formData.type === 'OTHER';
 
     // Subtypes list
