@@ -40,6 +40,7 @@ export interface VacationRequest {
   startDate: string;
   endDate: string;
   days: number;
+  hours?: number;
   status: VacationStatus;
   type: 'VACATION' | 'PERSONAL' | 'SICK_LEAVE';
   justificationUrl?: string;
