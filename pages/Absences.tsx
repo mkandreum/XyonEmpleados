@@ -197,36 +197,6 @@ export const AbsencesPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Vacation Chart */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 lg:col-span-1 flex flex-col items-center justify-center">
-                    <h2 className="text-lg font-semibold text-slate-900 mb-4 w-full">Balance Vacaciones {currentYear}</h2>
-                    <div className="w-full h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={vacationData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {vacationData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                                <Legend verticalAlign="bottom" height={36} />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="text-center mt-2">
-                        <p className="text-3xl font-bold text-blue-600">{remainingDays}</p>
-                        <p className="text-sm text-slate-500">Días Disponibles</p>
-                    </div>
-                </div>
-
                 {/* Request History */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-100 lg:col-span-2 overflow-hidden flex flex-col">
                     <div className="p-6 border-b border-slate-100">
