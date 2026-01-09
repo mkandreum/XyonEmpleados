@@ -69,9 +69,9 @@ export const AdminFichajes: React.FC = () => {
                         const maxPairs = Math.max(entradas.length, salidas.length);
 
                         for (let i = 0; i < maxPairs; i++) {
-                            // Check for notifications
-                            const entradaWarning = entradas[i]?.lateNotifications?.some((n: any) => !n.leido) || false;
-                            const salidaWarning = salidas[i]?.lateNotifications?.some((n: any) => !n.leido) || false;
+                            // Check for notifications (show if any exists, regardless of read status)
+                            const entradaWarning = entradas[i]?.lateNotifications?.length > 0;
+                            const salidaWarning = salidas[i]?.lateNotifications?.length > 0;
                             const hasWarning = entradaWarning || salidaWarning;
 
                             flatData.push({

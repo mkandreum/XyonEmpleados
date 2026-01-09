@@ -99,6 +99,9 @@ export const NotificationDropdown: React.FC = () => {
         if (text.includes('rechazada') || text.includes('rejected')) {
             return 'border-l-4 border-l-red-500 bg-red-50/50';
         }
+        if (text.includes('aviso') || text.includes('tarde') || text.includes('warning')) {
+            return 'border-l-4 border-l-amber-500 bg-amber-50/50';
+        }
         return 'border-l-4 border-l-blue-500 bg-blue-50/50';
     };
 

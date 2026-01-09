@@ -120,7 +120,20 @@ function groupFichajesByDay(fichajes, schedule) {
             const salidas = sorted.filter(f => f.tipo === 'SALIDA');
 
             isLate = entradas.some(f => isLateArrival(f, schedule));
-            hasEarlyDeparture = salidas.some(f => isEarlyDeparture(f, schedule));
+
+            // Solo marcar salida anticipada si la duración del trabajo es razonable (> 10 mins)
+            // Esto evita marcar "Salida anticipada" en pruebas rápidas de entrada/salida
+            hasEarlyDeparture = salidas.some((f, index) => {
+                if (!isEarlyDeparture(f, schedule)) return false;
+
+                // Buscar la entrada correspondiente
+                const entradaCodespot = entradas[index];
+                if (entradaCodespot) {
+                    const diff = (new Date(f.timestamp) - new Date(entradaCodespot.timestamp)) / (1000 * 60);
+                    if (diff < 10) return false; // Ignorar si trabajó menos de 10 minutos
+                }
+                return true;
+            });
         }
 
         return {
