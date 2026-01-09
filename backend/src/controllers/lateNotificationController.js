@@ -9,6 +9,7 @@ exports.createLateNotification = async (req, res) => {
     try {
         const managerId = req.user.userId;
         const { userId, fichajeId, fecha } = req.body;
+        console.log(`[DEBUG] createLateNotification by Manager: ${managerId} for User: ${userId}`);
 
         if (!userId || !fichajeId || !fecha) {
             return res.status(400).json({
@@ -45,6 +46,7 @@ exports.createLateNotification = async (req, res) => {
         });
 
         if (existing) {
+            console.log(`[DEBUG] Notification already exists for fichaje ${fichajeId}`);
             return res.status(400).json({
                 error: 'Ya existe una notificación para este fichaje'
             });
@@ -77,13 +79,16 @@ exports.createLateNotification = async (req, res) => {
             }
         });
 
+        console.log(`[DEBUG] LateNotification created: ${notification.id}`);
+
         // Crear también una notificación general para el usuario
         await prisma.notification.create({
             data: {
                 userId,
                 title: 'Aviso de llegada tarde',
                 message: `Tu manager ${manager.role === 'ADMIN' ? 'el administrador' : manager.department} ha registrado una llegada tarde el ${new Date(fecha).toLocaleDateString('es-ES')}. Por favor, justifica tu ausencia.`,
-                read: false
+                read: false,
+                date: new Date()
             }
         });
 
@@ -133,6 +138,7 @@ exports.justifyLateArrival = async (req, res) => {
         const { id } = req.params;
         const userId = req.user.userId;
         const { justificacion } = req.body;
+        console.log(`[DEBUG] justifyLateArrival: Notification ${id}, User ${userId}`);
 
         if (!justificacion || justificacion.trim().length === 0) {
             return res.status(400).json({
@@ -180,15 +186,19 @@ exports.justifyLateArrival = async (req, res) => {
             }
         });
 
+        console.log(`[DEBUG] Notification justified. Manager ID to notify: ${notification.managerId}`);
+
         // Crear notificación para el manager
-        await prisma.notification.create({
+        const newNotif = await prisma.notification.create({
             data: {
                 userId: notification.managerId,
                 title: 'Justificación de llegada tarde',
                 message: `${updated.user.name} ha justificado su llegada tarde del ${new Date(notification.fecha).toLocaleDateString('es-ES')}: "${justificacion}"`,
-                read: false
+                read: false,
+                date: new Date()
             }
         });
+        console.log(`[DEBUG] Manager notification created: ${newNotif.id}`);
 
         res.json(updated);
     } catch (error) {
@@ -205,6 +215,7 @@ exports.getSentNotifications = async (req, res) => {
     try {
         const managerId = req.user.userId;
         const userRole = req.user.role;
+        console.log(`[DEBUG] getSentNotifications called by User: ${managerId}, Role: ${userRole}`);
 
         if (userRole !== 'MANAGER' && userRole !== 'ADMIN') {
             return res.status(403).json({ error: 'No autorizado' });
@@ -226,6 +237,7 @@ exports.getSentNotifications = async (req, res) => {
             orderBy: { createdAt: 'desc' }
         });
 
+        console.log(`[DEBUG] Found ${notifications.length} sent notifications for manager ${managerId}`);
         res.json(notifications);
     } catch (error) {
         console.error('Error getting sent notifications:', error);

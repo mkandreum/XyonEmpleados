@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { vacationService, eventsService, holidayService, benefitsService, payrollService } from '../services/api';
-import { VacationRequest, Event, Holiday, UserBenefitsBalance, DepartmentBenefits, Payroll } from '../types';
-import { Calendar, Clock, Briefcase, FileText, Download, ChevronRight, Plane } from 'lucide-react';
+import { vacationService, eventsService, holidayService, benefitsService, payrollService, lateNotificationService } from '../services/api';
+import { VacationRequest, Event, Holiday, UserBenefitsBalance, DepartmentBenefits, Payroll, LateArrivalNotification } from '../types';
+import { Calendar, Clock, Briefcase, FileText, Download, ChevronRight, Plane, AlertTriangle } from 'lucide-react';
 import { DigitalClock } from '../components/DigitalClock';
 import { FichajeButton } from '../components/FichajeButton';
 
@@ -17,6 +17,7 @@ export const Dashboard: React.FC = () => {
   const [benefits, setBenefits] = useState<UserBenefitsBalance | null>(null);
   const [deptBenefits, setDeptBenefits] = useState<DepartmentBenefits | null>(null);
   const [lastPayroll, setLastPayroll] = useState<Payroll | null>(null);
+  const [pendingWarnings, setPendingWarnings] = useState<LateArrivalNotification[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,7 +28,8 @@ export const Dashboard: React.FC = () => {
           eventsService.getAll(),
           holidayService.getNext(),
           benefitsService.getUserBalance(),
-          payrollService.getAll()
+          payrollService.getAll(),
+          lateNotificationService.getAll()
         ];
 
         if (user?.department) {
@@ -35,7 +37,7 @@ export const Dashboard: React.FC = () => {
         }
 
         const results = await Promise.all(promises);
-        const [vacs, evts, holiday, benefitBalance, payrolls] = results;
+        const [vacs, evts, holiday, benefitBalance, payrolls, warnings] = results;
 
         setVacations(vacs);
         setPendingVacations(vacs.filter((v: VacationRequest) => v.status === 'PENDING'));
@@ -43,22 +45,18 @@ export const Dashboard: React.FC = () => {
         setNextHoliday(holiday);
         setBenefits(benefitBalance);
 
+        // Filter pending warnings (not justified)
+        if (Array.isArray(warnings)) {
+          setPendingWarnings(warnings.filter((w: LateArrivalNotification) => !w.justificado));
+        }
+
         // Get last payroll
         if (Array.isArray(payrolls) && payrolls.length > 0) {
-          // Sort by year/month descending if needed, or assume backend order. 
-          // Better to sort just in case.
-          // Assumption: month is string name, year is number. 
-          // Simple approach: just take the last one in the list or first depending on API.
-          // For now assuming API returns chronological or we just take the last element added.
-          // Or better, let's look for the most recent one based on ID or created date if available.
-          // Since we don't have full dates, let's assume the array is ordered or just take the first one.
-          setLastPayroll(payrolls[payrolls.length - 1]); // Assuming chronological order? Or reverse?
-          // Actually, let's pick the last one in the array
           setLastPayroll(payrolls[payrolls.length - 1]);
         }
 
-        if (user?.department && results[5]) {
-          setDeptBenefits(results[5] as DepartmentBenefits);
+        if (user?.department && results[6]) {
+          setDeptBenefits(results[6] as DepartmentBenefits);
         }
       } catch (error) {
         console.error('Error loading dashboard data:', error);
@@ -87,6 +85,49 @@ export const Dashboard: React.FC = () => {
         <h1 className="text-3xl font-bold text-slate-900">¡Hola, {user?.name?.split(' ')[0]}! 👋</h1>
         <p className="text-slate-500 mt-1">{new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
+
+      {/* Warning Alert Widget */}
+      {pendingWarnings.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <AlertTriangle size={100} className="text-red-500" />
+          </div>
+          <div className="relative z-10">
+            <h2 className="text-red-700 font-bold text-lg flex items-center gap-2 mb-2">
+              <AlertTriangle className="text-red-600" />
+              Tienes {pendingWarnings.length} {pendingWarnings.length === 1 ? 'Aviso' : 'Avisos'} de Asistencia
+            </h2>
+            <div className="space-y-3 mt-4">
+              {pendingWarnings.slice(0, 2).map((warning) => (
+                <div key={warning.id} className="bg-white/60 p-3 rounded-lg border border-red-100 backdrop-blur-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-red-800">
+                        {new Date(warning.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+                      </p>
+                      <p className="text-xs text-red-600">
+                        Reclamado por: {warning.manager?.name || 'Manager'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {pendingWarnings.length > 2 && (
+                <p className="text-xs text-red-600 font-medium pl-1">
+                  ... y {pendingWarnings.length - 2} más.
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => navigate('/news?tab=attendance')}
+              className="mt-4 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2"
+            >
+              Ver y Justificar
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">

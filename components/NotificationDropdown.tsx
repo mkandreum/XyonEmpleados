@@ -142,7 +142,14 @@ export const NotificationDropdown: React.FC = () => {
                                 {notifications.map(notification => (
                                     <div
                                         key={notification.id}
-                                        className={`px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors ${getNotificationStyle(notification.title, notification.message)} ${!notification.read ? 'opacity-100' : 'opacity-70'}`}
+                                        onClick={() => {
+                                            const text = (notification.title + notification.message).toLowerCase();
+                                            if (text.includes('aviso') || text.includes('tarde') || text.includes('warning') || text.includes('justificación')) {
+                                                window.location.href = '/news?tab=attendance';
+                                                setIsOpen(false);
+                                            }
+                                        }}
+                                        className={`px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer ${getNotificationStyle(notification.title, notification.message)} ${!notification.read ? 'opacity-100' : 'opacity-70'}`}
                                     >
                                         <div className="flex justify-between items-start gap-3">
                                             <div className="flex-1">
