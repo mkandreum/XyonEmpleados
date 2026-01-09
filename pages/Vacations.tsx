@@ -501,8 +501,6 @@ export const VacationsPage: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </div>
-            </div >
 
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
                 <AlertCircle className="text-amber-600 mt-0.5" size={20} />
@@ -520,6 +518,6 @@ export const VacationsPage: React.FC = () => {
                 type={modalState.type}
                 onConfirm={modalState.onConfirm}
             />
-        </div >
+        </div>
     );
 };
