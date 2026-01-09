@@ -43,7 +43,8 @@ app.use(express.json({ limit: '10kb' })); // Body limit to prevent DoS
 app.use(morgan('dev'));
 
 // Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Serve ONLY public files statically (logos, avatars)
+app.use('/uploads/public', express.static(path.join(__dirname, '../uploads/public')));
 
 // Static files (build from frontend)
 // We assume the frontend will be built into a 'public' folder inside backend or similar

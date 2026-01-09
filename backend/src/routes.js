@@ -14,6 +14,7 @@ const notificationController = require('./controllers/notificationController');
 const fichajeController = require('./controllers/fichajeController');
 const scheduleController = require('./controllers/scheduleController');
 const lateNotificationController = require('./controllers/lateNotificationController');
+const fileController = require('./controllers/fileController');
 const { isAdmin } = require('./middleware/auth');
 
 
@@ -37,6 +38,9 @@ router.post('/upload/justification', uploadController.uploadJustification, uploa
 router.post('/upload/avatar', uploadController.uploadAvatar, uploadController.handleUpload);
 router.post('/upload/news', isAdmin, uploadController.uploadNewsImage, uploadController.handleUpload);
 router.delete('/upload/file', uploadController.deleteFile);
+
+// Secure File Access
+router.get('/files/:type/:filename', fileController.getFile);
 
 // Benefits Routes
 router.get('/benefits/user', benefitsController.getUserBenefitsBalance);

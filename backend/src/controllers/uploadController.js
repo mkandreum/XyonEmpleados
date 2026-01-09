@@ -5,16 +5,26 @@ const fs = require('fs');
 
 const prisma = new PrismaClient();
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
+// Ensure uploads directories exist
+const uploadsBase = path.join(__dirname, '../../uploads');
+const publicDir = path.join(uploadsBase, 'public');
+const privateDir = path.join(uploadsBase, 'private');
+
+[publicDir, privateDir].forEach(dir => {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+});
+
+// Utils to determine storage type
+const isPublicType = (fieldname) => ['logos', 'avatars', 'news'].includes(fieldname);
 
 // Configure multer storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadPath = path.join(uploadsDir, file.fieldname);
+        const typeDir = isPublicType(file.fieldname) ? publicDir : privateDir;
+        const uploadPath = path.join(typeDir, file.fieldname);
+
         if (!fs.existsSync(uploadPath)) {
             fs.mkdirSync(uploadPath, { recursive: true });
         }
@@ -33,14 +43,14 @@ const fileFilter = (req, file, cb) => {
         'payrolls': /pdf/,
         'justifications': /jpeg|jpg|png|pdf/,
         'avatars': /jpeg|jpg|png/,
-        'news': /jpeg|jpg|png|gif/ // Added news
+        'news': /jpeg|jpg|png|gif/
     };
 
     const fieldType = file.fieldname;
-    const extname = allowedTypes[fieldType]?.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes[fieldType]?.test(file.mimetype);
+    const isExtValid = allowedTypes[fieldType]?.test(path.extname(file.originalname).toLowerCase());
+    const isMimeValid = allowedTypes[fieldType]?.test(file.mimetype);
 
-    if (extname && mimetype) {
+    if (isExtValid && isMimeValid) {
         return cb(null, true);
     } else {
         cb(new Error(`Invalid file type for ${fieldType}`));
@@ -58,7 +68,7 @@ exports.uploadLogo = upload.single('logos');
 exports.uploadPayroll = upload.single('payrolls');
 exports.uploadJustification = upload.single('justifications');
 exports.uploadAvatar = upload.single('avatars');
-exports.uploadNewsImage = upload.single('news'); // Added handler
+exports.uploadNewsImage = upload.single('news');
 
 // Get file URL
 exports.handleUpload = (req, res) => {
@@ -67,7 +77,15 @@ exports.handleUpload = (req, res) => {
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
-        const fileUrl = `/uploads/${req.file.fieldname}/${req.file.filename}`;
+        let fileUrl;
+        if (isPublicType(req.file.fieldname)) {
+            // Static public URL
+            fileUrl = `/uploads/public/${req.file.fieldname}/${req.file.filename}`;
+        } else {
+            // Secure API URL
+            fileUrl = `/api/files/${req.file.fieldname}/${req.file.filename}`;
+        }
+
         res.json({
             success: true,
             url: fileUrl,
@@ -89,7 +107,22 @@ exports.deleteFile = (req, res) => {
             return res.status(400).json({ error: 'Filepath required' });
         }
 
-        const fullPath = path.join(__dirname, '../../', filepath);
+        // Determine if path is public static or API route
+        // API route format: /api/files/payrolls/filename.pdf
+        // Public static format: /uploads/public/logos/filename.png
+
+        let fullPath;
+        if (filepath.startsWith('/api/files/')) {
+            const relativePath = filepath.replace('/api/files/', '');
+            fullPath = path.join(privateDir, relativePath);
+        } else if (filepath.startsWith('/uploads/public/')) {
+            const relativePath = filepath.replace('/uploads/public/', '');
+            fullPath = path.join(publicDir, relativePath);
+        } else {
+            // Legacy or invalid support
+            fullPath = path.join(__dirname, '../../', filepath);
+        }
+
         if (fs.existsSync(fullPath)) {
             fs.unlinkSync(fullPath);
             res.json({ success: true, message: 'File deleted' });
