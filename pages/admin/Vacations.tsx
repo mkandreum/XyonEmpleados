@@ -45,7 +45,7 @@ export const AdminVacations: React.FC = () => {
     const getTypeLabel = (type: string) => {
         switch (type) {
             case 'VACATION': return 'Vacaciones';
-            case 'SICK_LEAVE': return 'Baja Médica';
+            case 'SICK_LEAVE': return 'Horas médicas';
             case 'PERSONAL': return 'Asuntos Propios';
             default: return type;
         }

@@ -123,10 +123,22 @@ export const TeamRequests: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="mb-4">
+                            <div className="mb-4 flex justify-between items-center">
                                 <span className="inline-block px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded">
                                     Tipo: {request.type === 'VACATION' ? 'Vacaciones' : request.type === 'SICK_LEAVE' ? 'Horas médicas' : 'Personal'}
                                 </span>
+                                {request.justificationUrl && (
+                                    <a
+                                        href={request.justificationUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline"
+                                    >
+                                        <div className="w-16 h-8 bg-blue-50 flex items-center justify-center rounded border border-blue-100">
+                                            Ver Doc
+                                        </div>
+                                    </a>
+                                )}
                             </div>
 
                             {request.status === VacationStatus.PENDING_MANAGER && (
