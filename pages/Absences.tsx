@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { vacationService } from '../services/api';
-import { benefitsService } from '../services/benefitsService';
-import { uploadService } from '../services/uploadService';
+import { vacationService, benefitsService, uploadService } from '../services/api';
 import { VacationRequest, VacationStatus } from '../types';
 import { Plus, Calendar, AlertCircle, Upload, FileText, Clock, Briefcase, Heart } from 'lucide-react';
 
