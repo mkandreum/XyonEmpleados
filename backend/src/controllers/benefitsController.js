@@ -148,7 +148,7 @@ exports.getUserBenefitsBalance = async (req, res) => {
 // Update user balance (called when vacation is approved)
 exports.updateUserBalance = async (req, res) => {
     try {
-        const { userId, type, days } = req.body;
+        const { userId, type, days, hours } = req.body;
         const currentYear = new Date().getFullYear();
 
         const balance = await prisma.userBenefitsBalance.findUnique({
@@ -160,12 +160,22 @@ exports.updateUserBalance = async (req, res) => {
         }
 
         const updateData = {};
-        if (type === 'VACATION') {
-            updateData.vacationDaysUsed = balance.vacationDaysUsed + days;
-        } else if (type === 'SICK_LEAVE') {
-            updateData.sickLeaveDaysUsed = balance.sickLeaveDaysUsed + days;
-        } else if (type === 'PERSONAL') {
-            updateData.paidAbsenceHoursUsed = balance.paidAbsenceHoursUsed + (days * 8); // Convert days to hours
+
+        // Priority to hours if provided
+        if (hours) {
+            // Both SICK_LEAVE (Horas médicas) and PERSONAL (Asuntos Propios) consume paidAbsenceHours
+            if (type === 'PERSONAL' || type === 'SICK_LEAVE') {
+                updateData.paidAbsenceHoursUsed = balance.paidAbsenceHoursUsed + hours;
+            }
+        } else {
+            // Legacy/Days logic
+            if (type === 'VACATION') {
+                updateData.vacationDaysUsed = balance.vacationDaysUsed + days;
+            } else if (type === 'SICK_LEAVE') {
+                updateData.sickLeaveDaysUsed = balance.sickLeaveDaysUsed + days;
+            } else if (type === 'PERSONAL') {
+                updateData.paidAbsenceHoursUsed = balance.paidAbsenceHoursUsed + (days * 8); // Convert days to hours
+            }
         }
 
         const updated = await prisma.userBenefitsBalance.update({
