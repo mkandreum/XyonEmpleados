@@ -14,8 +14,10 @@ interface PayrollFormData {
 
 export const AdminPayrolls: React.FC = () => {
     const [users, setUsers] = useState<any[]>([]);
+    const [payrolls, setPayrolls] = useState<any[]>([]);
     const [showModal, setShowModal] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState<PayrollFormData>({
         userId: '',
         month: 'Enero',
@@ -23,22 +25,47 @@ export const AdminPayrolls: React.FC = () => {
         amount: 0,
         pdfUrl: ''
     });
-    const { modalState, showAlert, closeModal } = useModal();
+    const { modalState, showAlert, closeModal, showConfirm } = useModal();
 
     const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const [usersData, payrollsData] = await Promise.all([
+                adminService.getUsers(),
+                adminService.getPayrolls()
+            ]);
+            setUsers(usersData.filter((u: any) => u.role !== 'ADMIN'));
+            setPayrolls(payrollsData);
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            showAlert("Error al cargar datos", 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const data = await adminService.getUsers();
-                setUsers(data.filter((u: any) => u.role !== 'ADMIN'));
-            } catch (error) {
-                console.error("Error fetching users:", error);
-                showAlert("Error al obtener usuarios", 'error');
-            }
-        };
-        fetchUsers();
+        fetchData();
     }, []);
+
+    const handleDelete = (id: string) => {
+        showConfirm(
+            '¿Estás seguro de que quieres eliminar esta nómina? Esta acción no se puede deshacer.',
+            async () => {
+                try {
+                    await adminService.deletePayroll(id);
+                    showAlert('Nómina eliminada correctamente', 'success');
+                    fetchData();
+                } catch (error) {
+                    console.error("Error deleting payroll:", error);
+                    showAlert('Error al eliminar nómina', 'error');
+                }
+            },
+            'Eliminar Nómina'
+        );
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -75,6 +102,64 @@ export const AdminPayrolls: React.FC = () => {
                     <h3 className="text-lg font-semibold text-slate-900 mb-2">Carga de Nóminas</h3>
                     <p className="text-slate-500 mb-4">Utiliza el botón "Cargar Nómina" para añadir nóminas individuales</p>
                     <p className="text-sm text-slate-400">Para carga masiva, contacta con el administrador del sistema</p>
+                </div>
+            </div>
+
+            {/* Payrolls List */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                    <h3 className="font-semibold text-slate-900">Historial de Nóminas</h3>
+                    {/* Add filter here later if needed */}
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                        <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
+                            <tr>
+                                <th className="px-6 py-3">Empleado</th>
+                                <th className="px-6 py-3">Periodo</th>
+                                <th className="px-6 py-3">Importe</th>
+                                <th className="px-6 py-3 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {loading ? (
+                                <tr><td colSpan={4} className="px-6 py-4 text-center">Cargando...</td></tr>
+                            ) : payrolls.length === 0 ? (
+                                <tr><td colSpan={4} className="px-6 py-4 text-center text-slate-500">No hay nóminas registradas.</td></tr>
+                            ) : (
+                                payrolls.map((payroll) => (
+                                    <tr key={payroll.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 font-medium text-slate-900">
+                                            {payroll.user?.name || 'Desconocido'}
+                                            <span className="block text-xs text-slate-500 font-normal">{payroll.user?.email}</span>
+                                        </td>
+                                        <td className="px-6 py-4 text-slate-600">
+                                            {payroll.month} {payroll.year}
+                                        </td>
+                                        <td className="px-6 py-4 text-slate-600 font-medium">
+                                            {payroll.amount} €
+                                        </td>
+                                        <td className="px-6 py-4 text-right space-x-2">
+                                            <a
+                                                href={payroll.pdfUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center text-blue-600 hover:text-blue-800"
+                                            >
+                                                Ver PDF
+                                            </a>
+                                            <button
+                                                onClick={() => handleDelete(payroll.id)}
+                                                className="text-red-500 hover:text-red-700"
+                                            >
+                                                Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 

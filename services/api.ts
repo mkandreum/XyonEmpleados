@@ -261,6 +261,14 @@ export const adminService = {
         const res = await api.post('/admin/payrolls', data);
         return res.data;
     },
+    getPayrolls: async (): Promise<Payroll[]> => {
+        const res = await api.get('/admin/payrolls');
+        return res.data;
+    },
+    deletePayroll: async (id: string) => {
+        const res = await api.delete(`/admin/payrolls/${id}`);
+        return res.data;
+    },
     getVacations: async (): Promise<VacationRequest[]> => {
         const res = await api.get('/admin/vacations');
         return res.data;

@@ -237,3 +237,35 @@ exports.updateSettings = async (req, res) => {
         res.status(500).json({ error: 'Failed to update settings' });
     }
 };
+
+// --- Payroll Management ---
+
+exports.getAllPayrolls = async (req, res) => {
+    try {
+        const payrolls = await prisma.payroll.findMany({
+            include: {
+                user: {
+                    select: { name: true, email: true, department: true }
+                }
+            },
+            orderBy: [{ year: 'desc' }, { month: 'desc' }]
+        });
+        res.json(payrolls);
+    } catch (error) {
+        console.error("Get admin payrolls error:", error);
+        res.status(500).json({ error: 'Failed to fetch payrolls' });
+    }
+};
+
+exports.deletePayroll = async (req, res) => {
+    try {
+        const { id } = req.params;
+        // In a real app, we should also delete the file from storage (uploadController logic)
+        // For now, we just delete the database record.
+        await prisma.payroll.delete({ where: { id } });
+        res.json({ message: 'Payroll deleted successfully' });
+    } catch (error) {
+        console.error("Delete payroll error:", error);
+        res.status(500).json({ error: 'Failed to delete payroll' });
+    }
+};

@@ -58,6 +58,8 @@ router.delete('/admin/news/:id', isAdmin, contentController.deleteNews);
 router.post('/admin/payrolls', isAdmin, contentController.createPayroll);
 router.post('/admin/events', isAdmin, contentController.createEvent);
 router.delete('/admin/events/:id', isAdmin, contentController.deleteEvent);
+router.get('/admin/payrolls', isAdmin, adminController.getAllPayrolls);
+router.delete('/admin/payrolls/:id', isAdmin, adminController.deletePayroll);
 
 // User
 router.get('/users/profile', authController.getProfile);
