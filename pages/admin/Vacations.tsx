@@ -84,6 +84,16 @@ export const AdminVacations: React.FC = () => {
         }
     };
 
+    const getTypeColor = (type: string) => {
+        switch (type) {
+            case 'VACATION': return 'bg-indigo-100 text-indigo-700';
+            case 'SICK_LEAVE': return 'bg-rose-100 text-rose-700';
+            case 'PERSONAL': return 'bg-amber-100 text-amber-700';
+            case 'OVERTIME': return 'bg-purple-100 text-purple-700';
+            default: return 'bg-blue-100 text-blue-700';
+        }
+    };
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
@@ -207,7 +217,7 @@ export const AdminVacations: React.FC = () => {
                                             <span className="hidden md:inline">•</span>
                                             <span>{request.days ? `${request.days} días` : `${request.hours} horas`}</span>
                                             <span className="hidden md:inline">•</span>
-                                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md font-medium text-xs">
+                                            <span className={`px-2 py-1 rounded-md font-medium text-xs ${getTypeColor(request.type)}`}>
                                                 {getTypeLabel(request.type)}
                                             </span>
                                             {request.justificationUrl && (
@@ -320,7 +330,7 @@ export const AdminVacations: React.FC = () => {
                                                             <span className="text-slate-500">
                                                                 {request.days ? `${request.days} días` : `${request.hours} horas`}
                                                             </span>
-                                                            <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">
+                                                            <span className={`px-2 py-1 rounded text-xs ${getTypeColor(request.type)}`}>
                                                                 {getTypeLabel(request.type)}
                                                             </span>
                                                             <span className={`px-2 py-1 rounded text-xs font-medium ${request.status === 'APPROVED'
@@ -369,7 +379,7 @@ export const AdminVacations: React.FC = () => {
                                                             </div>
                                                             <div className="flex items-center justify-between">
                                                                 <span className="text-slate-500">Tipo:</span>
-                                                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${getTypeColor(request.type)}`}>
                                                                     {getTypeLabel(request.type)}
                                                                 </span>
                                                             </div>
@@ -423,7 +433,7 @@ export const AdminVacations: React.FC = () => {
                                                     {request.days ? `${request.days} días` : `${request.hours} horas`}
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+                                                    <span className={`px-2 py-1 rounded-md text-xs font-medium ${getTypeColor(request.type)}`}>
                                                         {getTypeLabel(request.type)}
                                                     </span>
                                                 </td>
