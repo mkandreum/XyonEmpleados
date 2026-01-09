@@ -65,7 +65,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <img
                   src={logoUrl}
                   alt={companyName}
-                  className="w-auto object-contain max-h-12"
+                  className="w-auto object-contain"
                   onError={() => setLogoError(true)}
                 />
               ) : (
