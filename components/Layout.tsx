@@ -72,12 +72,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                     className="w-auto object-contain"
                     onError={() => setLogoError(true)}
                   />
-                ) : (
-                  <div className="text-left">
-                    <h1 className="text-2xl font-bold tracking-tight text-white">{companyName}<span className="text-blue-500">Emp</span></h1>
-                    <p className="text-xs text-slate-400 mt-1">Portal del Empleado</p>
-                  </div>
-                )}
+                ) : null}
               </Link>
             </div>
             <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden text-slate-400">

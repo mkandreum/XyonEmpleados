@@ -12,6 +12,7 @@ export const LoginPage: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isError, setIsError] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
+  const [logoError, setLogoError] = useState(false);
   const { settings } = useSettings();
 
   // Load remembered email on mount
@@ -49,11 +50,14 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        {loginLogoUrl ? (
-          <img src={loginLogoUrl} alt={companyName} className="w-auto h-32 mx-auto mb-6" />
-        ) : (
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900">{companyName}<span className="text-blue-600">Emp</span></h1>
-        )}
+        {loginLogoUrl && !logoError ? (
+          <img
+            src={loginLogoUrl}
+            alt={companyName}
+            className="w-auto h-32 mx-auto mb-6"
+            onError={() => setLogoError(true)}
+          />
+        ) : null}
         <h2 className="mt-6 text-2xl font-bold tracking-tight text-slate-900">Portal del Empleado</h2>
         <p className="mt-2 text-sm text-slate-600">
           Inicia sesión para acceder a tu espacio personal
