@@ -1,11 +1,12 @@
 // Utility functions for vacation/absence type styling
 
-export const getTypeLabel = (type: string) => {
+export const getTypeLabel = (type: string, subtype?: string) => {
     switch (type) {
         case 'VACATION': return 'Vacaciones';
         case 'SICK_LEAVE': return 'Horas médicas';
         case 'PERSONAL': return 'Asuntos Propios';
         case 'OVERTIME': return 'Horas Exceso';
+        case 'OTHER': return subtype || 'Otros Permisos';
         default: return type;
     }
 };

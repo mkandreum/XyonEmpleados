@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { vacationService, uploadService, benefitsService } from '../services/api';
+import { vacationService, benefitsService, uploadService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { VacationRequest, VacationStatus, DepartmentBenefits, UserBenefitsBalance } from '../types';
-import { Plus, Calendar, AlertCircle, Upload, FileText, X } from 'lucide-react';
+import { Plus, Calendar, AlertCircle, Upload, FileText, Clock, Briefcase, Heart, X, Check } from 'lucide-react';
+import { getAbsoluteUrl } from '../utils/urlUtils';
+import { getTypeLabel, getTypeColor } from '../utils/vacationUtils';
 import { useModal } from '../hooks/useModal';
 import { Modal } from '../components/Modal';
 import { DateRangePicker } from '../components/DateRangePicker';
@@ -218,16 +220,7 @@ export const VacationsPage: React.FC = () => {
         }
     };
 
-    const getTypeLabel = (type: string, subtype?: string) => {
-        switch (type) {
-            case 'VACATION': return 'Vacaciones';
-            case 'PERSONAL': return 'Ausencias Retribuídas'; // Renamed
-            case 'SICK_LEAVE': return 'Horas Médicas';
-            case 'OVERTIME': return 'Horas Exceso Jornada';
-            case 'OTHER': return subtype || 'Otros Permisos';
-            default: return type;
-        }
-    }
+
 
     const currentYear = new Date().getFullYear();
 
