@@ -26,7 +26,9 @@ export const VacationsPage: React.FC = () => {
         startDate: today,
         endDate: today,
         type: 'VACATION',
-        justificationUrl: ''
+        justificationUrl: '',
+        hours: '', // Store as string for input, convert to Int on submit
+        durationMode: 'days' // 'days' | 'hours'
     });
 
     const fetchVacations = async () => {
@@ -116,14 +118,15 @@ export const VacationsPage: React.FC = () => {
                 startDate: formData.startDate,
                 endDate: formData.endDate,
                 days: businessDays,
+                hours: formData.durationMode === 'hours' && formData.hours ? parseInt(formData.hours) : undefined,
                 type: formData.type as any,
                 status: VacationStatus.PENDING,
                 justificationUrl: formData.justificationUrl || undefined
             });
 
-            await fetchVacations(); // Refresh list
+            fetchVacations(); // Refresh list
             setShowRequestForm(false);
-            setFormData({ startDate: today, endDate: today, type: 'VACATION', justificationUrl: '' }); // Reset form
+            setFormData({ startDate: today, endDate: today, type: 'VACATION', justificationUrl: '', hours: '', durationMode: 'days' }); // Reset form
             showAlert('Solicitud enviada correctamente', 'success');
         } catch (error) {
             console.error("Error creating vacation:", error);
@@ -182,7 +185,7 @@ export const VacationsPage: React.FC = () => {
                     className="hidden md:flex bg-blue-600 text-white px-4 py-2 rounded-lg items-center gap-2 hover:bg-blue-700 shadow-sm transition-colors"
                 >
                     <Plus size={18} />
-                    <span>{showRequestForm ? 'Cancelar' : 'Solicitar Días'}</span>
+                    <span>{showRequestForm ? 'Cancelar' : 'Nueva Solicitud'}</span>
                 </button>
             </div>
 
@@ -216,7 +219,7 @@ export const VacationsPage: React.FC = () => {
                         onClick={() => setShowRequestForm(!showRequestForm)}
                         className="md:hidden w-full mt-4 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
                     >
-                        {showRequestForm ? <><X size={20} /> Cancelar</> : <><Plus size={20} /> Solicitar Días</>}
+                        {showRequestForm ? <><X size={20} /> Cancelar</> : <><Plus size={20} /> Nueva Solicitud</>}
                     </button>
                     <div className="text-center mt-2">
                         <p className="text-3xl font-bold text-blue-600">{remainingDays}</p>
@@ -242,6 +245,46 @@ export const VacationsPage: React.FC = () => {
                                         endDate={formData.endDate}
                                         onChange={(start, end) => setFormData({ ...formData, startDate: start, endDate: end })}
                                     />
+                                    {(formData.type === 'SICK_LEAVE' || formData.type === 'PERSONAL') && (
+                                        <div className="mt-4 flex items-center gap-4">
+                                            <label className="flex items-center gap-2 text-sm text-slate-700">
+                                                <input
+                                                    type="radio"
+                                                    name="durationMode"
+                                                    checked={formData.durationMode === 'days'}
+                                                    onChange={() => setFormData({ ...formData, durationMode: 'days', hours: '' })}
+                                                    className="text-blue-600 focus:ring-blue-500"
+                                                />
+                                                Días Completos
+                                            </label>
+                                            <label className="flex items-center gap-2 text-sm text-slate-700">
+                                                <input
+                                                    type="radio"
+                                                    name="durationMode"
+                                                    checked={formData.durationMode === 'hours'}
+                                                    onChange={() => setFormData({ ...formData, durationMode: 'hours', endDate: formData.startDate })} // Reset end date to start date for single day
+                                                    className="text-blue-600 focus:ring-blue-500"
+                                                />
+                                                Por Horas
+                                            </label>
+                                        </div>
+                                    )}
+
+                                    {formData.durationMode === 'hours' && (formData.type === 'SICK_LEAVE' || formData.type === 'PERSONAL') && (
+                                        <div className="mt-2">
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Número de Horas</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="8"
+                                                value={formData.hours}
+                                                onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
+                                                className="w-32 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                placeholder="Ej: 2"
+                                            />
+                                            <p className="text-xs text-slate-500 mt-1">Máximo 8 horas por día.</p>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
