@@ -14,6 +14,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { NotificationDropdown } from './NotificationDropdown';
 import { useSettings } from '../hooks/useSettings';
+import { getAbsoluteUrl } from '../utils/urlUtils';
 
 const SidebarItem: React.FC<{ to: string; icon: any; label: string; active: boolean; onClick?: () => void }> = ({ to, icon: Icon, label, active, onClick }) => (
   <Link
@@ -127,7 +128,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <p className="text-xs text-slate-500">{user?.position}</p>
               </div>
               <img
-                src={user?.avatarUrl}
+                src={getAbsoluteUrl(user?.avatarUrl)}
                 alt="Profile"
                 className="w-9 h-9 rounded-full object-cover ring-2 ring-blue-100"
               />
