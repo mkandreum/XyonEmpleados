@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { adminService } from '../../services/adminService';
+import { adminService } from '../../services/api';
 import { User } from '../../types';
 import { Plus, Edit, Trash, Search, User as UserIcon } from 'lucide-react';
 
