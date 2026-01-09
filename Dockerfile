@@ -28,6 +28,12 @@ COPY backend/prisma ./prisma
 # Generate Prisma Client
 RUN npx prisma generate
 
+# Create uploads directory structure
+RUN mkdir -p uploads/logos uploads/avatars uploads/payrolls uploads/justifications uploads/news
+
+# Declare volume for persistent storage
+VOLUME ["/app/uploads"]
+
 # Expose port
 EXPOSE 3000
 
