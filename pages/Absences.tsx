@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { vacationService, benefitsService, uploadService } from '../services/api';
 import { VacationRequest, VacationStatus } from '../types';
 import { Plus, Calendar, AlertCircle, Upload, FileText, Clock, Briefcase, Heart } from 'lucide-react';
+import { getTypeLabel, getTypeColor } from '../utils/vacationUtils';
 
 export const AbsencesPage: React.FC = () => {
     const [showRequestForm, setShowRequestForm] = useState(false);
@@ -116,14 +117,7 @@ export const AbsencesPage: React.FC = () => {
         }
     };
 
-    const getTypeLabel = (type: string) => {
-        switch (type) {
-            case 'VACATION': return 'Vacaciones';
-            case 'PERSONAL': return 'Ausencia Justificada';
-            case 'SICK_LEAVE': return 'Baja Médica';
-            default: return type;
-        }
-    };
+
 
     const currentYear = new Date().getFullYear();
 
