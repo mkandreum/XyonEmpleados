@@ -10,6 +10,8 @@ import { VacationsPage } from './pages/Vacations';
 import { AbsencesPage } from './pages/Absences';
 import { NewsPage } from './pages/News';
 import { ProfilePage } from './pages/Profile';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
 
 // Lazy load admin pages
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard').then(m => ({ default: m.AdminDashboard })));
