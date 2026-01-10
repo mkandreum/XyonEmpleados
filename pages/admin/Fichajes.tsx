@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Users, Calendar, Settings, Download, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
-import { fichajeService, scheduleService } from '../../services/api';
+import { Clock, Users, Calendar, Download, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { fichajeService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 export const AdminFichajes: React.FC = () => {
@@ -8,46 +8,16 @@ export const AdminFichajes: React.FC = () => {
     const [selectedDepartment, setSelectedDepartment] = useState('');
     const [selectedView, setSelectedView] = useState<'week' | 'month'>('week');
     const [fichajes, setFichajes] = useState<any[]>([]);
-    const [schedule, setSchedule] = useState<any>(null);
-    const [loading, setLoading] = useState(false);
 
-    // Schedule form state
-    const [scheduleForm, setScheduleForm] = useState({
-        horaEntrada: '09:00',
-        horaSalida: '18:00',
-        horaEntradaTarde: '',
-        horaSalidaMañana: '',
-        toleranciaMinutos: 10,
-        isPartido: false
-    });
+    const [loading, setLoading] = useState(false);
 
     const departments = ['IT', 'RRHH', 'Ventas', 'Marketing', 'Operaciones'];
 
     useEffect(() => {
         if (selectedDepartment) {
-            loadSchedule();
             loadFichajes();
         }
     }, [selectedDepartment, selectedView]);
-
-    const loadSchedule = async () => {
-        try {
-            const data = await scheduleService.get(selectedDepartment);
-            if (data) {
-                setSchedule(data);
-                setScheduleForm({
-                    horaEntrada: data.horaEntrada || '09:00',
-                    horaSalida: data.horaSalida || '18:00',
-                    horaEntradaTarde: data.horaEntradaTarde || '',
-                    horaSalidaMañana: data.horaSalidaMañana || '',
-                    toleranciaMinutos: data.toleranciaMinutos || 10,
-                    isPartido: !!(data.horaEntradaTarde && data.horaSalidaMañana)
-                });
-            }
-        } catch (error) {
-            console.error('Error loading schedule:', error);
-        }
-    };
 
     const loadFichajes = async () => {
         setLoading(true);
@@ -101,25 +71,7 @@ export const AdminFichajes: React.FC = () => {
         }
     };
 
-    const handleSaveSchedule = async () => {
-        try {
-            const scheduleData = {
-                department: selectedDepartment,
-                horaEntrada: scheduleForm.horaEntrada,
-                horaSalida: scheduleForm.horaSalida,
-                horaEntradaTarde: scheduleForm.isPartido ? scheduleForm.horaEntradaTarde : null,
-                horaSalidaMañana: scheduleForm.isPartido ? scheduleForm.horaSalidaMañana : null,
-                toleranciaMinutos: scheduleForm.toleranciaMinutos
-            };
 
-            await scheduleService.update(scheduleData);
-            alert('Horario guardado correctamente');
-            loadSchedule();
-        } catch (error) {
-            console.error('Error saving schedule:', error);
-            alert('Error al guardar el horario');
-        }
-    };
 
     return (
         <div className="space-y-6">
@@ -174,104 +126,6 @@ export const AdminFichajes: React.FC = () => {
 
             {selectedDepartment && (
                 <>
-                    {/* Schedule Configuration */}
-                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors animate-slide-up delay-150">
-                        <div className="flex items-center gap-2 mb-6">
-                            <Settings className="text-blue-600 dark:text-blue-400" size={24} />
-                            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Configuración de Horario - {selectedDepartment}</h2>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="isPartido"
-                                    checked={scheduleForm.isPartido}
-                                    onChange={(e) => setScheduleForm({ ...scheduleForm, isPartido: e.target.checked })}
-                                    className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-slate-800"
-                                />
-                                <label htmlFor="isPartido" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Horario partido (mañana y tarde)
-                                </label>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                        Hora Entrada {scheduleForm.isPartido && 'Mañana'}
-                                    </label>
-                                    <input
-                                        type="time"
-                                        value={scheduleForm.horaEntrada}
-                                        onChange={(e) => setScheduleForm({ ...scheduleForm, horaEntrada: e.target.value })}
-                                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
-                                    />
-                                </div>
-
-                                {scheduleForm.isPartido && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                            Hora Salida Mañana
-                                        </label>
-                                        <input
-                                            type="time"
-                                            value={scheduleForm.horaSalidaMañana}
-                                            onChange={(e) => setScheduleForm({ ...scheduleForm, horaSalidaMañana: e.target.value })}
-                                            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
-                                        />
-                                    </div>
-                                )}
-
-                                {scheduleForm.isPartido && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                            Hora Entrada Tarde
-                                        </label>
-                                        <input
-                                            type="time"
-                                            value={scheduleForm.horaEntradaTarde}
-                                            onChange={(e) => setScheduleForm({ ...scheduleForm, horaEntradaTarde: e.target.value })}
-                                            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
-                                        />
-                                    </div>
-                                )}
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                        Hora Salida {scheduleForm.isPartido && 'Tarde'}
-                                    </label>
-                                    <input
-                                        type="time"
-                                        value={scheduleForm.horaSalida}
-                                        onChange={(e) => setScheduleForm({ ...scheduleForm, horaSalida: e.target.value })}
-                                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                        Tolerancia (minutos)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        value={scheduleForm.toleranciaMinutos}
-                                        onChange={(e) => setScheduleForm({ ...scheduleForm, toleranciaMinutos: parseInt(e.target.value) })}
-                                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
-                                        min="0"
-                                        max="60"
-                                    />
-                                </div>
-                            </div>
-
-                            <button
-                                onClick={handleSaveSchedule}
-                                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                            >
-                                Guardar Horario
-                            </button>
-                        </div>
-                    </div>
-
                     {/* Fichajes Table */}
                     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-200">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-800 transition-colors">
