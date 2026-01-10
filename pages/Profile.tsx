@@ -223,8 +223,8 @@ export const ProfilePage: React.FC = () => {
 
             {/* Password Change Modal */}
             {showPasswordModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowPasswordModal(false)}>
-                    <div className="bg-white dark:bg-slate-900 rounded-xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowPasswordModal(false)}>
+                    <div className="bg-white dark:bg-slate-900 rounded-xl max-w-md w-full p-6 pb-24 shadow-2xl border border-slate-200 dark:border-slate-800 animate-scale-in" onClick={(e) => e.stopPropagation()}>
                         <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Cambiar Contraseña</h2>
                         <form onSubmit={handleChangePassword} className="space-y-4">
                             <div>

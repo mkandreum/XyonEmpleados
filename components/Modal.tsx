@@ -68,7 +68,7 @@ export const Modal: React.FC<ModalProps> = ({
 
     return (
         <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fadeIn"
             onClick={handleOverlayClick}
         >
             <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl max-w-md w-full transform transition-all animate-slideUp border border-slate-100 dark:border-slate-800">

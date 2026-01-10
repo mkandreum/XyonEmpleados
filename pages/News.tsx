@@ -329,7 +329,7 @@ export const NewsPage: React.FC = () => {
 
       {/* News Detail Modal */}
       {selectedNews && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onClick={() => setSelectedNews(null)}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in" onClick={() => setSelectedNews(null)}>
           <div className="bg-white dark:bg-slate-900 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-slate-800 animate-scale-in" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 flex justify-between items-center z-10 transition-colors">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white transition-colors">{selectedNews.title}</h2>
@@ -361,8 +361,8 @@ export const NewsPage: React.FC = () => {
 
       {/* Justification Modal */}
       {showJustifyModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowJustifyModal(false)}>
-          <div className="bg-white dark:bg-slate-900 rounded-xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowJustifyModal(false)}>
+          <div className="bg-white dark:bg-slate-900 rounded-xl max-w-md w-full p-6 pb-24 shadow-2xl border border-slate-200 dark:border-slate-800 animate-scale-in" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 transition-colors">Justificar Llegada Tarde</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 transition-colors">
               Por favor, explica el motivo de tu llegada tarde el día {selectedWarning && new Date(selectedWarning.fecha).toLocaleDateString('es-ES')}.

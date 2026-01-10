@@ -150,7 +150,7 @@ export const AdminNews: React.FC = () => {
 
             {/* Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
                     <div className="bg-white dark:bg-slate-900 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800 shadow-xl transition-colors" onClick={(e) => e.stopPropagation()}>
                         <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 flex justify-between items-center z-10">
                             <h2 className="text-xl font-bold text-slate-900 dark:text-white">{editingNews ? 'Editar Noticia' : 'Nueva Noticia'}</h2>
@@ -158,7 +158,7 @@ export const AdminNews: React.FC = () => {
                                 <X size={20} className="text-slate-500 dark:text-slate-400" />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                        <form onSubmit={handleSubmit} className="p-6 pb-24 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Título</label>
                                 <input

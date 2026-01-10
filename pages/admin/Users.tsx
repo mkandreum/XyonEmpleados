@@ -237,8 +237,8 @@ export const AdminUsers: React.FC = () => {
 
             {/* Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 px-4 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-100 dark:border-slate-800 transition-colors">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 px-4 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-md w-full p-6 pb-24 border border-slate-100 dark:border-slate-800 transition-colors max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold text-slate-800 dark:text-white">
                                 {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}

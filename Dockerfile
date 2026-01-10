@@ -28,8 +28,8 @@ COPY backend/prisma ./prisma
 # Generate Prisma Client
 RUN npx prisma generate
 
-# Create uploads directory structure
-RUN mkdir -p uploads/logos uploads/avatars uploads/payrolls uploads/justifications uploads/news
+# Create uploads directory structure (public for logos/avatars/news, private for payrolls/justifications)
+RUN mkdir -p uploads/public/logos uploads/public/avatars uploads/public/news uploads/private/payrolls uploads/private/justifications
 
 # Declare volume for persistent storage
 VOLUME ["/app/uploads"]
