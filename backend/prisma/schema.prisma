@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -35,6 +38,9 @@ model User {
   role        Role     @default(EMPLOYEE)
   department  String
   position    String
+  
+  resetToken       String?
+  resetTokenExpiry DateTime?
   avatarUrl   String?
   phone       String?
   address     String?
@@ -208,4 +214,11 @@ model LateArrivalNotification {
   @@index([userId, leido])
 }
 
-
+model InvitationCode {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  isUsed    Boolean  @default(false)
+  usedBy    String?  // ID/Email of user who used it
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+}

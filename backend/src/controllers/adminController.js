@@ -287,3 +287,51 @@ exports.deletePayroll = async (req, res) => {
         res.status(500).json({ error: 'Failed to delete payroll' });
     }
 };
+
+// --- Invitation Codes ---
+
+exports.getInviteCodes = async (req, res) => {
+    try {
+        const codes = await prisma.invitationCode.findMany({
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(codes);
+    } catch (error) {
+        console.error("Get invite codes error:", error);
+        res.status(500).json({ error: 'Failed to fetch invite codes' });
+    }
+};
+
+const crypto = require('crypto');
+
+exports.generateInviteCode = async (req, res) => {
+    try {
+        // Generate a cryptographically strong random code (8 chars hex)
+        const code = crypto.randomBytes(4).toString('hex').toUpperCase();
+
+        const invite = await prisma.invitationCode.create({
+            data: {
+                code
+            }
+        });
+        res.status(201).json(invite);
+    } catch (error) {
+        if (error.code === 'P2002') {
+            // Rare collision
+            return res.status(409).json({ error: 'Code collision, please try again' });
+        }
+        console.error("Generate invite code error:", error);
+        res.status(500).json({ error: 'Failed to generate invite code' });
+    }
+};
+
+exports.revokeInviteCode = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.invitationCode.delete({ where: { id } });
+        res.json({ message: 'Invitation code revoked' });
+    } catch (error) {
+        console.error("Revoke invite code error:", error);
+        res.status(500).json({ error: 'Failed to revoke invite code' });
+    }
+};

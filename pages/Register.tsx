@@ -13,7 +13,8 @@ export const RegisterPage: React.FC = () => {
         email: '',
         password: '',
         position: '',
-        department: 'General'
+        department: 'General',
+        invitationCode: ''
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -156,6 +157,26 @@ export const RegisterPage: React.FC = () => {
                                     />
                                 </div>
                             </div>
+                        </div>
+
+                        <div>
+                            <label htmlFor="invitationCode" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Código de Invitación</label>
+                            <div className="mt-1 relative rounded-md shadow-sm">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Lock className="h-5 w-5 text-slate-400" />
+                                </div>
+                                <input
+                                    id="invitationCode"
+                                    name="invitationCode"
+                                    type="text"
+                                    required
+                                    value={(formData as any).invitationCode}
+                                    onChange={handleChange}
+                                    className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors uppercase tracking-widest font-mono"
+                                    placeholder="CÓDIGO"
+                                />
+                            </div>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">Solicítalo a tu administrador.</p>
                         </div>
 
                         <div>

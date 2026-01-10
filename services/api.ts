@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User, Payroll, VacationRequest, NewsItem, Notification, Event, Holiday, DepartmentBenefits, UserBenefitsBalance, GlobalSettings, AdminStats, Fichaje, FichajeTipo, FichajeStatus, FichajeDayStats, DepartmentSchedule, LateArrivalNotification } from '../types';
+import { User, Payroll, VacationRequest, NewsItem, Notification, Event, Holiday, DepartmentBenefits, UserBenefitsBalance, GlobalSettings, AdminStats, Fichaje, FichajeTipo, FichajeStatus, FichajeDayStats, DepartmentSchedule, LateArrivalNotification, InvitationCode } from '../types';
 
 // The API URL will depend on where the backend is served. 
 // In development, Vite proxy can handle /api.
@@ -37,6 +37,14 @@ export const authService = {
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data.user));
         }
+        return response.data;
+    },
+    forgotPassword: async (email: string) => {
+        const response = await api.post('/auth/forgot-password', { email });
+        return response.data;
+    },
+    resetPassword: async (data: any) => {
+        const response = await api.post('/auth/reset-password', data);
         return response.data;
     },
     logout: () => {
@@ -255,6 +263,18 @@ export const adminService = {
     },
     updateSettings: async (settings: any) => {
         const response = await api.put('/admin/settings', settings);
+        return response.data;
+    },
+    getInviteCodes: async () => {
+        const response = await api.get<InvitationCode[]>('/admin/invites');
+        return response.data;
+    },
+    generateInviteCode: async () => {
+        const response = await api.post<InvitationCode>('/admin/invites');
+        return response.data;
+    },
+    revokeInviteCode: async (id: string) => {
+        const response = await api.delete(`/admin/invites/${id}`);
         return response.data;
     },
     createPayroll: async (data: any) => {

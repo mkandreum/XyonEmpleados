@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -84,11 +85,28 @@ exports.changePassword = async (req, res) => {
 
 exports.register = async (req, res) => {
     try {
-        const { name, email, password, department, position } = req.body;
+        const { name, email, password, department, position, invitationCode } = req.body;
+
+        // Verify Invitation Code
+        if (!invitationCode) {
+            return res.status(400).json({ error: 'Código de invitación requerido' });
+        }
+
+        const invite = await prisma.invitationCode.findUnique({
+            where: { code: invitationCode }
+        });
+
+        if (!invite) {
+            return res.status(400).json({ error: 'Código de invitación inválido' });
+        }
+
+        if (invite.isUsed) {
+            return res.status(400).json({ error: 'Este código de invitación ya ha sido usado' });
+        }
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
-            return res.status(400).json({ error: 'Email already registered' });
+            return res.status(400).json({ error: 'El email ya está registrado' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -99,21 +117,51 @@ exports.register = async (req, res) => {
         });
         const avatarUrl = defaultAvatarSetting?.value || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`;
 
-        const user = await prisma.user.create({
-            data: {
-                name,
-                email,
-                password: hashedPassword,
-                department: department || 'General',
-                position: position || 'Employee',
-                role: 'EMPLOYEE',
-                avatarUrl
+        // Transaction to ensure User creation and Invite usage happen atomically
+        const user = await prisma.$transaction(async (tx) => {
+            // Re-verify invite code inside transaction
+            const validInvite = await tx.invitationCode.findUnique({
+                where: { code: invitationCode }
+            });
+
+            if (!validInvite || validInvite.isUsed) {
+                throw new Error('INVITE_INVALID'); // Will be caught below
             }
+
+            const newUser = await tx.user.create({
+                data: {
+                    name,
+                    email,
+                    password: hashedPassword,
+                    department: department || 'General',
+                    position: position || 'Employee',
+                    role: 'EMPLOYEE',
+                    avatarUrl
+                }
+            });
+
+            await tx.invitationCode.update({
+                where: { id: validInvite.id },
+                data: {
+                    isUsed: true,
+                    usedBy: newUser.email
+                }
+            });
+
+            return newUser;
         });
 
-        const token = jwt.sign({ userId: user.id, role: user.role, department: user.department }, JWT_SECRET, { expiresIn: '1d' });
-
         const { password: _, ...userWithoutPassword } = user;
+
+        // Send welcome email (outside transaction)
+        try {
+            const { sendWelcomeEmail } = require('../services/emailService');
+            sendWelcomeEmail(user.email, user.name).catch(console.error);
+        } catch (e) {
+            console.error('Email service not ready or failed', e);
+        }
+
+        const token = jwt.sign({ userId: user.id, role: user.role, department: user.department }, JWT_SECRET, { expiresIn: '1d' });
 
         res.status(201).json({ token, user: userWithoutPassword });
     } catch (error) {
@@ -144,6 +192,76 @@ exports.login = async (req, res) => {
     } catch (error) {
         console.error("Login error:", error);
         res.status(500).json({ error: 'Login failed' });
+    }
+};
+
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user) {
+            // Security: Do not reveal if email exists, but simulating success
+            return res.json({ message: 'If the email exists, a reset link has been sent.' });
+        }
+
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const hash = await bcrypt.hash(resetToken, 10);
+        const expiry = new Date(Date.now() + 3600000); // 1 hour
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                resetToken: hash,
+                resetTokenExpiry: expiry
+            }
+        });
+
+        const { sendPasswordResetEmail } = require('../services/emailService');
+        // Use environment variable or default to localhost
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const resetLink = `${frontendUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+
+        await sendPasswordResetEmail(user.email, resetLink);
+
+        res.json({ message: 'If the email exists, a reset link has been sent.' });
+    } catch (err) {
+        console.error("Forgot password error:", err);
+        res.status(500).json({ error: 'Error processing request' });
+    }
+};
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const { token, email, newPassword } = req.body;
+
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user || !user.resetToken || !user.resetTokenExpiry) {
+            return res.status(400).json({ error: 'Invalid or expired token' });
+        }
+
+        if (new Date() > user.resetTokenExpiry) {
+            return res.status(400).json({ error: 'Token expired' });
+        }
+
+        const isValid = await bcrypt.compare(token, user.resetToken);
+        if (!isValid) {
+            return res.status(400).json({ error: 'Invalid token' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                resetToken: null,
+                resetTokenExpiry: null
+            }
+        });
+
+        res.json({ message: 'Password reset successfully' });
+    } catch (err) {
+        console.error("Reset password error:", err);
+        res.status(500).json({ error: 'Error resetting password' });
     }
 };
 

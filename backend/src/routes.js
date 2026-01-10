@@ -25,6 +25,8 @@ const { authLimiter } = require('./server');
 // Public Routes (NO AUTH REQUIRED)
 router.post('/auth/register', authLimiter, validate(registerSchema), authController.register);
 router.post('/auth/login', authLimiter, validate(loginSchema), authController.login);
+router.post('/auth/forgot-password', authLimiter, authController.forgotPassword);
+router.post('/auth/reset-password', authLimiter, authController.resetPassword);
 
 // Public endpoint for logo only (secure alternative to exposing all settings)
 router.get('/public/logo', async (req, res) => {
@@ -92,6 +94,11 @@ router.get('/admin/vacations', isAdmin, adminController.getAllVacations);
 router.put('/admin/vacations/:id/status', isAdmin, adminController.updateVacationStatus);
 router.get('/admin/settings', isAdmin, adminController.getSettings); // Protected - Admin only
 router.put('/admin/settings', isAdmin, adminController.updateSettings);
+
+// Admin - Invites
+router.get('/admin/invites', isAdmin, adminController.getInviteCodes);
+router.post('/admin/invites', isAdmin, adminController.generateInviteCode);
+router.delete('/admin/invites/:id', isAdmin, adminController.revokeInviteCode);
 
 // Admin Content Management
 router.post('/admin/news', isAdmin, contentController.createNews);

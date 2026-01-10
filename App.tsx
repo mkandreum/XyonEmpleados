@@ -59,6 +59,8 @@ const AppRoutes = () => {
                 ) : <LoginPage />
             } />
             <Route path="/register" element={isAuthenticated ? <Navigate to="/" /> : <RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={

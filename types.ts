@@ -169,3 +169,11 @@ export interface FichajeDayStats {
   isLate: boolean;
   isEarlyDeparture: boolean;
 }
+
+export interface InvitationCode {
+  id: string;
+  code: string;
+  isUsed: boolean;
+  usedBy?: string;
+  createdAt: string;
+}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, X } from 'lucide-react';
 import { userService, uploadService } from '../services/api';
 import { getAbsoluteUrl } from '../utils/urlUtils';
+import { useTheme, ThemeColor } from '../context/ThemeContext';
 
 interface ProfileModalProps {
     isOpen: boolean;
@@ -13,6 +14,7 @@ interface ProfileModalProps {
 export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, onUpdate }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
+    const { themeColor, setThemeColor } = useTheme();
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
@@ -186,6 +188,34 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
                                     className="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white disabled:bg-slate-100 dark:disabled:bg-slate-800/50 disabled:text-slate-500 dark:disabled:text-slate-400 focus:border-blue-500 focus:ring-blue-500 transition-colors"
                                     placeholder="Ej: María García - 600 111 222"
                                 />
+                            </div>
+                        </div>
+
+                        {/* Theme Selection */}
+                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Tema de Color</label>
+                            <div className="flex gap-3">
+                                {(['blue', 'green', 'purple', 'orange', 'red', 'slate'] as ThemeColor[]).map((color) => {
+                                    const realColors: { [key: string]: string } = {
+                                        blue: '#3b82f6',
+                                        green: '#22c55e',
+                                        purple: '#a855f7',
+                                        orange: '#f97316',
+                                        red: '#ef4444',
+                                        slate: '#64748b'
+                                    };
+
+                                    return (
+                                        <button
+                                            key={color}
+                                            onClick={() => setThemeColor(color)}
+                                            className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${themeColor === color ? 'border-slate-900 dark:border-white ring-2 ring-offset-2 ring-slate-100 dark:ring-slate-800' : 'border-transparent'
+                                                }`}
+                                            style={{ backgroundColor: realColors[color] }}
+                                            title={`Tema ${color}`}
+                                        />
+                                    );
+                                })}
                             </div>
                         </div>
 
