@@ -100,7 +100,7 @@ export const FloatingNavbar: React.FC = () => {
                 {/* Sliding Active Indicator (The "Pill") */}
                 {showSlider && (
                     <div
-                        className="absolute top-1 bottom-1 bg-white dark:bg-slate-800 rounded-full shadow-sm transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] pointer-events-none"
+                        className="absolute top-1 bottom-1 bg-blue-600/90 dark:bg-blue-500/90 rounded-full shadow-sm transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] pointer-events-none"
                         style={{
                             left: `calc(4px + ${activeIndex * (isMobile ? 64 : 96)}px)`,
                             width: isMobile ? '64px' : '96px'
@@ -124,13 +124,13 @@ export const FloatingNavbar: React.FC = () => {
                                 ${isMobile ? 'w-16' : 'w-24'}
                                 rounded-full transition-colors duration-200
                                 ${isActive
-                                    ? 'text-blue-700 dark:text-blue-400'
+                                    ? 'text-white'
                                     : 'text-blue-700 dark:text-blue-400 hover:bg-white/20 dark:hover:bg-slate-800/30 hover:text-blue-800 dark:hover:text-blue-300'}
                             `}
                         >
                             <Icon size={isMobile ? 20 : 22} strokeWidth={isActive ? 3 : 2} className="transition-transform duration-200" />
 
-                            <span className={`text-[10px] sm:text-xs font-semibold leading-none ${isActive ? 'text-blue-900 dark:text-blue-200 font-bold' : 'transition-colors'}`}>
+                            <span className={`text-[10px] sm:text-xs font-semibold leading-none ${isActive ? 'text-white font-bold' : 'transition-colors'}`}>
                                 {item.label}
                             </span>
                         </Link>
