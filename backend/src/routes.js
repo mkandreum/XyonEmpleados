@@ -16,12 +16,40 @@ const scheduleController = require('./controllers/scheduleController');
 const lateNotificationController = require('./controllers/lateNotificationController');
 const fileController = require('./controllers/fileController');
 const { isAdmin } = require('./middleware/auth');
+const { validate, loginSchema, registerSchema, changePasswordSchema, updateProfileSchema, vacationRequestSchema } = require('./middleware/validation');
+
+// Import auth rate limiter from server
+const { authLimiter } = require('./server');
 
 
 // Public Routes (NO AUTH REQUIRED)
-router.post('/auth/register', authController.register);
-router.post('/auth/login', authController.login);
-router.get('/admin/settings', adminController.getSettings); // Public for logo loading
+router.post('/auth/register', authLimiter, validate(registerSchema), authController.register);
+router.post('/auth/login', authLimiter, validate(loginSchema), authController.login);
+
+// Public endpoint for logo only (secure alternative to exposing all settings)
+router.get('/public/logo', async (req, res) => {
+    try {
+        const { PrismaClient } = require('@prisma/client');
+        const prisma = new PrismaClient();
+
+        const logoSetting = await prisma.globalSettings.findUnique({
+            where: { key: 'logoUrl' }
+        });
+
+        const companySetting = await prisma.globalSettings.findUnique({
+            where: { key: 'companyName' }
+        });
+
+        res.json({
+            logoUrl: logoSetting?.value || '/default-logo.png',
+            companyName: companySetting?.value || 'XyonEmpleados'
+        });
+    } catch (error) {
+        console.error('Error fetching public settings:', error);
+        res.status(500).json({ error: 'Failed to fetch public settings' });
+    }
+});
+
 router.get('/events', contentController.getAllEvents);
 router.get('/holidays/next', contentController.getNextHoliday);
 
@@ -57,6 +85,7 @@ router.delete('/admin/users/:id', isAdmin, adminController.deleteUser);
 router.post('/admin/users/bulk', isAdmin, adminController.importUsers);
 router.get('/admin/vacations', isAdmin, adminController.getAllVacations);
 router.put('/admin/vacations/:id/status', isAdmin, adminController.updateVacationStatus);
+router.get('/admin/settings', isAdmin, adminController.getSettings); // Protected - Admin only
 router.put('/admin/settings', isAdmin, adminController.updateSettings);
 
 // Admin Content Management
@@ -69,17 +98,18 @@ router.delete('/admin/events/:id', isAdmin, contentController.deleteEvent);
 router.get('/admin/payrolls', isAdmin, adminController.getAllPayrolls);
 router.delete('/admin/payrolls/:id', isAdmin, adminController.deletePayroll);
 
+
 // User
 router.get('/users/profile', authController.getProfile);
-router.put('/users/profile', authController.updateProfile);
-router.post('/users/change-password', authController.changePassword);
+router.put('/users/profile', validate(updateProfileSchema), authController.updateProfile);
+router.post('/users/change-password', validate(changePasswordSchema), authController.changePassword);
 
 // Payrolls
 router.get('/payrolls', payrollController.getAllPayrolls);
 
 // Vacations
 router.get('/vacations', vacationController.getAllVacations);
-router.post('/vacations', vacationController.createVacation);
+router.post('/vacations', validate(vacationRequestSchema), vacationController.createVacation);
 
 // Manager routes (protected - requires MANAGER role)
 router.get('/manager/team-vacations', vacationController.getTeamVacations);

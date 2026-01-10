@@ -2,7 +2,13 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+    console.error('❌ FATAL ERROR: JWT_SECRET environment variable is not set');
+    console.error('Generate one with: openssl rand -base64 64');
+    process.exit(1);
+}
 
 exports.getProfile = async (req, res) => {
     try {
