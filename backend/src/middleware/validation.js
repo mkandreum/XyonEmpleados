@@ -70,7 +70,7 @@ const updateProfileSchema = Joi.object({
     phone: Joi.string().pattern(/^\+?[0-9\s\-()]+$/).max(20).optional().allow(''),
     address: Joi.string().max(200).optional().allow(''),
     emergencyContact: Joi.string().max(200).optional().allow(''),
-    avatarUrl: Joi.string().uri().optional().allow('')
+    avatarUrl: Joi.string().max(500).optional().allow('')
 });
 
 // Vacation Request Schema
