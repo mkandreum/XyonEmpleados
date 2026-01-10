@@ -97,7 +97,7 @@ export const ManagerFichajes: React.FC = () => {
         const monday = new Date(today);
         monday.setDate(today.getDate() - (currentDay === 0 ? 6 : currentDay - 1) + (selectedWeek * 7));
 
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 7; i++) {
             const day = new Date(monday);
             day.setDate(monday.getDate() + i);
             days.push(day);
