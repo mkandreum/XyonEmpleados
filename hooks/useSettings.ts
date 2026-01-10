@@ -14,7 +14,7 @@ export const useSettings = () => {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const response = await fetch('/api/admin/settings');
+                const response = await fetch('/api/public/logo');
                 const data = await response.json();
 
                 // Use settings as-is - relative URLs work with Vite proxy

@@ -36,12 +36,17 @@ router.get('/public/logo', async (req, res) => {
             where: { key: 'logoUrl' }
         });
 
+        const adminLogoSetting = await prisma.globalSettings.findUnique({
+            where: { key: 'adminLogoUrl' }
+        });
+
         const companySetting = await prisma.globalSettings.findUnique({
             where: { key: 'companyName' }
         });
 
         res.json({
             logoUrl: logoSetting?.value || '/default-logo.png',
+            adminLogoUrl: adminLogoSetting?.value || '/default-logo.png',
             companyName: companySetting?.value || 'XyonEmpleados'
         });
     } catch (error) {
