@@ -67,7 +67,23 @@ app.use(limiter);
 
 // Middleware - CORS Configuration (SECURE)
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || (process.env.NODE_ENV === 'production' ? false : 'http://localhost:5173'),
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        // If FRONTEND_URL is set, use it
+        if (process.env.FRONTEND_URL) {
+            if (origin === process.env.FRONTEND_URL) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        } else {
+            // In production without FRONTEND_URL, allow same-origin
+            // Coolify will handle the domain automatically
+            callback(null, true);
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
