@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { adminService, uploadService } from '../../services/api';
-import { Mail, Shield, User, Key, Plus, Trash2, Copy } from 'lucide-react';
+import { ScheduleSettings } from '../../components/ScheduleSettings';
+import { Mail, Shield, User, Key, Plus, Trash2, Copy, Clock } from 'lucide-react';
 import { InvitationCode } from '../../types';
 
 export const AdminSettings: React.FC = () => {
     const [settings, setSettings] = useState<{ [key: string]: string }>({});
-    const [activeTab, setActiveTab] = useState<'general' | 'smtp' | 'invites'>('general');
+    const [activeTab, setActiveTab] = useState<'general' | 'smtp' | 'invites' | 'schedules'>('general');
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -111,6 +112,16 @@ export const AdminSettings: React.FC = () => {
                 >
                     <Mail size={18} />
                     SMTP Email
+                </button>
+                <button
+                    onClick={() => setActiveTab('schedules')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${activeTab === 'schedules'
+                        ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                        }`}
+                >
+                    <Clock size={18} />
+                    Horarios
                 </button>
                 <button
                     onClick={() => setActiveTab('invites')}
@@ -404,6 +415,11 @@ export const AdminSettings: React.FC = () => {
                             </div>
                         )}
                     </div>
+                )}
+
+                {/* SCHEDULES TAB */}
+                {activeTab === 'schedules' && (
+                    <ScheduleSettings />
                 )}
             </div>
         </div>

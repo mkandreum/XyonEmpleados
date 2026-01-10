@@ -35,9 +35,10 @@ function calculateWorkedHours(fichajes) {
 function isLateArrival(fichaje, schedule) {
     if (fichaje.tipo !== 'ENTRADA') return false;
 
+    // Si el horario es flexible, no hay llegadas tarde
+    if (schedule.flexibleSchedule) return false;
+
     const fichajeTime = new Date(fichaje.timestamp);
-    // No validar puntualidad en fines de semana
-    if (fichajeTime.getDay() === 0 || fichajeTime.getDay() === 6) return false;
     const fichajeHour = fichajeTime.getHours();
     const fichajeMinute = fichajeTime.getMinutes();
     const fichajeTotalMinutes = fichajeHour * 60 + fichajeMinute;
@@ -65,9 +66,10 @@ function isLateArrival(fichaje, schedule) {
 function isEarlyDeparture(fichaje, schedule) {
     if (fichaje.tipo !== 'SALIDA') return false;
 
+    // Si el horario es flexible, no hay salidas tempranas
+    if (schedule.flexibleSchedule) return false;
+
     const fichajeTime = new Date(fichaje.timestamp);
-    // No validar salida temprana en fines de semana
-    if (fichajeTime.getDay() === 0 || fichajeTime.getDay() === 6) return false;
     const fichajeHour = fichajeTime.getHours();
     const fichajeMinute = fichajeTime.getMinutes();
     const fichajeTotalMinutes = fichajeHour * 60 + fichajeMinute;

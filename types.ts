@@ -139,6 +139,7 @@ export interface DepartmentSchedule {
   horaEntradaTarde?: string;
   horaSalidaMañana?: string;
   toleranciaMinutos: number;
+  flexibleSchedule?: boolean;
 }
 
 export interface LateArrivalNotification {

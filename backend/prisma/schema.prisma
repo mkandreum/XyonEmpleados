@@ -192,6 +192,7 @@ model DepartmentSchedule {
   horaSalidaMañana    String?  // Formato "HH:mm" ej: "14:00"
   
   toleranciaMinutos   Int      @default(10)
+  flexibleSchedule    Boolean  @default(false)
   
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt

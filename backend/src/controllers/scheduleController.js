@@ -21,7 +21,8 @@ exports.getSchedule = async (req, res) => {
                 horaSalida: '18:00',
                 toleranciaMinutos: 10,
                 horaEntradaTarde: null,
-                horaSalidaMañana: null
+                horaSalidaMañana: null,
+                flexibleSchedule: false
             });
         }
 
@@ -44,7 +45,8 @@ exports.upsertSchedule = async (req, res) => {
             horaSalida,
             horaEntradaTarde,
             horaSalidaMañana,
-            toleranciaMinutos
+            toleranciaMinutos,
+            flexibleSchedule
         } = req.body;
 
         if (!department || !horaEntrada || !horaSalida) {
@@ -80,7 +82,8 @@ exports.upsertSchedule = async (req, res) => {
                 horaSalida,
                 horaEntradaTarde: horaEntradaTarde || null,
                 horaSalidaMañana: horaSalidaMañana || null,
-                toleranciaMinutos: toleranciaMinutos || 10
+                toleranciaMinutos: toleranciaMinutos || 10,
+                flexibleSchedule: flexibleSchedule || false
             },
             create: {
                 department,
@@ -88,7 +91,8 @@ exports.upsertSchedule = async (req, res) => {
                 horaSalida,
                 horaEntradaTarde: horaEntradaTarde || null,
                 horaSalidaMañana: horaSalidaMañana || null,
-                toleranciaMinutos: toleranciaMinutos || 10
+                toleranciaMinutos: toleranciaMinutos || 10,
+                flexibleSchedule: flexibleSchedule || false
             }
         });
 
