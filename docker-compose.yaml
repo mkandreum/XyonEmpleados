@@ -7,8 +7,12 @@ services:
     ports:
       - "3000:3000"
     environment:
+      - NODE_ENV=production
       - DATABASE_URL=postgresql://postgres:secure_pg_password_123@db:5432/xyonempleados_db
-      - JWT_SECRET=super_secure_jwt_secret_change_me
+      - JWT_SECRET=cGxlYXNlX2NoYW5nZV90aGlzX3RvX2FfcmFuZG9tX3NlY3JldF9nZW5lcmF0ZWRfd2l0aF9vcGVuc3Ns
+      - ADMIN_EMAIL=admin@xyonempleados.com
+      - ADMIN_INITIAL_PASSWORD=ChangeThisSecurePassword123!
+      - FRONTEND_URL=http://localhost:5173
     volumes:
       - uploads:/app/uploads
     depends_on:
