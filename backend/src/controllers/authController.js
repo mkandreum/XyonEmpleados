@@ -218,7 +218,7 @@ exports.forgotPassword = async (req, res) => {
 
         const { sendPasswordResetEmail } = require('../services/emailService');
         // Use environment variable or default to localhost
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const frontendUrl = process.env.FRONTEND_URL || 'https://portalempleado.xyoncloud.win';
         const resetLink = `${frontendUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
         await sendPasswordResetEmail(user.email, resetLink);
