@@ -4,6 +4,7 @@ import { useSettings } from '../hooks/useSettings';
 import { useTheme } from '../context/ThemeContext';
 import { NotificationDropdown } from './NotificationDropdown';
 import { FloatingNavbar } from './FloatingNavbar';
+import { ProfileModal } from './ProfileModal';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogOut, User, Moon, Sun } from 'lucide-react';
 import { getAbsoluteUrl } from '../utils/urlUtils';
@@ -15,6 +16,7 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
     const navigate = useNavigate();
     const [logoError, setLogoError] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [showProfileModal, setShowProfileModal] = useState(false);
 
     const companyName = settings.companyName || 'XyonEmpleados';
     const logoUrl = settings.logoUrl;
@@ -82,14 +84,16 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
                                     <p className="text-sm font-semibold text-slate-900 dark:text-white">{user?.name}</p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
                                 </div>
-                                <Link
-                                    to={user?.role === 'ADMIN' ? '/admin/settings' : '/profile'}
-                                    className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                                    onClick={() => setShowProfileMenu(false)}
+                                <button
+                                    onClick={() => {
+                                        setShowProfileMenu(false);
+                                        setShowProfileModal(true);
+                                    }}
+                                    className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                                 >
                                     <User size={16} />
-                                    Mi Perfil / Ajustes
-                                </Link>
+                                    Mi Perfil
+                                </button>
                                 <button
                                     onClick={handleLogout}
                                     className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
@@ -119,6 +123,14 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
                     onClick={() => setShowProfileMenu(false)}
                 />
             )}
+
+            {/* Profile Modal */}
+            <ProfileModal
+                isOpen={showProfileModal}
+                onClose={() => setShowProfileModal(false)}
+                user={user}
+                onUpdate={() => window.location.reload()}
+            />
         </div>
     );
 };
