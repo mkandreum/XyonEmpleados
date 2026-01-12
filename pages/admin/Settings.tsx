@@ -492,6 +492,7 @@ export const AdminSettings: React.FC = () => {
                                 {/* Template Editor */}
                                 {selectedTemplate && (
                                     <EmailTemplateEditor
+                                        key={selectedTemplate.id}
                                         template={selectedTemplate}
                                         onSave={async (data) => {
                                             await adminService.updateEmailTemplate(selectedTemplate.id, data);

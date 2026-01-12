@@ -38,7 +38,12 @@ export const RegisterPage: React.FC = () => {
             navigate('/');
         } catch (err: any) {
             console.error(err);
-            setError(err.response?.data?.error || 'Error al registrarse');
+            // Show detailed validation errors if available
+            if (err.response?.data?.details && Array.isArray(err.response.data.details)) {
+                setError(err.response.data.details.join(', '));
+            } else {
+                setError(err.response?.data?.error || 'Error al registrarse');
+            }
             setIsLoading(false);
         }
     };
