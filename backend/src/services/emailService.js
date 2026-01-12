@@ -46,15 +46,17 @@ const getTransporter = async () => {
         // Create transporter
         const transporter = nodemailer.createTransport(transportConfig);
 
-        // Verify connection logic
+        // Verify connection logic (NON-BLOCKING)
         try {
             await transporter.verify();
             console.log('✅ [DEBUG] SMTP Connection verified successfully');
-            return transporter;
         } catch (verifyError) {
-            console.error('❌ [DEBUG] SMTP Connection Verification Failed:', verifyError.message);
-            return null; // Return null if connection fails
+            console.warn('⚠️ [DEBUG] SMTP Connection Verification Warning:', verifyError.message);
+            console.warn('⚠️ [DEBUG] Proceeding to return transporter anyway (Optimistic)');
+            // Do NOT return null here, let sendMail try its best
         }
+
+        return transporter;
     } catch (error) {
         console.error('Error configuring email transporter:', error);
         return null;
