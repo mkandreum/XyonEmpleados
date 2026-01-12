@@ -4,6 +4,7 @@ const prisma = new PrismaClient();
 // Internal helper to create notifications
 const createNotification = async (userId, title, message) => {
     try {
+        console.log(`🔔 [NOTIFICATION] Creating notification for user ${userId}: ${title}`);
         await prisma.notification.create({
             data: {
                 userId,
@@ -13,15 +14,17 @@ const createNotification = async (userId, title, message) => {
                 date: new Date()
             }
         });
-        console.log(`Notification created for user ${userId}: ${title}`);
+        console.log(`✅ [NOTIFICATION] Notification created successfully for user ${userId}`);
     } catch (error) {
-        console.error('Error creating notification:', error);
+        console.error('❌ [NOTIFICATION] Error creating notification:', error);
     }
 };
 
 const getNotifications = async (req, res) => {
     try {
         const userId = req.user.userId;
+        console.log(`🔔 [NOTIFICATION] Fetching notifications for user ${userId}`);
+
         const notifications = await prisma.notification.findMany({
             where: { userId },
             orderBy: { date: 'desc' },
@@ -33,9 +36,11 @@ const getNotifications = async (req, res) => {
             where: { userId, read: false }
         });
 
+        console.log(`🔔 [NOTIFICATION] Found ${notifications.length} notifications, ${unreadCount} unread for user ${userId}`);
+
         res.json({ notifications, unreadCount });
     } catch (error) {
-        console.error('Error getting notifications:', error);
+        console.error('❌ [NOTIFICATION] Error getting notifications:', error);
         res.status(500).json({ error: 'Error getting notifications' });
     }
 };

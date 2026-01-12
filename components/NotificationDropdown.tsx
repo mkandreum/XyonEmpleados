@@ -20,10 +20,12 @@ export const NotificationDropdown: React.FC = () => {
 
     const fetchNotifications = async () => {
         try {
+            console.log('🔔 [FRONTEND] Fetching notifications...');
             const response = await api.get('/notifications');
             if (response.data && Array.isArray(response.data.notifications)) {
                 setNotifications(response.data.notifications);
                 setUnreadCount(response.data.unreadCount || 0);
+                console.log(`🔔 [FRONTEND] Loaded ${response.data.notifications.length} notifications, ${response.data.unreadCount} unread`);
             } else {
                 console.warn('Invalid notifications response format', response.data);
                 setNotifications([]);
@@ -39,6 +41,7 @@ export const NotificationDropdown: React.FC = () => {
         if (token) {
             fetchNotifications();
             // Poll every 15 seconds
+            console.log('🔔 [FRONTEND] Starting notification polling (every 15s)');
             const interval = setInterval(fetchNotifications, 15000);
             return () => clearInterval(interval);
         }

@@ -12,10 +12,17 @@ exports.getAdminStats = async (req, res) => {
             where: { role: { not: 'ADMIN' } }
         });
 
-        // Pending vacation requests
+        console.log('📊 [STATS] Fetching admin statistics...');
+
+        // Pending vacation requests (FIXED: Use correct statuses)
         const pendingRequests = await prisma.vacationRequest.count({
-            where: { status: 'PENDING' }
+            where: {
+                status: {
+                    in: ['PENDING_MANAGER', 'PENDING_ADMIN']
+                }
+            }
         });
+        console.log(`📊 [STATS] Pending requests: ${pendingRequests}`);
 
         // Approved vacations this month
         const approvedThisMonth = await prisma.vacationRequest.count({
@@ -59,6 +66,8 @@ exports.getAdminStats = async (req, res) => {
             count: d._count.department
         }));
 
+        console.log(`📊 [STATS] Employees by department:`, departmentData);
+
         res.json({
             totalEmployees,
             pendingRequests,
@@ -67,8 +76,11 @@ exports.getAdminStats = async (req, res) => {
             requestsByMonth,
             employeesByDepartment: departmentData
         });
+
+        console.log('✅ [STATS] Statistics fetched successfully');
     } catch (error) {
-        console.error('Get admin stats error:', error);
+        console.error('❌ [STATS] Error fetching statistics:', error);
+        console.error('❌ [STATS] Stack:', error.stack);
         res.status(500).json({ error: 'Failed to fetch statistics' });
     }
 };

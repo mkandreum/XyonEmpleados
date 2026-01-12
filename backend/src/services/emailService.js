@@ -106,24 +106,34 @@ const { processTemplate } = require('./emailTemplateService');
  * @param {object} variables - Variables para reemplazar en la plantilla
  */
 const sendTemplateEmail = async (email, templateType, variables) => {
+    console.log(`📧 [EMAIL] Attempting to send ${templateType} to ${email}`);
+    console.log(`📧 [EMAIL] Variables:`, JSON.stringify(variables, null, 2));
+
     const transporter = await getTransporter();
     if (!transporter) {
-        console.warn('⚠️ Email transporter not configured, skipping email');
+        console.error('❌ [EMAIL] SMTP transporter not configured. Check Admin > Settings');
         return false;
     }
 
     try {
         // Procesar plantilla con variables
+        console.log(`📧 [EMAIL] Processing template: ${templateType}`);
         const processed = await processTemplate(templateType, variables);
 
         if (!processed) {
-            console.warn(`⚠️ Template ${templateType} not found, email not sent`);
+            console.error(`❌ [EMAIL] Template ${templateType} not found in database`);
+            console.error(`❌ [EMAIL] Make sure default templates were created. Check EmailTemplate table.`);
             return false;
         }
+
+        console.log(`📧 [EMAIL] Template processed successfully`);
+        console.log(`📧 [EMAIL] Subject: ${processed.subject}`);
 
         // Get customized 'from' address or default
         const fromSetting = await prisma.globalSettings.findUnique({ where: { key: 'smtpFrom' } });
         const from = fromSetting?.value || '"Xyon Portal" <no-reply@xyon.com>';
+
+        console.log(`📧 [EMAIL] Sending from: ${from}`);
 
         await transporter.sendMail({
             from,
@@ -132,10 +142,12 @@ const sendTemplateEmail = async (email, templateType, variables) => {
             html: processed.htmlBody
         });
 
-        console.log(`✅ Template email sent to ${email} (${templateType})`);
+        console.log(`✅ [EMAIL] Successfully sent ${templateType} to ${email}`);
         return true;
     } catch (error) {
-        console.error('Error sending template email:', error);
+        console.error(`❌ [EMAIL] Failed to send ${templateType} to ${email}`);
+        console.error(`❌ [EMAIL] Error:`, error.message);
+        console.error(`❌ [EMAIL] Stack:`, error.stack);
         return false;
     }
 };
