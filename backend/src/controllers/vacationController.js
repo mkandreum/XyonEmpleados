@@ -171,28 +171,14 @@ exports.managerApproveVacation = async (req, res) => {
             );
         }
 
-        // Notify User
+        // Notify User (in-app only, no email until Admin approves)
         await createNotification(
             request.userId,
             'Solicitud Actualizada',
             'Tu manager ha aprobado tu solicitud. Ahora está pendiente de RRHH/Admin.'
         );
 
-        // 🔔 ENVIAR EMAIL AL EMPLEADO
-        const employee = await prisma.user.findUnique({
-            where: { id: request.userId },
-            select: { email: true, name: true }
-        });
-
-        const emailVariables = {
-            employeeName: employee.name,
-            requestType: request.type,
-            startDate: new Date(request.startDate).toLocaleDateString('es-ES'),
-            endDate: new Date(request.endDate).toLocaleDateString('es-ES'),
-            days: request.days.toString()
-        };
-
-        await sendTemplateEmail(employee.email, 'REQUEST_APPROVED', emailVariables);
+        // NO enviamos email aquí, solo cuando Admin apruebe finalmente
 
         res.json(updated);
     } catch (error) {
