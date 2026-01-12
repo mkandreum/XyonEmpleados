@@ -3,6 +3,7 @@ const prisma = new PrismaClient();
 const bcrypt = require('bcryptjs');
 const { createNotification } = require('./notificationController');
 const { updateUserBalanceLogic } = require('./benefitsController');
+const { sendTemplateEmail } = require('../services/emailService');
 
 // --- User Management ---
 
@@ -170,7 +171,12 @@ exports.updateVacationStatus = async (req, res) => {
 
         const vacation = await prisma.vacationRequest.update({
             where: { id },
-            data: { status }
+            data: { status },
+            include: {
+                user: {
+                    select: { email: true, name: true }
+                }
+            }
         });
 
         if (status === 'APPROVED') {
@@ -191,6 +197,19 @@ exports.updateVacationStatus = async (req, res) => {
             title,
             message
         );
+
+        // 🔔 ENVIAR EMAIL AL EMPLEADO
+        const emailVariables = {
+            employeeName: vacation.user.name,
+            requestType: vacation.type,
+            startDate: new Date(vacation.startDate).toLocaleDateString('es-ES'),
+            endDate: new Date(vacation.endDate).toLocaleDateString('es-ES'),
+            days: vacation.days.toString(),
+            reason: status === 'REJECTED' ? 'El administrador ha rechazado la solicitud' : ''
+        };
+
+        const templateType = status === 'APPROVED' ? 'REQUEST_APPROVED' : 'REQUEST_REJECTED';
+        await sendTemplateEmail(vacation.user.email, templateType, emailVariables);
 
         res.json(vacation);
     } catch (error) {

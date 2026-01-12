@@ -1,18 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { adminService, uploadService } from '../../services/api';
 import { ScheduleSettings } from '../../components/ScheduleSettings';
+import { EmailTemplateEditor } from '../../components/EmailTemplateEditor';
 import { Mail, Shield, User, Key, Plus, Trash2, Copy, Clock } from 'lucide-react';
 import { InvitationCode } from '../../types';
 
 export const AdminSettings: React.FC = () => {
     const [settings, setSettings] = useState<{ [key: string]: string }>({});
-    const [activeTab, setActiveTab] = useState<'general' | 'smtp' | 'invites' | 'schedules'>('general');
+    const [activeTab, setActiveTab] = useState<'general' | 'smtp' | 'invites' | 'schedules' | 'email-templates'>('general');
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
     // Invites state
     const [invites, setInvites] = useState<InvitationCode[]>([]);
     const [loadingInvites, setLoadingInvites] = useState(false);
+
+    // Email Templates state
+    const [emailTemplates, setEmailTemplates] = useState<any[]>([]);
+    const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
+    const [loadingTemplates, setLoadingTemplates] = useState(false);
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -31,6 +37,8 @@ export const AdminSettings: React.FC = () => {
     useEffect(() => {
         if (activeTab === 'invites') {
             loadInvites();
+        } else if (activeTab === 'email-templates') {
+            loadEmailTemplates();
         }
     }, [activeTab]);
 
@@ -43,6 +51,21 @@ export const AdminSettings: React.FC = () => {
             console.error("Error fetching invites:", error);
         } finally {
             setLoadingInvites(false);
+        }
+    };
+
+    const loadEmailTemplates = async () => {
+        setLoadingTemplates(true);
+        try {
+            const data = await adminService.getEmailTemplates();
+            setEmailTemplates(data);
+            if (data.length > 0 && !selectedTemplate) {
+                setSelectedTemplate(data[0]);
+            }
+        } catch (error) {
+            console.error("Error fetching email templates:", error);
+        } finally {
+            setLoadingTemplates(false);
         }
     };
 
@@ -122,6 +145,16 @@ export const AdminSettings: React.FC = () => {
                 >
                     <Clock size={18} />
                     Horarios
+                </button>
+                <button
+                    onClick={() => setActiveTab('email-templates')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${activeTab === 'email-templates'
+                        ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                        }`}
+                >
+                    <Mail size={18} />
+                    Plantillas Email
                 </button>
                 <button
                     onClick={() => setActiveTab('invites')}
@@ -412,6 +445,63 @@ export const AdminSettings: React.FC = () => {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* EMAIL TEMPLATES TAB */}
+                {activeTab === 'email-templates' && (
+                    <div className="space-y-6">
+                        <div>
+                            <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">Plantillas de Email</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                Personaliza las plantillas de correo electrónico que se envían automáticamente a los empleados.
+                            </p>
+                        </div>
+
+                        {loadingTemplates ? (
+                            <div className="text-center py-8 text-slate-500">Cargando plantillas...</div>
+                        ) : emailTemplates.length === 0 ? (
+                            <div className="text-center py-8 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-dashed border-slate-300 dark:border-slate-700">
+                                <p className="text-slate-500">No hay plantillas de email disponibles.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                {/* Template Selector */}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                        Seleccionar Plantilla
+                                    </label>
+                                    <select
+                                        value={selectedTemplate?.id || ''}
+                                        onChange={(e) => {
+                                            const template = emailTemplates.find(t => t.id === e.target.value);
+                                            setSelectedTemplate(template);
+                                        }}
+                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
+                                    >
+                                        {emailTemplates.map((template) => (
+                                            <option key={template.id} value={template.id}>
+                                                {template.name} ({template.type})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Template Editor */}
+                                {selectedTemplate && (
+                                    <EmailTemplateEditor
+                                        template={selectedTemplate}
+                                        onSave={async (data) => {
+                                            await adminService.updateEmailTemplate(selectedTemplate.id, data);
+                                            await loadEmailTemplates();
+                                        }}
+                                        onPreview={async (data) => {
+                                            return await adminService.previewEmailTemplate(data);
+                                        }}
+                                    />
+                                )}
                             </div>
                         )}
                     </div>

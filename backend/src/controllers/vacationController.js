@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { createNotification } = require('./notificationController');
+const { sendTemplateEmail } = require('../services/emailService');
 
 // Get all vacations for the requesting user
 exports.getAllVacations = async (req, res) => {
@@ -177,6 +178,22 @@ exports.managerApproveVacation = async (req, res) => {
             'Tu manager ha aprobado tu solicitud. Ahora está pendiente de RRHH/Admin.'
         );
 
+        // 🔔 ENVIAR EMAIL AL EMPLEADO
+        const employee = await prisma.user.findUnique({
+            where: { id: request.userId },
+            select: { email: true, name: true }
+        });
+
+        const emailVariables = {
+            employeeName: employee.name,
+            requestType: request.type,
+            startDate: new Date(request.startDate).toLocaleDateString('es-ES'),
+            endDate: new Date(request.endDate).toLocaleDateString('es-ES'),
+            days: request.days.toString()
+        };
+
+        await sendTemplateEmail(employee.email, 'REQUEST_APPROVED', emailVariables);
+
         res.json(updated);
     } catch (error) {
         console.error("Manager approve error:", error);
@@ -219,6 +236,22 @@ exports.managerRejectVacation = async (req, res) => {
             'Solicitud Rechazada',
             'Tu manager ha rechazado tu solicitud de vacaciones.'
         );
+
+        // 🔔 ENVIAR EMAIL AL EMPLEADO
+        const employee = await prisma.user.findUnique({
+            where: { id: request.userId },
+            select: { email: true, name: true }
+        });
+
+        const emailVariables = {
+            employeeName: employee.name,
+            requestType: request.type,
+            startDate: new Date(request.startDate).toLocaleDateString('es-ES'),
+            endDate: new Date(request.endDate).toLocaleDateString('es-ES'),
+            reason: 'Tu manager ha rechazado la solicitud'
+        };
+
+        await sendTemplateEmail(employee.email, 'REQUEST_REJECTED', emailVariables);
 
         res.json(updated);
     } catch (error) {

@@ -292,6 +292,23 @@ export const adminService = {
     getVacations: async (): Promise<VacationRequest[]> => {
         const res = await api.get('/admin/vacations');
         return res.data;
+    },
+    // Email Templates
+    getEmailTemplates: async () => {
+        const response = await api.get('/admin/email-templates');
+        return response.data;
+    },
+    getEmailTemplate: async (id: string) => {
+        const response = await api.get(`/admin/email-templates/${id}`);
+        return response.data;
+    },
+    updateEmailTemplate: async (id: string, data: any) => {
+        const response = await api.put(`/admin/email-templates/${id}`, data);
+        return response.data;
+    },
+    previewEmailTemplate: async (data: any) => {
+        const response = await api.post('/admin/email-templates/preview', data);
+        return response.data;
     }
 };
 

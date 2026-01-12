@@ -223,3 +223,15 @@ model InvitationCode {
   expiresAt DateTime?
   createdAt DateTime @default(now())
 }
+
+model EmailTemplate {
+  id          String   @id @default(uuid())
+  type        String   @unique // 'LATE_ARRIVAL', 'CLOCKING_WARNING', 'REQUEST_APPROVED', 'REQUEST_REJECTED'
+  name        String   // Nombre descriptivo
+  subject     String   // Asunto del email
+  htmlBody    String   @db.Text // Contenido HTML con variables {{variable}}
+  variables   String   @db.Text // JSON array de variables disponibles
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

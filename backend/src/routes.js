@@ -15,6 +15,7 @@ const fichajeController = require('./controllers/fichajeController');
 const scheduleController = require('./controllers/scheduleController');
 const lateNotificationController = require('./controllers/lateNotificationController');
 const fileController = require('./controllers/fileController');
+const emailTemplateController = require('./controllers/emailTemplateController');
 const { isAdmin } = require('./middleware/auth');
 const { validate, loginSchema, registerSchema, changePasswordSchema, updateProfileSchema, vacationRequestSchema } = require('./middleware/validation');
 
@@ -99,6 +100,12 @@ router.put('/admin/settings', isAdmin, adminController.updateSettings);
 router.get('/admin/invites', isAdmin, adminController.getInviteCodes);
 router.post('/admin/invites', isAdmin, adminController.generateInviteCode);
 router.delete('/admin/invites/:id', isAdmin, adminController.revokeInviteCode);
+
+// Admin - Email Templates
+router.get('/admin/email-templates', isAdmin, emailTemplateController.getAll);
+router.get('/admin/email-templates/:id', isAdmin, emailTemplateController.getById);
+router.put('/admin/email-templates/:id', isAdmin, emailTemplateController.update);
+router.post('/admin/email-templates/preview', isAdmin, emailTemplateController.preview);
 
 // Admin Content Management
 router.post('/admin/news', isAdmin, contentController.createNews);

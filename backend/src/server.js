@@ -123,6 +123,7 @@ app.get('*', (req, res) => {
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
+const { createDefaultTemplates } = require('./services/emailTemplateService');
 
 async function ensureAdminExists() {
     try {
@@ -165,9 +166,24 @@ async function ensureAdminExists() {
     }
 }
 
+async function initializeEmailTemplates() {
+    try {
+        console.log('📧 Initializing email templates...');
+        await createDefaultTemplates();
+        console.log('✓ Email templates initialized');
+    } catch (error) {
+        console.error('Error initializing email templates:', error);
+        // Don't exit, just log the error
+    }
+}
+
 // Start server
-ensureAdminExists().then(() => {
+Promise.all([
+    ensureAdminExists(),
+    initializeEmailTemplates()
+]).then(() => {
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });
 });
+

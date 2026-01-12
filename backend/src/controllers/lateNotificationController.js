@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { sendTemplateEmail } = require('../services/emailService');
 
 /**
  * POST /api/late-notifications
@@ -31,7 +32,7 @@ exports.createLateNotification = async (req, res) => {
         // (mismo departamento o es admin)
         const manager = await prisma.user.findUnique({
             where: { id: managerId },
-            select: { department: true, role: true }
+            select: { department: true, role: true, name: true }
         });
 
         if (manager.role !== 'ADMIN' && manager.department !== fichaje.user.department) {
@@ -86,11 +87,21 @@ exports.createLateNotification = async (req, res) => {
             data: {
                 userId,
                 title: 'Aviso de llegada tarde',
-                message: `Tu manager ${manager.role === 'ADMIN' ? 'el administrador' : manager.department} ha registrado una llegada tarde el ${new Date(fecha).toLocaleDateString('es-ES')}. Por favor, justifica tu ausencia.`,
+                message: `Tu manager ${manager.role === 'ADMIN' ? 'el administrador' : manager.name} ha registrado una llegada tarde el ${new Date(fecha).toLocaleDateString('es-ES')}. Por favor, justifica tu ausencia.`,
                 read: false,
                 date: new Date()
             }
         });
+
+        // 🔔 ENVIAR EMAIL AL EMPLEADO
+        const emailVariables = {
+            employeeName: notification.user.name,
+            managerName: manager.name,
+            date: new Date(fecha).toLocaleDateString('es-ES'),
+            time: new Date(fichaje.timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+        };
+
+        await sendTemplateEmail(notification.user.email, 'LATE_ARRIVAL', emailVariables);
 
         res.json(notification);
     } catch (error) {

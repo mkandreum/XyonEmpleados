@@ -47,7 +47,10 @@ const registerSchema = Joi.object({
             'any.required': 'Password is required'
         }),
     department: Joi.string().max(100).optional(),
-    position: Joi.string().max(100).optional()
+    position: Joi.string().max(100).optional(),
+    invitationCode: Joi.string().required().messages({
+        'any.required': 'Invitation code is required'
+    })
 });
 
 const changePasswordSchema = Joi.object({

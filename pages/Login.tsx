@@ -35,7 +35,6 @@ export const LoginPage: React.FC = () => {
         localStorage.removeItem('rememberedEmail');
       }
       await login(email, password);
-      await login(email, password);
     } catch (error) {
       setIsError(true);
       setIsShaking(true);

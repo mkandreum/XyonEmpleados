@@ -97,7 +97,51 @@ const sendWelcomeEmail = async (email, name) => {
     }
 };
 
+const { processTemplate } = require('./emailTemplateService');
+
+/**
+ * Enviar email usando plantilla
+ * @param {string} email - Email del destinatario
+ * @param {string} templateType - Tipo de plantilla (LATE_ARRIVAL, REQUEST_APPROVED, etc.)
+ * @param {object} variables - Variables para reemplazar en la plantilla
+ */
+const sendTemplateEmail = async (email, templateType, variables) => {
+    const transporter = await getTransporter();
+    if (!transporter) {
+        console.warn('⚠️ Email transporter not configured, skipping email');
+        return false;
+    }
+
+    try {
+        // Procesar plantilla con variables
+        const processed = await processTemplate(templateType, variables);
+
+        if (!processed) {
+            console.warn(`⚠️ Template ${templateType} not found, email not sent`);
+            return false;
+        }
+
+        // Get customized 'from' address or default
+        const fromSetting = await prisma.globalSettings.findUnique({ where: { key: 'smtpFrom' } });
+        const from = fromSetting?.value || '"Xyon Portal" <no-reply@xyon.com>';
+
+        await transporter.sendMail({
+            from,
+            to: email,
+            subject: processed.subject,
+            html: processed.htmlBody
+        });
+
+        console.log(`✅ Template email sent to ${email} (${templateType})`);
+        return true;
+    } catch (error) {
+        console.error('Error sending template email:', error);
+        return false;
+    }
+};
+
 module.exports = {
     sendPasswordResetEmail,
-    sendWelcomeEmail
+    sendWelcomeEmail,
+    sendTemplateEmail
 };

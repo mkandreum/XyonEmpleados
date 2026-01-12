@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/api';
 import { User, Lock, Mail, Briefcase, Building } from 'lucide-react';
+import { useSettings } from '../hooks/useSettings';
 
 export const RegisterPage: React.FC = () => {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [logoError, setLogoError] = useState(false);
+    const { settings } = useSettings();
 
     const [formData, setFormData] = useState({
         name: '',
@@ -40,10 +43,20 @@ export const RegisterPage: React.FC = () => {
         }
     };
 
+    const companyName = settings.companyName || 'XyonEmpleados';
+    const loginLogoUrl = settings.loginLogoUrl || settings.logoUrl;
+
     return (
         <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300">
             <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-                <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white">XyonEmpleados<span className="text-blue-600 dark:text-blue-400">Emp</span></h1>
+                {loginLogoUrl && !logoError ? (
+                    <img
+                        src={loginLogoUrl}
+                        alt={companyName}
+                        className="w-auto h-32 mx-auto mb-6"
+                        onError={() => setLogoError(true)}
+                    />
+                ) : null}
                 <h2 className="mt-6 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Crear Cuenta</h2>
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                     Únete al portal del empleado
