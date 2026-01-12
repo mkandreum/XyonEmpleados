@@ -201,12 +201,23 @@ exports.updateVacationStatus = async (req, res) => {
         );
 
         // 🔔 ENVIAR EMAIL AL EMPLEADO
+        const getTypeLabel = (t, st) => {
+            switch (t) {
+                case 'VACATION': return 'Vacaciones';
+                case 'SICK_LEAVE': return 'Baja Médica';
+                case 'PERSONAL': return 'Asuntos Propios';
+                case 'OVERTIME': return 'Horas Exceso';
+                case 'OTHER': return st || 'Otros Permisos';
+                default: return t;
+            }
+        };
+
         const emailVariables = {
             employeeName: vacation.user.name,
-            requestType: vacation.type,
+            requestType: getTypeLabel(vacation.type, vacation.subtype),
             startDate: new Date(vacation.startDate).toLocaleDateString('es-ES'),
             endDate: new Date(vacation.endDate).toLocaleDateString('es-ES'),
-            days: vacation.days.toString(),
+            days: vacation.days ? vacation.days.toString() : (vacation.hours + ' horas'),
             reason: status === 'REJECTED' ? 'El administrador ha rechazado la solicitud' : ''
         };
 

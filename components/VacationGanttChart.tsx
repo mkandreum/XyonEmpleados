@@ -201,6 +201,10 @@ export const VacationGanttChart: React.FC = () => {
                         <div className={`w-8 h-4 rounded ${getTypeColor('OVERTIME')}`}></div>
                         <span className="text-xs text-slate-600 dark:text-slate-400">Horas Exceso</span>
                     </div>
+                    <div className="flex items-center gap-2">
+                        <div className={`w-8 h-4 rounded ${getTypeColor('OTHER')}`}></div>
+                        <span className="text-xs text-slate-600 dark:text-slate-400">Otros Permisos</span>
+                    </div>
                 </div>
             </div>
         </div>
