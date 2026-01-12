@@ -4,6 +4,7 @@ const prisma = new PrismaClient();
 
 const getTransporter = async () => {
     try {
+        console.log('📧 [DEBUG] Fetching SMTP settings from DB...');
         const settings = await prisma.globalSettings.findMany({
             where: {
                 key: { in: ['smtpHost', 'smtpPort', 'smtpUser', 'smtpPass', 'smtpSecure'] }
@@ -15,12 +16,21 @@ const getTransporter = async () => {
             return acc;
         }, {});
 
+        // Log config presence (masking sensitive data)
+        console.log('📧 [DEBUG] SMTP Config retrieved:', {
+            host: config.smtpHost ? 'FOUND' : 'MISSING',
+            port: config.smtpPort ? config.smtpPort : 'MISSING(Default:587)',
+            user: config.smtpUser ? 'FOUND' : 'MISSING',
+            pass: config.smtpPass ? 'FOUND' : 'MISSING',
+            secure: config.smtpSecure
+        });
+
         if (!config.smtpHost || !config.smtpUser || !config.smtpPass) {
-            console.warn('⚠️ SMTP settings not configured');
+            console.warn('⚠️ SMTP settings not configured: Missing Host, User, or Pass');
             return null;
         }
 
-        return nodemailer.createTransport({
+        const transportConfig = {
             host: config.smtpHost,
             port: parseInt(config.smtpPort) || 587,
             secure: config.smtpSecure === 'true', // true for 465, false for other ports
@@ -28,7 +38,23 @@ const getTransporter = async () => {
                 user: config.smtpUser,
                 pass: config.smtpPass,
             },
-        });
+            tls: {
+                rejectUnauthorized: false // Helps with some self-signed certs or strict firewalls
+            }
+        };
+
+        // Create transporter
+        const transporter = nodemailer.createTransport(transportConfig);
+
+        // Verify connection logic
+        try {
+            await transporter.verify();
+            console.log('✅ [DEBUG] SMTP Connection verified successfully');
+            return transporter;
+        } catch (verifyError) {
+            console.error('❌ [DEBUG] SMTP Connection Verification Failed:', verifyError.message);
+            return null; // Return null if connection fails
+        }
     } catch (error) {
         console.error('Error configuring email transporter:', error);
         return null;
