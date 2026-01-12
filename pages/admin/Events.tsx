@@ -99,75 +99,38 @@ export const AdminEvents: React.FC = () => {
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-75">
-                {/* Desktop Table */}
-                <div className="hidden sm:block overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 transition-colors">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Título</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Fecha</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Ubicación</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {loading ? (
-                                <tr><td colSpan={4} className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">Cargando...</td></tr>
-                            ) : events.length === 0 ? (
-                                <tr><td colSpan={4} className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">No hay eventos</td></tr>
-                            ) : (
-                                events.map((event) => (
-                                    <tr key={event.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                        <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{event.title}</td>
-                                        <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
-                                            {new Date(event.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{event.location || '-'}</td>
-                                        <td className="px-6 py-4 text-right text-sm space-x-2">
-                                            <button onClick={() => handleDelete(event.id)} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Mobile Cards */}
-                <div className="sm:hidden p-4 space-y-4">
-                    {loading ? (
-                        <div className="text-center py-4 text-slate-500 dark:text-slate-400">Cargando...</div>
-                    ) : events.length === 0 ? (
-                        <div className="text-center py-4 text-slate-500 dark:text-slate-400">No hay eventos</div>
-                    ) : (
-                        events.map((event) => (
-                            <div key={event.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-                                <h3 className="font-medium text-slate-900 dark:text-white mb-2">{event.title}</h3>
-                                <div className="space-y-1 mb-3">
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                                        <Calendar size={14} />
+                <table className="w-full">
+                    <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 transition-colors">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Título</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Fecha</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Ubicación</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {loading ? (
+                            <tr><td colSpan={4} className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">Cargando...</td></tr>
+                        ) : events.length === 0 ? (
+                            <tr><td colSpan={4} className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">No hay eventos</td></tr>
+                        ) : (
+                            events.map((event) => (
+                                <tr key={event.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-white">{event.title}</td>
+                                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
                                         {new Date(event.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                    </p>
-                                    {event.location && (
-                                        <p className="text-sm text-slate-500 dark:text-slate-400 pl-6">
-                                            {event.location}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
-                                    <button
-                                        onClick={() => handleDelete(event.id)}
-                                        className="w-full py-2 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                                    >
-                                        <Trash2 size={16} /> Eliminar Evento
-                                    </button>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{event.location || '-'}</td>
+                                    <td className="px-6 py-4 text-right text-sm space-x-2">
+                                        <button onClick={() => handleDelete(event.id)} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
 
             {/* Modal */}

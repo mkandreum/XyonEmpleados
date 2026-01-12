@@ -2,13 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { adminService, uploadService } from '../../services/api';
 import { ScheduleSettings } from '../../components/ScheduleSettings';
 import { EmailTemplateEditor } from '../../components/EmailTemplateEditor';
-import Mail from 'lucide-react/dist/esm/icons/mail';
-import User from 'lucide-react/dist/esm/icons/user';
-import Plus from 'lucide-react/dist/esm/icons/plus';
-import Trash2 from 'lucide-react/dist/esm/icons/trash-2';
-import Clock from 'lucide-react/dist/esm/icons/clock';
-import KeyRound from 'lucide-react/dist/esm/icons/key-round';
-import ClipboardCopy from 'lucide-react/dist/esm/icons/clipboard-copy';
+import { Mail, Shield, User, Key, Plus, Trash2, Copy, Clock } from 'lucide-react';
 import { InvitationCode } from '../../types';
 
 export const AdminSettings: React.FC = () => {
@@ -169,7 +163,7 @@ export const AdminSettings: React.FC = () => {
                         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
                         }`}
                 >
-                    <KeyRound size={18} />
+                    <Key size={18} />
                     Códigos de Invitación
                 </button>
             </div>
@@ -400,106 +394,58 @@ export const AdminSettings: React.FC = () => {
                                 <p className="text-slate-500">No hay códigos de invitación activos.</p>
                             </div>
                         ) : (
-                            <>
-                                {/* Desktop Table */}
-                                <div className="hidden sm:block overflow-x-auto">
-                                    <table className="w-full text-sm text-left">
-                                        <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/50">
-                                            <tr>
-                                                <th className="px-4 py-3 rounded-l-lg">Código</th>
-                                                <th className="px-4 py-3">Estado</th>
-                                                <th className="px-4 py-3">Usado Por</th>
-                                                <th className="px-4 py-3">Creado el</th>
-                                                <th className="px-4 py-3 rounded-r-lg text-right">Acciones</th>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/50">
+                                        <tr>
+                                            <th className="px-4 py-3 rounded-l-lg">Código</th>
+                                            <th className="px-4 py-3">Estado</th>
+                                            <th className="px-4 py-3">Usado Por</th>
+                                            <th className="px-4 py-3">Creado el</th>
+                                            <th className="px-4 py-3 rounded-r-lg text-right">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {invites.map((invite) => (
+                                            <tr key={invite.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                                                <td className="px-4 py-3 font-mono font-medium text-lg tracking-wider text-slate-800 dark:text-slate-200">{invite.code}</td>
+                                                <td className="px-4 py-3">
+                                                    {invite.isUsed ? (
+                                                        <span className="px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-full text-xs font-medium">Usado</span>
+                                                    ) : (
+                                                        <span className="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full text-xs font-medium">Activo</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 text-slate-500">{invite.usedBy || '-'}</td>
+                                                <td className="px-4 py-3 text-slate-500">{new Date(invite.createdAt).toLocaleDateString()}</td>
+                                                <td className="px-4 py-3 text-right">
+                                                    {!invite.isUsed && (
+                                                        <div className="flex justify-end gap-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    navigator.clipboard.writeText(invite.code);
+                                                                    alert('Código copiado: ' + invite.code);
+                                                                }}
+                                                                className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                                                title="Copiar"
+                                                            >
+                                                                <Copy size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleRevokeInvite(invite.id)}
+                                                                className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                                title="Eliminar/Revocar"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody>
-                                            {invites.map((invite) => (
-                                                <tr key={invite.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                                                    <td className="px-4 py-3 font-mono font-medium text-lg tracking-wider text-slate-800 dark:text-slate-200">{invite.code}</td>
-                                                    <td className="px-4 py-3">
-                                                        {invite.isUsed ? (
-                                                            <span className="px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-full text-xs font-medium">Usado</span>
-                                                        ) : (
-                                                            <span className="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full text-xs font-medium">Activo</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-slate-500">{invite.usedBy || '-'}</td>
-                                                    <td className="px-4 py-3 text-slate-500">{new Date(invite.createdAt).toLocaleDateString()}</td>
-                                                    <td className="px-4 py-3 text-right">
-                                                        {!invite.isUsed && (
-                                                            <div className="flex justify-end gap-2">
-                                                                <button
-                                                                    onClick={() => {
-                                                                        navigator.clipboard.writeText(invite.code);
-                                                                        alert('Código copiado: ' + invite.code);
-                                                                    }}
-                                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                                                                    title="Copiar"
-                                                                >
-                                                                    <ClipboardCopy size={16} />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleRevokeInvite(invite.id)}
-                                                                    className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                                                    title="Eliminar/Revocar"
-                                                                >
-                                                                    <Trash2 size={16} />
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                {/* Mobile Cards */}
-                                <div className="sm:hidden space-y-4">
-                                    {invites.map((invite) => (
-                                        <div key={invite.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
-                                            <div className="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <p className="font-mono font-medium text-lg tracking-wider text-slate-800 dark:text-slate-200">{invite.code}</p>
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Creado: {new Date(invite.createdAt).toLocaleDateString()}</p>
-                                                </div>
-                                                {invite.isUsed ? (
-                                                    <span className="px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-full text-xs font-medium">Usado</span>
-                                                ) : (
-                                                    <span className="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full text-xs font-medium">Activo</span>
-                                                )}
-                                            </div>
-
-                                            {invite.usedBy && (
-                                                <div className="text-sm text-slate-600 dark:text-slate-400 mb-3 bg-slate-50 dark:bg-slate-800/50 p-2 rounded">
-                                                    <span className="font-medium">Usado por:</span> {invite.usedBy}
-                                                </div>
-                                            )}
-
-                                            {!invite.isUsed && (
-                                                <div className="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                                                    <button
-                                                        onClick={() => {
-                                                            navigator.clipboard.writeText(invite.code);
-                                                            alert('Código copiado: ' + invite.code);
-                                                        }}
-                                                        className="flex-1 py-2 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-                                                    >
-                                                        <ClipboardCopy size={16} /> Copiar
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleRevokeInvite(invite.id)}
-                                                        className="flex-1 py-2 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                                                    >
-                                                        <Trash2 size={16} /> Revocar
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         )}
                     </div>
                 )}

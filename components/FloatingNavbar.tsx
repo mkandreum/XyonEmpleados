@@ -91,7 +91,7 @@ export const FloatingNavbar: React.FC = () => {
             <div className="
                 relative flex items-center p-1
                 rounded-full
-                bg-white/20 dark:bg-black/20
+                bg-slate-100/90 dark:bg-slate-900/90 border border-blue-200/50 dark:border-blue-800/50
                 backdrop-blur-[3px]
                 shadow-[0_6px_6px_rgba(0,0,0,0.2),0_0_20px_rgba(0,0,0,0.1),inset_2px_2px_1px_0_rgba(255,255,255,0.5),inset_-1px_-1px_1px_1px_rgba(255,255,255,0.5)]
                 transition-all duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]

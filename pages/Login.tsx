@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import User from 'lucide-react/dist/esm/icons/user';
-import Info from 'lucide-react/dist/esm/icons/info';
-import LockKeyhole from 'lucide-react/dist/esm/icons/lock-keyhole';
+import { Lock, User, Info } from 'lucide-react';
 import { useSettings } from '../hooks/useSettings';
 
 export const LoginPage: React.FC = () => {
@@ -50,22 +48,22 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center animate-slide-up">
         {loginLogoUrl && !logoError ? (
           <img
             src={loginLogoUrl}
             alt={companyName}
-            className="w-auto h-32 mx-auto mb-6 animate-slide-up"
+            className="w-auto h-32 mx-auto mb-6"
             onError={() => setLogoError(true)}
           />
         ) : null}
-        <h2 className="mt-6 text-2xl font-bold tracking-tight text-slate-900 animate-slide-up delay-75">Portal del Empleado</h2>
-        <p className="mt-2 text-sm text-slate-600 animate-slide-up delay-100">
+        <h2 className="mt-6 text-2xl font-bold tracking-tight text-slate-900">Portal del Empleado</h2>
+        <p className="mt-2 text-sm text-slate-600">
           Inicia sesión para acceder a tu espacio personal
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md animate-slide-up delay-150">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md animate-slide-up delay-100">
         <div className="bg-white py-8 px-4 shadow-xl rounded-xl sm:px-10 border border-slate-100 transition-colors">
 
           <form className="space-y-6" onSubmit={handleSubmit}>
@@ -94,13 +92,13 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="animate-slide-up delay-200">
+            <div>
               <label htmlFor="password" className="block text-sm font-medium text-slate-700">
                 Contraseña
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <LockKeyhole className="h-5 w-5 text-slate-400" aria-hidden="true" />
+                  <Lock className="h-5 w-5 text-slate-400" aria-hidden="true" />
                 </div>
                 <input
                   id="password"
@@ -119,7 +117,7 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between animate-slide-up delay-300">
+            <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <input
                   id="remember-me"
@@ -141,7 +139,7 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="animate-slide-up delay-400">
+            <div>
               <button
                 type="submit"
                 disabled={isLoading}
@@ -168,10 +166,11 @@ export const LoginPage: React.FC = () => {
           </Link>
         </div>
 
-        <p className="mt-6 text-center text-xs text-slate-500">
-          &copy; 2026 XyonPlatforms. Todos los derechos reservados.
-        </p>
       </div>
+
+      <p className="mt-6 text-center text-xs text-slate-500 animate-slide-up delay-200">
+        &copy; 2026 XyonPlatforms. Todos los derechos reservados.
+      </p>
     </div>
   );
 };
