@@ -155,7 +155,6 @@ export const VacationsPage: React.FC = () => {
                 hours: formData.lessThanOneDay && formData.hours ? parseInt(formData.hours) : undefined,
                 type: formData.type as any,
                 subtype: formData.subtype || undefined,
-                status: VacationStatus.PENDING,
                 justificationUrl: formData.justificationUrl || undefined
             });
 
