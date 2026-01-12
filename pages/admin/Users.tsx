@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { adminService } from '../../services/api';
-import { User, UserRole } from '../../types';
-import { Plus, Edit2 as Edit, Trash2 as Trash, Search, User as UserIcon } from 'lucide-react';
+import { User } from '../../types';
+import { Plus, Edit2 as Edit, Trash2 as Trash, Search, User as UserIcon, X, Save, Briefcase } from 'lucide-react';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import toast from 'react-hot-toast';
 
 export const AdminUsers: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<Partial<User> | null>(null);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState<string | null>(null);
+    const [departments, setDepartments] = useState<string[]>([]);
+    const [newDeptName, setNewDeptName] = useState('');
 
     // Form state
     const [formData, setFormData] = useState({
@@ -24,19 +28,34 @@ export const AdminUsers: React.FC = () => {
         avatarUrl: ''
     });
 
-    const fetchUsers = async () => {
+    const fetchData = async () => {
         try {
-            const data = await adminService.getUsers();
-            setUsers(data);
+            const [usersData, settingsData] = await Promise.all([
+                adminService.getUsers(),
+                adminService.getSettings()
+            ]);
+            setUsers(usersData);
+
+            if (settingsData && settingsData.DEPARTMENTS) {
+                try {
+                    setDepartments(JSON.parse(settingsData.DEPARTMENTS));
+                } catch (e) {
+                    console.error("Error parsing departments:", e);
+                    setDepartments(['General']);
+                }
+            } else {
+                setDepartments(['General']);
+            }
         } catch (error) {
-            console.error("Error fetching users:", error);
+            console.error("Error fetching data:", error);
+            toast.error("Error al cargar datos");
         } finally {
             setIsLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchUsers();
+        fetchData();
     }, []);
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +74,7 @@ export const AdminUsers: React.FC = () => {
             email: '',
             password: '', // Required for new user
             role: 'EMPLOYEE',
-            department: '',
+            department: departments[0] || 'General',
             position: '',
             avatarUrl: ''
         });
@@ -87,9 +106,10 @@ export const AdminUsers: React.FC = () => {
             await adminService.deleteUser(userToDelete);
             setDeleteModalOpen(false);
             setUserToDelete(null);
-            fetchUsers();
+            fetchData();
+            toast.success('Usuario eliminado');
         } catch (error) {
-            alert('Error al eliminar usuario');
+            toast.error('Error al eliminar usuario');
         }
     };
 
@@ -101,14 +121,47 @@ export const AdminUsers: React.FC = () => {
                 const updateData = { ...formData };
                 if (!updateData.password) delete (updateData as any).password;
                 await adminService.updateUser(editingUser.id, updateData as any);
+                toast.success('Usuario actualizado');
             } else {
                 // Create
                 await adminService.createUser(formData as any);
+                toast.success('Usuario creado');
             }
             setIsModalOpen(false);
-            fetchUsers();
+            fetchData();
         } catch (error) {
-            alert('Error al guardar usuario');
+            toast.error('Error al guardar usuario');
+        }
+    };
+
+    const handleAddDepartment = async () => {
+        if (!newDeptName.trim()) return;
+        if (departments.includes(newDeptName.trim())) {
+            toast.error("El departamento ya existe");
+            return;
+        }
+
+        const updatedDepts = [...departments, newDeptName.trim()];
+        setDepartments(updatedDepts);
+        setNewDeptName('');
+
+        try {
+            await adminService.updateSettings({ key: 'DEPARTMENTS', value: JSON.stringify(updatedDepts) });
+            toast.success("Departamento agregado");
+        } catch (error) {
+            toast.error("Error al guardar departamentos");
+        }
+    };
+
+    const handleRemoveDepartment = async (deptToRemove: string) => {
+        const updatedDepts = departments.filter(d => d !== deptToRemove);
+        setDepartments(updatedDepts);
+
+        try {
+            await adminService.updateSettings({ key: 'DEPARTMENTS', value: JSON.stringify(updatedDepts) });
+            toast.success("Departamento eliminado");
+        } catch (error) {
+            toast.error("Error al guardar departamentos");
         }
     };
 
@@ -118,13 +171,22 @@ export const AdminUsers: React.FC = () => {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-slide-up">
                 <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Gestión de Usuarios</h1>
-                <button
-                    onClick={handleCreate}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                    <Plus size={20} />
-                    Nuevo Usuario
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setIsDeptModalOpen(true)}
+                        className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    >
+                        <Briefcase size={20} />
+                        Departamentos
+                    </button>
+                    <button
+                        onClick={handleCreate}
+                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        <Plus size={20} />
+                        Nuevo Usuario
+                    </button>
+                </div>
             </div>
 
             {/* Search */}
@@ -173,7 +235,7 @@ export const AdminUsers: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'}`}>
-                                            {user.role}
+                                            {user.role === 'ADMIN' ? 'Administrador' : (user.role === 'MANAGER' ? 'Manager' : 'Empleado')}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
@@ -213,7 +275,7 @@ export const AdminUsers: React.FC = () => {
                                 </div>
                             </div>
                             <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-full ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'}`}>
-                                {user.role === 'EMPLOYEE' ? 'Empleado' : user.role}
+                                {user.role === 'ADMIN' ? 'Administrador' : (user.role === 'MANAGER' ? 'Manager' : 'Empleado')}
                             </span>
                         </div>
 
@@ -235,7 +297,7 @@ export const AdminUsers: React.FC = () => {
                 ))}
             </div>
 
-            {/* Modal */}
+            {/* User Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 px-4 backdrop-blur-sm">
                     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-md w-full p-6 pb-24 border border-slate-100 dark:border-slate-800 transition-colors max-h-[90vh] overflow-y-auto">
@@ -244,7 +306,7 @@ export const AdminUsers: React.FC = () => {
                                 {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
                             </h2>
                             <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                                <XIcon size={24} />
+                                <X size={24} />
                             </button>
                         </div>
 
@@ -289,13 +351,12 @@ export const AdminUsers: React.FC = () => {
                                                 const file = e.target.files?.[0];
                                                 if (!file) return;
                                                 try {
-                                                    // Dynamic import to avoid circular dependency issues if any, or just use global service
                                                     const { uploadService } = await import('../../services/api');
                                                     const result = await uploadService.uploadAvatar(file);
                                                     setFormData(prev => ({ ...prev, avatarUrl: result.url } as any));
                                                 } catch (error) {
                                                     console.error("Error uploading avatar:", error);
-                                                    alert("Error al subir el avatar");
+                                                    toast.error("Error al subir el avatar");
                                                 }
                                             }}
                                         />
@@ -336,17 +397,21 @@ export const AdminUsers: React.FC = () => {
                                     >
                                         <option value="EMPLOYEE">Empleado</option>
                                         <option value="MANAGER">Manager</option>
-                                        <option value="ADMIN">Admin</option>
+                                        <option value="ADMIN">Administrador</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Departamento</label>
-                                    <input
-                                        type="text"
+                                    <select
                                         className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors"
                                         value={formData.department}
                                         onChange={e => setFormData({ ...formData, department: e.target.value })}
-                                    />
+                                    >
+                                        <option value="" disabled>Seleccionar...</option>
+                                        {departments.map((dept) => (
+                                            <option key={dept} value={dept}>{dept}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
                             <div>
@@ -378,6 +443,76 @@ export const AdminUsers: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Department Management Modal */}
+            {isDeptModalOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 px-4 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-100 dark:border-slate-800 transition-colors">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+                                Gestionar Departamentos
+                            </h2>
+                            <button onClick={() => setIsDeptModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="Nombre del departamento"
+                                    className="flex-1 px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors"
+                                    value={newDeptName}
+                                    onChange={e => setNewDeptName(e.target.value)}
+                                />
+                                <button
+                                    onClick={handleAddDepartment}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                >
+                                    <Plus size={18} />
+                                    Agregar
+                                </button>
+                            </div>
+
+                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2 max-h-60 overflow-y-auto border border-slate-200 dark:border-slate-700">
+                                {departments.length === 0 ? (
+                                    <p className="text-center text-slate-500 dark:text-slate-400 py-4">No hay departamentos definidos.</p>
+                                ) : (
+                                    <div className="space-y-1">
+                                        {departments.map((dept) => (
+                                            <div key={dept} className="flex justify-between items-center p-2 bg-white dark:bg-slate-800 rounded border border-slate-100 dark:border-slate-700">
+                                                <span className="text-slate-700 dark:text-slate-300 font-medium">{dept}</span>
+                                                <button
+                                                    onClick={() => handleRemoveDepartment(dept)}
+                                                    className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                                                    title="Eliminar"
+                                                >
+                                                    <Trash size={16} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                                * Eliminar un departamento no afecta a los usuarios que ya lo tienen asignado.
+                            </p>
+                        </div>
+
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                onClick={() => setIsDeptModalOpen(false)}
+                                className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                            >
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Delete Confirmation Modal */}
             <ConfirmModal
                 isOpen={deleteModalOpen}
@@ -391,8 +526,3 @@ export const AdminUsers: React.FC = () => {
         </div>
     );
 };
-
-// Helper for the X icon which was missing in imports
-const XIcon = ({ size }: { size: number }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-);

@@ -112,7 +112,8 @@ export const AdminNews: React.FC = () => {
                 </button>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-75">
+            {/* Desktop Table */}
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-75 hidden sm:block">
                 <table className="w-full">
                     <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                         <tr>
@@ -146,6 +147,35 @@ export const AdminNews: React.FC = () => {
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="sm:hidden space-y-4 animate-slide-up delay-75">
+                {loading ? (
+                    <div className="text-center p-4 text-slate-500 dark:text-slate-400">Cargando...</div>
+                ) : news.length === 0 ? (
+                    <div className="text-center p-4 text-slate-500 dark:text-slate-400">No hay noticias</div>
+                ) : (
+                    news.map((item) => (
+                        <div key={item.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+                            <div className="flex justify-between items-start mb-2">
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2">{item.title}</h3>
+                                <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded">
+                                    {item.category.charAt(0) + item.category.slice(1).toLowerCase()}
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{new Date(item.date).toLocaleDateString('es-ES')}</p>
+                            <div className="flex justify-end gap-2 border-t border-slate-50 dark:border-slate-800 pt-2">
+                                <button onClick={() => openEditModal(item)} className="p-1.5 text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded">
+                                    <Edit size={14} />
+                                </button>
+                                <button onClick={() => handleDelete(item.id)} className="p-1.5 text-red-600 bg-red-50 dark:bg-red-900/20 rounded">
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
             {/* Modal */}

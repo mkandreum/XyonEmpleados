@@ -58,7 +58,7 @@ export const RegisterPage: React.FC = () => {
                     <img
                         src={loginLogoUrl}
                         alt={companyName}
-                        className="w-auto h-32 mx-auto mb-6"
+                        className="max-w-[80%] h-auto max-h-32 mx-auto mb-6 object-contain"
                         onError={() => setLogoError(true)}
                     />
                 ) : null}

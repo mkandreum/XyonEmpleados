@@ -25,7 +25,7 @@ export const VacationGanttChart: React.FC = () => {
 
             // Group by user
             const grouped = approved.reduce((acc, vacation) => {
-                const userId = vacation.user?.id || vacation.userId;
+                const userId = vacation.user?.id || (vacation as any).userId;
                 const userName = vacation.user?.name || 'Unknown';
 
                 if (!acc[userId]) {

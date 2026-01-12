@@ -249,6 +249,14 @@ export const adminService = {
         const response = await api.post('/admin/users/bulk', users);
         return response.data;
     },
+    getSettings: async () => {
+        const response = await api.get<any>('/admin/settings');
+        return response.data;
+    },
+    updateSettings: async (data: any) => {
+        const response = await api.put<any>('/admin/settings', data);
+        return response.data;
+    },
     getAllVacations: async () => {
         const response = await api.get<VacationRequest[]>('/admin/vacations');
         return response.data;

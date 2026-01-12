@@ -121,75 +121,99 @@ export const TeamRequests: React.FC = () => {
                             <p className="text-slate-600 dark:text-slate-400 text-lg">No hay solicitudes pendientes de tu equipo</p>
                         </div>
                     ) : (
-                        <div className="grid gap-4 animate-slide-up delay-75">
-                            {requests.map((request) => (
-                                <div key={request.id} className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md transition-all">
-                                    <div className="flex justify-between items-start mb-4">
+                        <div className="space-y-6 animate-slide-up delay-75">
+                            {/* Group requests by User */}
+                            {Object.values(requests.reduce((acc, req) => {
+                                const userId = req.user?.id || 'unknown';
+                                if (!acc[userId]) {
+                                    acc[userId] = { user: req.user, requests: [] };
+                                }
+                                acc[userId].requests.push(req);
+                                return acc;
+                            }, {} as Record<string, { user: any, requests: VacationRequest[] }>)).map((group: any) => (
+                                <div key={group.user.name} className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
+                                    <div className="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center transition-colors">
-                                                <UserIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                                            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
+                                                {group.user.name.charAt(0)}
                                             </div>
                                             <div>
-                                                <h3 className="text-lg font-semibold text-slate-800 dark:text-white transition-colors">{request.user?.name || 'Usuario'}</h3>
-                                                <p className="text-sm text-slate-500 dark:text-slate-400 transition-colors">{(request.user as any)?.position || ''}</p>
+                                                <h3 className="font-bold text-lg text-slate-800 dark:text-white">{group.user.name}</h3>
+                                                <p className="text-sm text-slate-500 dark:text-slate-400">{group.user.department}</p>
                                             </div>
                                         </div>
-                                        <span className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${getStatusColor(request.status)}`}>
-                                            {getStatusText(request.status)}
+                                        <span className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-semibold px-3 py-1 rounded-full">
+                                            {group.requests.length} solicitud{group.requests.length !== 1 ? 'es' : ''}
                                         </span>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 transition-colors">
-                                            <Calendar className="h-4 w-4 text-blue-500" />
-                                            <span>Desde: {new Date(request.startDate).toLocaleDateString()}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 transition-colors">
-                                            <Calendar className="h-4 w-4 text-blue-500" />
-                                            <span>Hasta: {new Date(request.endDate).toLocaleDateString()}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 transition-colors">
-                                            <Clock className="h-4 w-4 text-blue-500" />
-                                            <span>{request.days} día{request.days !== 1 ? 's' : ''}</span>
-                                        </div>
-                                    </div>
+                                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                        {group.requests.map((request: VacationRequest) => (
+                                            <div key={request.id} className="p-6 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
+                                                <div className="flex flex-col md:flex-row justify-between gap-4">
+                                                    <div className="space-y-3 flex-1">
+                                                        <div className="flex flex-wrap items-center gap-3">
+                                                            <span className={`px-2.5 py-1 rounded-md text-xs font-bold border ${getTypeColor(request.type)}`}>
+                                                                {getTypeLabel(request.type, request.subtype)}
+                                                            </span>
+                                                            <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                                                <Clock className="w-3.5 h-3.5" />
+                                                                Solicitado el {new Date(request.id ? parseInt(request.id.substring(0, 8), 16) * 1000 : Date.now()).toLocaleDateString()}
+                                                            </span>
+                                                        </div>
 
-                                    <div className="mb-4 flex justify-between items-center">
-                                        <span className={`inline-block px-2 py-1 text-xs rounded transition-colors ${getTypeColor(request.type)}`}>
-                                            {getTypeLabel(request.type, request.subtype)}
-                                        </span>
-                                        {request.justificationUrl && (
-                                            <a
-                                                href={request.justificationUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 hover:underline transition-colors"
-                                            >
-                                                <div className="px-3 py-1 bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center rounded border border-blue-100 dark:border-blue-800 transition-colors">
-                                                    Ver Documento
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
+                                                                <Calendar className="h-4 w-4 text-blue-500" />
+                                                                <span className="font-medium text-sm">
+                                                                    {new Date(request.startDate).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                                                    {' - '}
+                                                                    {new Date(request.endDate).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg">
+                                                                <Clock className="h-4 w-4 text-amber-500" />
+                                                                <span className="font-medium text-sm">
+                                                                    {request.days ? `${request.days} días` : `${request.hours} horas`}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {request.justificationUrl && (
+                                                            <a
+                                                                href={request.justificationUrl}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline font-medium mt-1"
+                                                            >
+                                                                <FileText size={16} />
+                                                                Ver documento justificativo
+                                                            </a>
+                                                        )}
+                                                    </div>
+
+                                                    {request.status === VacationStatus.PENDING_MANAGER && (
+                                                        <div className="flex items-center gap-3 self-start md:self-center w-full md:w-auto mt-2 md:mt-0">
+                                                            <button
+                                                                onClick={() => handleApprove(request.id)}
+                                                                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all shadow-sm hover:shadow-md font-medium text-sm"
+                                                            >
+                                                                <CheckCircle className="h-5 w-5" />
+                                                                Aprobar
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleReject(request.id)}
+                                                                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all shadow-sm hover:shadow-md font-medium text-sm"
+                                                            >
+                                                                <XCircle className="h-5 w-5" />
+                                                                Rechazar
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            </a>
-                                        )}
+                                            </div>
+                                        ))}
                                     </div>
-
-                                    {request.status === VacationStatus.PENDING_MANAGER && (
-                                        <div className="flex gap-3">
-                                            <button
-                                                onClick={() => handleApprove(request.id)}
-                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
-                                            >
-                                                <CheckCircle className="h-5 w-5" />
-                                                Aprobar
-                                            </button>
-                                            <button
-                                                onClick={() => handleReject(request.id)}
-                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
-                                            >
-                                                <XCircle className="h-5 w-5" />
-                                                Rechazar
-                                            </button>
-                                        </div>
-                                    )}
                                 </div>
                             ))}
                         </div>

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Lock, User, Info } from 'lucide-react';
+import { Clock, User } from 'lucide-react';
 import { useSettings } from '../hooks/useSettings';
 
 export const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+  const { login } = useAuth() as any;
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -48,12 +48,12 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center animate-slide-up delay-100">
         {loginLogoUrl && !logoError ? (
           <img
             src={loginLogoUrl}
             alt={companyName}
-            className="w-auto h-32 mx-auto mb-6"
+            className="max-w-[80%] h-auto max-h-32 mx-auto mb-6 object-contain"
             onError={() => setLogoError(true)}
           />
         ) : null}
@@ -63,7 +63,7 @@ export const LoginPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md animate-slide-up delay-200">
         <div className="bg-white py-8 px-4 shadow-xl rounded-xl sm:px-10 border border-slate-100 transition-colors">
 
           <form className="space-y-6" onSubmit={handleSubmit}>

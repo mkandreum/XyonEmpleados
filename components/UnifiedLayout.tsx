@@ -27,7 +27,7 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans transition-colors duration-300">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans transition-colors duration-300 animate-fade-in">
             {/* Top Bar - Minimal */}
             <header className="fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-white/20 dark:border-slate-800 shadow-sm z-40 px-4 sm:px-8 flex items-center justify-between transition-colors duration-300">
 

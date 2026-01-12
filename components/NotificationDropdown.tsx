@@ -40,9 +40,9 @@ export const NotificationDropdown: React.FC = () => {
     useEffect(() => {
         if (token) {
             fetchNotifications();
-            // Poll every 15 seconds
-            console.log('🔔 [FRONTEND] Starting notification polling (every 15s)');
-            const interval = setInterval(fetchNotifications, 15000);
+            // Poll every 5 seconds for near-real-time updates
+            console.log('🔔 [FRONTEND] Starting notification polling (every 5s)');
+            const interval = setInterval(fetchNotifications, 5000);
             return () => clearInterval(interval);
         }
     }, [token, fetchNotifications]);

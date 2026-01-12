@@ -98,7 +98,8 @@ export const AdminEvents: React.FC = () => {
                 </button>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-75">
+            {/* Desktop Table */}
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-75 hidden sm:block">
                 <table className="w-full">
                     <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 transition-colors">
                         <tr>
@@ -131,6 +132,38 @@ export const AdminEvents: React.FC = () => {
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="sm:hidden space-y-4 animate-slide-up delay-75">
+                {loading ? (
+                    <div className="text-center p-4 text-slate-500 dark:text-slate-400">Cargando...</div>
+                ) : events.length === 0 ? (
+                    <div className="text-center p-4 text-slate-500 dark:text-slate-400">No hay eventos</div>
+                ) : (
+                    events.map((event) => (
+                        <div key={event.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+                            <div className="flex justify-between items-start mb-2">
+                                <h3 className="font-bold text-slate-900 dark:text-white">{event.title}</h3>
+                                <button onClick={() => handleDelete(event.id)} className="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-1.5 rounded-lg transition-colors">
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
+                            <div className="space-y-1 text-sm text-slate-600 dark:text-slate-400">
+                                <div className="flex items-center gap-2">
+                                    <Calendar size={14} />
+                                    <span>{new Date(event.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                                {event.location && (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-semibold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded">📍</span>
+                                        <span>{event.location}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
             {/* Modal */}
