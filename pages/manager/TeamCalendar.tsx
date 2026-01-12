@@ -185,7 +185,7 @@ export const TeamCalendar: React.FC = () => {
 
             {/* Mobile View (Standard Calendar) */}
             <div className="sm:hidden space-y-4 animate-slide-up delay-75">
-                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-4 transition-colors">
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
                     {/* Days Header */}
                     <div className="grid grid-cols-7 mb-2">
                         {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(day => (
@@ -194,116 +194,89 @@ export const TeamCalendar: React.FC = () => {
                             </div>
                         ))}
                     </div>
-
                     {/* Calendar Grid */}
                     <div className="grid grid-cols-7 gap-1">
-                        {(() => {
-                            // Generate calendar grid
-                            const year = currentDate.getFullYear();
-                            const month = currentDate.getMonth();
-                            const firstDay = new Date(year, month, 1);
-                            const lastDay = new Date(year, month + 1, 0);
+                        {Array.from({ length: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay() - 1 < 0 ? 6 : new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay() - 1 }).map((_, i) => (
+                            <div key={`empty-${i}`} className="aspect-square"></div>
+                        ))}
+                        {Array.from({ length: daysInMonth }).map((_, i) => {
+                            const day = i + 1;
+                            const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                            const isToday = new Date().toDateString() === date.toDateString();
 
-                            // Adjust for Monday start (0=Sunday, 1=Monday...)
-                            let startDay = firstDay.getDay() - 1;
-                            if (startDay === -1) startDay = 6;
+                            // Find vacations for this day
+                            const dayVacations = teamVacations.filter(v => {
+                                if (v.status === 'REJECTED') return false;
+                                const start = new Date(v.startDate); start.setHours(0, 0, 0, 0);
+                                const end = new Date(v.endDate); end.setHours(0, 0, 0, 0);
+                                return date >= start && date <= end;
+                            });
 
-                            const days = [];
-                            // Empty cells for previous month
-                            for (let i = 0; i < startDay; i++) {
-                                days.push(<div key={`empty-${i}`} className="h-10"></div>);
-                            }
+                            const hasApproved = dayVacations.some(v => v.status === 'APPROVED');
+                            const hasPending = dayVacations.some(v => v.status !== 'APPROVED');
 
-                            // Days of month
-                            for (let d = 1; d <= lastDay.getDate(); d++) {
-                                const currentDay = new Date(year, month, d);
-                                // Find vacations for this day
-                                const dayVacations = teamVacations.filter(v => {
-                                    if (v.status === 'REJECTED') return false;
-                                    const start = new Date(v.startDate); start.setHours(0, 0, 0, 0);
-                                    const end = new Date(v.endDate); end.setHours(0, 0, 0, 0);
-                                    return currentDay >= start && currentDay <= end;
-                                });
-
-                                const hasApproved = dayVacations.some(v => v.status === 'APPROVED');
-                                const hasPending = dayVacations.some(v => v.status !== 'APPROVED');
-
-                                days.push(
-                                    <div key={d} className="h-10 flex flex-col items-center justify-center relative cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg"
+                            return (
+                                <div key={day} className="aspect-square flex flex-col items-center justify-center relative">
+                                    <button
+                                        className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors ${isToday
+                                                ? 'bg-blue-600 text-white shadow-md'
+                                                : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                            }`}
                                         onClick={() => {
                                             if (dayVacations.length > 0) {
-                                                // Simple alert for now, could be a modal or expansion
-                                                const details = dayVacations.map(v => `${v.user?.name}: ${v.type === 'VACATION' ? 'Vacaciones' : v.type}`).join('\n');
-                                                alert(`Ausencias el ${d}/${month + 1}:\n${details}`);
+                                                // Ideally show details, for now just log or highlight? 
+                                                // Better: Selected state in parent? keeping it simple for now, just visual.
                                             }
                                         }}
                                     >
-                                        <span className={`text-sm ${dayVacations.length > 0 ? 'font-bold' : 'text-slate-700 dark:text-slate-300'}`}>
-                                            {d}
-                                        </span>
-                                        <div className="flex gap-0.5 mt-0.5">
-                                            {hasApproved && <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>}
-                                            {hasPending && <div className="w-1.5 h-1.5 bg-amber-400 rounded-full"></div>}
-                                        </div>
+                                        {day}
+                                    </button>
+                                    <div className="flex gap-0.5 mt-0.5 h-1.5">
+                                        {hasApproved && <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>}
+                                        {hasPending && <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>}
                                     </div>
-                                );
-                            }
-                            return days;
-                        })()}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
-                {/* List below calendar for selected month details */}
+                {/* Daily Details List (Reactive to selected day ideally, or just list all for month? List all active below is cleaner) */}
                 <div className="space-y-3">
-                    <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 pl-1 uppercase tracking-wider text-xs">Detalles del Mes</h3>
-                    {(() => {
-                        const activeUsers = uniqueUsers.map(user => {
-                            const userVacations = teamVacations.filter(v => {
-                                if (v.user?.id !== user.id) return false;
-                                if (v.status === 'REJECTED') return false;
-                                const start = new Date(v.startDate);
-                                const end = new Date(v.endDate);
-                                const currentMonth = currentDate.getMonth();
-                                const currentYear = currentDate.getFullYear();
-                                return (start.getMonth() === currentMonth && start.getFullYear() === currentYear) ||
-                                    (end.getMonth() === currentMonth && end.getFullYear() === currentYear) ||
-                                    (start < new Date(currentYear, currentMonth, 1) && end > new Date(currentYear, currentMonth + 1, 0));
-                            });
-                            return { user, vacations: userVacations };
-                        }).filter(item => item.vacations.length > 0);
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-2">Ausencias este mes</p>
+                    {uniqueUsers.map(user => {
+                        const userVacations = teamVacations.filter(v => {
+                            if (v.user?.id !== user.id) return false;
+                            if (v.status === 'REJECTED') return false;
+                            const start = new Date(v.startDate);
+                            const end = new Date(v.endDate);
+                            const currentMonth = currentDate.getMonth();
+                            const currentYear = currentDate.getFullYear();
+                            return (start.getMonth() === currentMonth && start.getFullYear() === currentYear) ||
+                                (end.getMonth() === currentMonth && end.getFullYear() === currentYear);
+                        });
 
-                        if (activeUsers.length === 0) {
-                            return (
-                                <div className="text-center p-4 text-slate-500 dark:text-slate-400 text-sm bg-white dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800">
-                                    No hay ausencias este mes.
-                                </div>
-                            );
-                        }
+                        if (userVacations.length === 0) return null;
 
-                        return activeUsers.map(({ user, vacations }) => (
-                            <div key={user.id} className="bg-white dark:bg-slate-900 p-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">
-                                        {user.name?.charAt(0) || 'U'}
+                        return (
+                            <div key={user.id} className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold">
+                                        {user.name?.charAt(0)}
                                     </div>
-                                    <span className="font-medium text-slate-900 dark:text-white text-sm">{user.name}</span>
+                                    <div className="text-sm">
+                                        <p className="font-medium text-slate-900 dark:text-white">{user.name}</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">{userVacations.length} eventos</p>
+                                    </div>
                                 </div>
-                                <div className="pl-11 space-y-2">
-                                    {vacations.map(vac => (
-                                        <div key={vac.id} className="flex justify-between items-center text-xs">
-                                            <span className="text-slate-600 dark:text-slate-400">
-                                                {new Date(vac.startDate).getDate()} - {new Date(vac.endDate).getDate()} {vac.type === 'VACATION' ? 'Vacaciones' : 'Ausencia'}
-                                            </span>
-                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${vac.status === 'APPROVED' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                                }`}>
-                                                {vac.status === 'APPROVED' ? 'Aprobado' : 'Pendiente'}
-                                            </span>
-                                        </div>
+                                <div className="flex gap-1">
+                                    {userVacations.map(v => (
+                                        <div key={v.id} className={`w-2 h-2 rounded-full ${v.status === 'APPROVED' ? 'bg-green-500' : 'bg-amber-400'}`}></div>
                                     ))}
                                 </div>
                             </div>
-                        ));
-                    })()}
+                        );
+                    })}
                 </div>
             </div>
         </div>

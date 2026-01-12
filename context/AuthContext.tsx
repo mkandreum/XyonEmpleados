@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { useState, ReactNode, useEffect, useContext } from 'react';
 import { User } from '../types';
 import { authService } from '../services/api';
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -10,7 +10,7 @@ interface AuthContextType {
   isLoading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);

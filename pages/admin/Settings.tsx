@@ -2,7 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { adminService, uploadService } from '../../services/api';
 import { ScheduleSettings } from '../../components/ScheduleSettings';
 import { EmailTemplateEditor } from '../../components/EmailTemplateEditor';
-import { Mail, User, Key, Plus, Trash2, Copy, Clock, ShieldCheck, FileText } from 'lucide-react';
+import Mail from 'lucide-react/dist/esm/icons/mail';
+import User from 'lucide-react/dist/esm/icons/user';
+import Plus from 'lucide-react/dist/esm/icons/plus';
+import Trash2 from 'lucide-react/dist/esm/icons/trash-2';
+import Clock from 'lucide-react/dist/esm/icons/clock';
+import KeyRound from 'lucide-react/dist/esm/icons/key-round';
+import ClipboardCopy from 'lucide-react/dist/esm/icons/clipboard-copy';
 import { InvitationCode } from '../../types';
 
 export const AdminSettings: React.FC = () => {
@@ -163,7 +169,7 @@ export const AdminSettings: React.FC = () => {
                         : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
                         }`}
                 >
-                    <Key size={18} />
+                    <KeyRound size={18} />
                     Códigos de Invitación
                 </button>
             </div>
@@ -394,9 +400,9 @@ export const AdminSettings: React.FC = () => {
                                 <p className="text-slate-500">No hay códigos de invitación activos.</p>
                             </div>
                         ) : (
-                            <div className="space-y-4">
+                            <>
                                 {/* Desktop Table */}
-                                <div className="hidden md:block overflow-x-auto">
+                                <div className="hidden sm:block overflow-x-auto">
                                     <table className="w-full text-sm text-left">
                                         <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/50">
                                             <tr>
@@ -431,7 +437,7 @@ export const AdminSettings: React.FC = () => {
                                                                     className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                                                     title="Copiar"
                                                                 >
-                                                                    <Copy size={16} />
+                                                                    <ClipboardCopy size={16} />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleRevokeInvite(invite.id)}
@@ -450,17 +456,13 @@ export const AdminSettings: React.FC = () => {
                                 </div>
 
                                 {/* Mobile Cards */}
-                                <div className="grid grid-cols-1 gap-4 md:hidden">
+                                <div className="sm:hidden space-y-4">
                                     {invites.map((invite) => (
-                                        <div key={invite.id} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700">
+                                        <div key={invite.id} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
-                                                    <span className="font-mono text-xl font-bold tracking-wider text-slate-800 dark:text-slate-200 block mb-1">
-                                                        {invite.code}
-                                                    </span>
-                                                    <span className="text-xs text-slate-500 block">
-                                                        Creado: {new Date(invite.createdAt).toLocaleDateString()}
-                                                    </span>
+                                                    <p className="font-mono font-medium text-lg tracking-wider text-slate-800 dark:text-slate-200">{invite.code}</p>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Creado: {new Date(invite.createdAt).toLocaleDateString()}</p>
                                                 </div>
                                                 {invite.isUsed ? (
                                                     <span className="px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-full text-xs font-medium">Usado</span>
@@ -469,38 +471,35 @@ export const AdminSettings: React.FC = () => {
                                                 )}
                                             </div>
 
-                                            <div className="flex justify-between items-end">
-                                                <div className="text-sm">
-                                                    <span className="text-slate-500 block text-xs">Usado por:</span>
-                                                    <span className="text-slate-700 dark:text-slate-300 font-medium">{invite.usedBy || '-'}</span>
+                                            {invite.usedBy && (
+                                                <div className="text-sm text-slate-600 dark:text-slate-400 mb-3 bg-slate-50 dark:bg-slate-800/50 p-2 rounded">
+                                                    <span className="font-medium">Usado por:</span> {invite.usedBy}
                                                 </div>
+                                            )}
 
-                                                {!invite.isUsed && (
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            onClick={() => {
-                                                                navigator.clipboard.writeText(invite.code);
-                                                                alert('Código copiado: ' + invite.code);
-                                                            }}
-                                                            className="p-2 text-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                                                            title="Copiar"
-                                                        >
-                                                            <Copy size={18} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleRevokeInvite(invite.id)}
-                                                            className="p-2 text-red-600 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                                                            title="Eliminar/Revocar"
-                                                        >
-                                                            <Trash2 size={18} />
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
+                                            {!invite.isUsed && (
+                                                <div className="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                                    <button
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(invite.code);
+                                                            alert('Código copiado: ' + invite.code);
+                                                        }}
+                                                        className="flex-1 py-2 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                                                    >
+                                                        <ClipboardCopy size={16} /> Copiar
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleRevokeInvite(invite.id)}
+                                                        className="flex-1 py-2 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                                                    >
+                                                        <Trash2 size={16} /> Revocar
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
-                            </div>
+                            </>
                         )}
                     </div>
                 )}

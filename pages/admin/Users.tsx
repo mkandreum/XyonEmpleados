@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { adminService } from '../../services/api';
 import { User } from '../../types';
-import { Plus, Edit2 as Edit, Trash2 as Trash, Search, User as UserIcon, X, Save, Briefcase } from 'lucide-react';
+import { Plus, Edit2 as Edit, Trash2 as Trash, Search, User as UserIcon, Building, X, Save } from 'lucide-react';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import toast from 'react-hot-toast';
 
@@ -176,7 +176,7 @@ export const AdminUsers: React.FC = () => {
                         onClick={() => setIsDeptModalOpen(true)}
                         className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                     >
-                        <Briefcase size={20} />
+                        <Building size={20} />
                         Departamentos
                     </button>
                     <button
