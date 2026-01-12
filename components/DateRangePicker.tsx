@@ -92,24 +92,24 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
 
         return (
             <div className="flex-1">
-                <h3 className="text-center font-semibold text-slate-700 dark:text-slate-300 mb-3 capitalize">
+                <h3 className="text-center font-semibold text-slate-700 dark:text-slate-300 mb-2 capitalize text-sm">
                     {monthNames[displayMonth.getMonth()]} {displayMonth.getFullYear()}
                 </h3>
 
                 {/* Day headers */}
-                <div className="grid grid-cols-7 gap-1 mb-2">
+                <div className="grid grid-cols-7 gap-0.5 mb-1">
                     {dayNames.map(day => (
-                        <div key={day} className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 py-1">
+                        <div key={day} className="text-center text-[10px] font-medium text-slate-500 dark:text-slate-400 py-0.5">
                             {day}
                         </div>
                     ))}
                 </div>
 
                 {/* Calendar days */}
-                <div className="grid grid-cols-7 gap-1">
+                <div className="grid grid-cols-7 gap-0.5">
                     {days.map((date, idx) => {
                         if (!date) {
-                            return <div key={`empty-${idx}`} className="aspect-square" />;
+                            return <div key={`empty-${idx}`} className="w-8 h-8 sm:w-9 sm:h-9" />;
                         }
 
                         const inRange = isInRange(date);
@@ -123,7 +123,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
                                 type="button"
                                 onClick={() => handleDateClick(date)}
                                 className={`
-                  aspect-square flex items-center justify-center text-sm rounded-lg
+                  w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-xs rounded-md
                   transition-colors relative
                   ${isStart || isEnd
                                         ? 'bg-blue-600 text-white font-semibold hover:bg-blue-700'
@@ -145,30 +145,30 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
     };
 
     return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-sm transition-colors">
-            <div className="flex items-center justify-between mb-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 shadow-sm transition-colors">
+            <div className="flex items-center justify-between mb-3">
                 <button
                     type="button"
                     onClick={prevMonth}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 >
-                    <ChevronLeft className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                    <ChevronLeft className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                 </button>
 
-                <div className="text-sm text-slate-600 dark:text-slate-400">
+                <div className="text-xs text-slate-600 dark:text-slate-400">
                     {selectingStart ? 'Selecciona fecha de inicio' : 'Selecciona fecha de fin'}
                 </div>
 
                 <button
                     type="button"
                     onClick={nextMonth}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 >
-                    <ChevronRight className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                    <ChevronRight className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                 </button>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex flex-col md:flex-row gap-4">
                 {renderMonth(0)}
                 <div className="hidden md:block flex-1">
                     {renderMonth(1)}

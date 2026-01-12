@@ -110,9 +110,9 @@ export const VacationsPage: React.FC = () => {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validate justification for non-vacation/non-overtime types
-        const isExempt = formData.type === 'VACATION' || formData.type === 'OVERTIME';
-        if (!isExempt && !formData.justificationUrl) {
+        // Validate justification only for SICK_LEAVE and OTHER types
+        const requiresJustification = formData.type === 'SICK_LEAVE' || formData.type === 'OTHER';
+        if (requiresJustification && !formData.justificationUrl) {
             showAlert('El justificante es obligatorio para este tipo de solicitud', 'warning');
             return;
         }
@@ -172,7 +172,7 @@ export const VacationsPage: React.FC = () => {
     };
 
     // Derived states
-    const requiresJustification = formData.type !== 'VACATION' && formData.type !== 'OVERTIME';
+    const requiresJustification = formData.type === 'SICK_LEAVE' || formData.type === 'OTHER';
     const showSubtypeDropdown = formData.type === 'OTHER';
 
     // Subtypes list
