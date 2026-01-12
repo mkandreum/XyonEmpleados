@@ -23,6 +23,14 @@ const { validate, loginSchema, registerSchema, changePasswordSchema, updateProfi
 const { authLimiter } = require('./server');
 
 
+// ========================================
+// HEALTH CHECK (Docker - no auth required)
+// ========================================
+router.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+
 // Public Routes (NO AUTH REQUIRED)
 router.post('/auth/register', authLimiter, validate(registerSchema), authController.register);
 router.post('/auth/login', authLimiter, validate(loginSchema), authController.login);
