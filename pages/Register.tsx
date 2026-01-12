@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/api';
-import { User, Lock, Mail, Briefcase, Building } from 'lucide-react';
+import { User, Key, Mail, Briefcase } from 'lucide-react';
 import { useSettings } from '../hooks/useSettings';
 
 export const RegisterPage: React.FC = () => {
@@ -120,7 +120,7 @@ export const RegisterPage: React.FC = () => {
                             <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Contraseña</label>
                             <div className="mt-1 relative rounded-md shadow-sm">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Lock className="h-5 w-5 text-slate-400" />
+                                    <Key className="h-5 w-5 text-slate-400" />
                                 </div>
                                 <input
                                     id="password"
@@ -140,7 +140,7 @@ export const RegisterPage: React.FC = () => {
                                 <label htmlFor="department" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Departamento</label>
                                 <div className="mt-1 relative rounded-md shadow-sm">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Building className="h-5 w-5 text-slate-400" />
+                                        <Briefcase className="h-5 w-5 text-slate-400" />
                                     </div>
                                     <select
                                         id="department"
@@ -181,7 +181,7 @@ export const RegisterPage: React.FC = () => {
                             <label htmlFor="invitationCode" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Código de Invitación</label>
                             <div className="mt-1 relative rounded-md shadow-sm">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Lock className="h-5 w-5 text-slate-400" />
+                                    <Key className="h-5 w-5 text-slate-400" />
                                 </div>
                                 <input
                                     id="invitationCode"
