@@ -170,7 +170,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
 
             <div className="flex flex-col md:flex-row gap-4">
                 {renderMonth(0)}
-                <div className="hidden md:block flex-1">
+                {/* Only show second month on desktop */}
+                <div className="hidden lg:block flex-1">
                     {renderMonth(1)}
                 </div>
             </div>
