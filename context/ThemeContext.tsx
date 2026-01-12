@@ -29,7 +29,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (storedTheme) {
             setIsDark(storedTheme === 'dark');
         } else {
-            setIsDark(prefersDark);
+            // Default to light mode (changed from system preference)
+            setIsDark(false);
         }
 
         if (storedColor) {
