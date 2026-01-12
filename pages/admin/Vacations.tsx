@@ -12,6 +12,7 @@ interface VacationRequest {
         department: string;
     };
     type: string;
+    subtype?: string;
     startDate: string;
     endDate: string;
     hours?: number;
@@ -68,7 +69,7 @@ export const AdminVacations: React.FC = () => {
         switch (status) {
             case 'PENDING': return 'Pendiente';
             case 'PENDING_MANAGER': return 'Pendiente Manager';
-            case 'PENDING_ADMIN': return 'Pendiente Admin';
+            case 'PENDING_ADMIN': return 'Pendiente RRHH';
             case 'APPROVED': return 'Aprobada';
             case 'REJECTED': return 'Rechazada';
             default: return status;
@@ -201,7 +202,7 @@ export const AdminVacations: React.FC = () => {
                                             <span>{request.days ? `${request.days} días` : `${request.hours} horas`}</span>
                                             <span className="hidden md:inline">•</span>
                                             <span className={`px-2 py-1 rounded-md font-medium text-xs ${getTypeColor(request.type)}`}>
-                                                {getTypeLabel(request.type)}
+                                                {getTypeLabel(request.type, request.subtype)}
                                             </span>
                                             {request.justificationUrl && (
                                                 <>
@@ -325,7 +326,7 @@ export const AdminVacations: React.FC = () => {
                                                                 </td>
                                                                 <td className="px-4 py-2">
                                                                     <span className={`px-2 py-1 rounded text-xs font-medium ${getTypeColor(request.type)}`}>
-                                                                        {getTypeLabel(request.type)}
+                                                                        {getTypeLabel(request.type, request.subtype)}
                                                                     </span>
                                                                 </td>
                                                                 <td className="px-4 py-2">
@@ -383,7 +384,7 @@ export const AdminVacations: React.FC = () => {
                                                             <div className="flex items-center justify-between">
                                                                 <span className="text-slate-500 dark:text-slate-500">Tipo:</span>
                                                                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${getTypeColor(request.type)}`}>
-                                                                    {getTypeLabel(request.type)}
+                                                                    {getTypeLabel(request.type, request.subtype)}
                                                                 </span>
                                                             </div>
                                                             {request.justificationUrl && (
@@ -437,7 +438,7 @@ export const AdminVacations: React.FC = () => {
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <span className={`px-2 py-1 rounded-md text-xs font-medium ${getTypeColor(request.type)}`}>
-                                                        {getTypeLabel(request.type)}
+                                                        {getTypeLabel(request.type, request.subtype)}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3">
@@ -499,7 +500,7 @@ export const AdminVacations: React.FC = () => {
                                             <div className="flex items-center justify-between">
                                                 <span className="text-slate-500 dark:text-slate-500">Tipo:</span>
                                                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${getTypeColor(request.type)}`}>
-                                                    {getTypeLabel(request.type)}
+                                                    {getTypeLabel(request.type, request.subtype)}
                                                 </span>
                                             </div>
                                             {request.justificationUrl && (

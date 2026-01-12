@@ -156,7 +156,7 @@ export const TeamRequests: React.FC = () => {
 
                                     <div className="mb-4 flex justify-between items-center">
                                         <span className={`inline-block px-2 py-1 text-xs rounded transition-colors ${getTypeColor(request.type)}`}>
-                                            {getTypeLabel(request.type)}
+                                            {getTypeLabel(request.type, request.subtype)}
                                         </span>
                                         {request.justificationUrl && (
                                             <a
