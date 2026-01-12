@@ -124,7 +124,16 @@ export const NotificationDropdown: React.FC = () => {
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden z-50 animate-fadeIn">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
-                        <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Notificaciones</h3>
+                        <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Notificaciones</h3>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); fetchNotifications(); }}
+                                className="text-slate-400 hover:text-blue-500 transition-colors"
+                                title="Actualizar"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" /><path d="M16 16h5v5" /></svg>
+                            </button>
+                        </div>
                         {unreadCount > 0 && (
                             <button
                                 onClick={handleMarkAllRead}
