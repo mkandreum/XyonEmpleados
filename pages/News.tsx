@@ -22,6 +22,22 @@ export const NewsPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    // Check URL parameters for auto-open on redirect from notification
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    const notifyIdParam = params.get('notifyId');
+
+    if (tabParam === 'attendance') {
+      setActiveTab('attendance');
+    }
+
+    // Store notifyId to auto-open modal after warnings are loaded
+    if (notifyIdParam) {
+      sessionStorage.setItem('pendingNotifyId', notifyIdParam);
+    }
+  }, []);
+
+  useEffect(() => {
     if (activeTab === 'news') {
       fetchNews();
     } else {
@@ -49,6 +65,16 @@ export const NewsPage: React.FC = () => {
     try {
       const data = await lateNotificationService.getAll();
       setWarnings(data);
+
+      // Auto-open modal if redirected from notification
+      const pendingId = sessionStorage.getItem('pendingNotifyId');
+      if (pendingId) {
+        const targetWarning = data.find(w => w.id === pendingId);
+        if (targetWarning && !targetWarning.justificado) {
+          handleOpenJustify(targetWarning);
+        }
+        sessionStorage.removeItem('pendingNotifyId');
+      }
     } catch (error) {
       console.error("Error fetching warnings:", error);
     } finally {

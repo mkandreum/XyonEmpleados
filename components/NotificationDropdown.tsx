@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Check, X } from 'lucide-react';
+import { Bell, Check, X, AlertCircle, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
@@ -18,7 +18,7 @@ export const NotificationDropdown: React.FC = () => {
     const dropdownRef = useRef<HTMLDivElement>(null);
     const { token } = useAuth();
 
-    const fetchNotifications = async () => {
+    const fetchNotifications = React.useCallback(async () => {
         try {
             console.log('🔔 [FRONTEND] Fetching notifications...');
             const response = await api.get('/notifications');
@@ -35,7 +35,7 @@ export const NotificationDropdown: React.FC = () => {
             // Don't crash, just show empty
             setNotifications([]);
         }
-    };
+    }, []);
 
     useEffect(() => {
         if (token) {
@@ -45,7 +45,7 @@ export const NotificationDropdown: React.FC = () => {
             const interval = setInterval(fetchNotifications, 15000);
             return () => clearInterval(interval);
         }
-    }, [token]);
+    }, [token, fetchNotifications]);
 
     // Close when clicking outside
     useEffect(() => {
@@ -151,51 +151,67 @@ export const NotificationDropdown: React.FC = () => {
                             </div>
                         ) : (
                             <div>
-                                {notifications.map(notification => (
-                                    <div
-                                        key={notification.id}
-                                        onClick={() => {
-                                            const text = (notification.title + notification.message).toLowerCase();
-                                            if (text.includes('aviso') || text.includes('tarde') || text.includes('warning') || text.includes('justificación')) {
-                                                window.location.href = '/news?tab=attendance';
-                                                setIsOpen(false);
-                                            }
-                                        }}
-                                        className={`px-4 py-3 border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer ${getNotificationStyle(notification.title, notification.message)} ${!notification.read ? 'opacity-100' : 'opacity-70 dark:opacity-60'}`}
-                                    >
-                                        <div className="flex justify-between items-start gap-3">
-                                            <div className="flex-1">
-                                                <h4 className={`text-sm ${!notification.read ? 'font-semibold text-slate-900 dark:text-white' : 'font-medium text-slate-700 dark:text-slate-300'}`}>
-                                                    {notification.title}
-                                                </h4>
-                                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">
-                                                    {notification.message}
-                                                </p>
-                                                <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 block">
-                                                    {new Date(notification.date).toLocaleDateString()} {new Date(notification.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                {!notification.read && (
+                                {notifications.map(notification => {
+                                    const text = (notification.title + notification.message).toLowerCase();
+                                    const isApproved = text.includes('aprobada') || text.includes('approved');
+                                    const isRejected = text.includes('rechazada') || text.includes('rejected');
+                                    const isWarning = text.includes('aviso') || text.includes('tarde') || text.includes('warning');
+                                    const isJustification = text.includes('justificación');
+
+                                    let icon = <Bell size={20} />;
+                                    if (isApproved) icon = <Check size={20} className="text-green-600" />;
+                                    else if (isRejected) icon = <X size={20} className="text-red-600" />;
+                                    else if (isWarning) icon = <AlertCircle size={20} className="text-amber-600" />;
+                                    else if (isJustification) icon = <FileText size={20} className="text-blue-600" />;
+
+                                    return (
+                                        <div
+                                            key={notification.id}
+                                            onClick={() => {
+                                                if (isWarning || isJustification) {
+                                                    window.location.href = `/news?tab=attendance&notifyId=${notification.id}`;
+                                                    setIsOpen(false);
+                                                }
+                                            }}
+                                            className={`px-4 py-3 border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${(isWarning || isJustification) ? 'cursor-pointer' : ''} ${getNotificationStyle(notification.title, notification.message)} ${!notification.read ? 'opacity-100' : 'opacity-70 dark:opacity-60'}`}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className="flex-shrink-0 mt-1">
+                                                    {icon}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className={`text-sm ${!notification.read ? 'font-semibold text-slate-900 dark:text-white' : 'font-medium text-slate-700 dark:text-slate-300'}`}>
+                                                        {notification.title}
+                                                    </h4>
+                                                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">
+                                                        {notification.message}
+                                                    </p>
+                                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 block">
+                                                        {new Date(notification.date).toLocaleDateString()} {new Date(notification.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                                <div className="flex flex-col gap-1 flex-shrink-0">
+                                                    {!notification.read && (
+                                                        <button
+                                                            onClick={(e) => handleMarkAsRead(notification.id, e)}
+                                                            className="text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 p-1 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all"
+                                                            title="Marcar como leída"
+                                                        >
+                                                            <Check size={14} />
+                                                        </button>
+                                                    )}
                                                     <button
-                                                        onClick={(e) => handleMarkAsRead(notification.id, e)}
-                                                        className="text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 p-1 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all"
-                                                        title="Marcar como leída"
+                                                        onClick={(e) => handleDelete(notification.id, e)}
+                                                        className="text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 p-1 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all"
+                                                        title="Eliminar"
                                                     >
-                                                        <Check size={14} />
+                                                        <X size={14} />
                                                     </button>
-                                                )}
-                                                <button
-                                                    onClick={(e) => handleDelete(notification.id, e)}
-                                                    className="text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 p-1 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all"
-                                                    title="Eliminar"
-                                                >
-                                                    <X size={14} />
-                                                </button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
