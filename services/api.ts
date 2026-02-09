@@ -265,14 +265,6 @@ export const adminService = {
         const response = await api.put<VacationRequest>(`/admin/vacations/${id}/status`, { status });
         return response.data;
     },
-    getSettings: async () => {
-        const response = await api.get<GlobalSettings>('/admin/settings');
-        return response.data;
-    },
-    updateSettings: async (settings: any) => {
-        const response = await api.put('/admin/settings', settings);
-        return response.data;
-    },
     getInviteCodes: async () => {
         const response = await api.get<InvitationCode[]>('/admin/invites');
         return response.data;

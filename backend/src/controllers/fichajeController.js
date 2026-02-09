@@ -223,6 +223,10 @@ exports.getWeek = async (req, res) => {
             select: { department: true }
         });
 
+        if (!user || !user.department) {
+            return res.status(404).json({ error: 'Usuario o departamento no encontrado' });
+        }
+
         const schedule = await prisma.departmentSchedule.findUnique({
             where: { department: user.department }
         });
@@ -272,6 +276,10 @@ exports.getMonth = async (req, res) => {
             where: { id: userId },
             select: { department: true }
         });
+
+        if (!user || !user.department) {
+            return res.status(404).json({ error: 'Usuario o departamento no encontrado' });
+        }
 
         const schedule = await prisma.departmentSchedule.findUnique({
             where: { department: user.department }

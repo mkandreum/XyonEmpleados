@@ -183,7 +183,7 @@ exports.updateVacationStatus = async (req, res) => {
 
         if (status === 'APPROVED') {
             try {
-                await updateUserBalanceLogic(vacation.userId, vacation.type, vacation.days, vacation.hours);
+                await updateUserBalanceLogic(vacation.userId, vacation.type, vacation.days, vacation.hours, vacation.subtype);
             } catch (err) {
                 console.error("Failed to update user balance on approval:", err);
                 // Don't fail the request, but log error. Maybe notify admin?
