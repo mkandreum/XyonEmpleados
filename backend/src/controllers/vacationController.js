@@ -12,6 +12,7 @@ exports.getAllVacations = async (req, res) => {
         });
         res.json(vacations);
     } catch (error) {
+        console.error('Error fetching vacations:', error);
         res.status(500).json({ error: 'Failed to fetch vacations' });
     }
 };

@@ -177,7 +177,7 @@ exports.getUserBenefitsBalance = async (req, res) => {
 };
 
 // Internal logic to update balance
-const updateUserBalanceLogic = async (userId, type, days, hours) => {
+const updateUserBalanceLogic = async (userId, type, days, hours, subtype = null) => {
     const currentYear = new Date().getFullYear();
 
     const balance = await prisma.userBenefitsBalance.findUnique({
@@ -230,8 +230,8 @@ const updateUserBalanceLogic = async (userId, type, days, hours) => {
 // Update user balance (called when vacation is approved)
 exports.updateUserBalance = async (req, res) => {
     try {
-        const { userId, type, days, hours } = req.body;
-        const updated = await updateUserBalanceLogic(userId, type, days, hours);
+        const { userId, type, days, hours, subtype } = req.body;
+        const updated = await updateUserBalanceLogic(userId, type, days, hours, subtype);
         res.json(updated);
     } catch (error) {
         console.error('Update balance error:', error);
