@@ -328,8 +328,8 @@ export const managerService = {
 };
 
 export const fichajeService = {
-    create: async (tipo: FichajeTipo, location?: { latitude: number; longitude: number; accuracy: number }) => {
-        const response = await api.post<{ fichaje: Fichaje; status: FichajeStatus }>('/fichajes', { tipo, ...location });
+    create: async (tipo: FichajeTipo) => {
+        const response = await api.post<{ fichaje: Fichaje; status: FichajeStatus }>('/fichajes', { tipo });
         return response.data;
     },
     getCurrent: async () => {
