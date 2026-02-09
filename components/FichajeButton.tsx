@@ -5,8 +5,6 @@ import { FichajeTipo } from '../types';
 
 export const FichajeButton: React.FC = () => {
     const [loading, setLoading] = useState(false);
-    const [gettingLocation, setGettingLocation] = useState(false);
-
     const [hasActiveEntry, setHasActiveEntry] = useState(false);
     const [checking, setChecking] = useState(true);
     const [todayFichajes, setTodayFichajes] = useState<any[]>([]);
@@ -50,32 +48,8 @@ export const FichajeButton: React.FC = () => {
     const handleFichaje = async () => {
         setLoading(true);
         try {
-            setGettingLocation(true);
-
-            // Get location if available
-            let locationData = undefined;
-            if ('geolocation' in navigator) {
-                try {
-                    const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(resolve, reject, {
-                            timeout: 5000,
-                            maximumAge: 0
-                        });
-                    });
-                    locationData = {
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
-                        accuracy: position.coords.accuracy
-                    };
-                } catch (e) {
-                    console.warn('Could not get location:', e);
-                    // Continue without location
-                }
-            }
-            setGettingLocation(false);
-
             const tipo = hasActiveEntry ? FichajeTipo.SALIDA : FichajeTipo.ENTRADA;
-            const result = await fichajeService.create(tipo, locationData);
+            const result = await fichajeService.create(tipo);
 
             setHasActiveEntry(result.status.hasActiveEntry);
 
@@ -110,7 +84,6 @@ export const FichajeButton: React.FC = () => {
             }, 3000);
         } finally {
             setLoading(false);
-            setGettingLocation(false);
         }
     };
 
@@ -136,7 +109,7 @@ export const FichajeButton: React.FC = () => {
         <div className="flex flex-col items-center gap-3 w-full max-w-xs mx-auto">
             <button
                 onClick={handleFichaje}
-                disabled={loading || gettingLocation}
+                disabled={loading}
                 className={`w-full flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-semibold text-lg shadow-lg transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${hasActiveEntry
                     ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
                     : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
@@ -146,11 +119,6 @@ export const FichajeButton: React.FC = () => {
                     <>
                         <Loader2 size={24} className="animate-spin" />
                         Procesando...
-                    </>
-                ) : gettingLocation ? (
-                    <>
-                        <Loader2 size={24} className="animate-spin" />
-                        Ubicando...
                     </>
                 ) : hasActiveEntry ? (
                     <>
