@@ -195,6 +195,24 @@ function getNextFichajeTipo(lastFichaje) {
     return lastFichaje.tipo === 'ENTRADA' ? 'SALIDA' : 'ENTRADA';
 }
 
+/**
+ * Obtiene la medianoche local para una fecha dada
+ * Esto evita problemas con timezones al usar setHours()
+ */
+function getLocalMidnight(date = new Date()) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+}
+
+/**
+ * Obtiene el rango del día actual (desde medianoche hasta el día siguiente)
+ */
+function getTodayRange(referenceDate = new Date()) {
+    const today = getLocalMidnight(referenceDate);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return { today, tomorrow };
+}
+
 module.exports = {
     calculateWorkedHours,
     isLateArrival,
@@ -202,5 +220,7 @@ module.exports = {
     groupFichajesByDay,
     validateFichajeSequence,
     getLastFichajeOfDay,
-    getNextFichajeTipo
+    getNextFichajeTipo,
+    getLocalMidnight,
+    getTodayRange
 };

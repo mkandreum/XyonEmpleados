@@ -7,7 +7,8 @@ const {
     groupFichajesByDay,
     validateFichajeSequence,
     getLastFichajeOfDay,
-    getNextFichajeTipo
+    getNextFichajeTipo,
+    getTodayRange
 } = require('../utils/fichajeUtils');
 
 // Custom error class for validation errors
@@ -34,6 +35,9 @@ exports.createFichaje = async (req, res) => {
 
         // Use transaction to prevent race conditions
         const result = await prisma.$transaction(async (tx) => {
+            // Capture timestamp at the start for consistency
+            const now = new Date();
+            
             // Obtener usuario para department dentro de la transacción
             const user = await tx.user.findUnique({
                 where: { id: userId },
@@ -50,10 +54,7 @@ exports.createFichaje = async (req, res) => {
             }
 
             // Obtener fichajes del día actual dentro de la transacción
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
+            const { today, tomorrow } = getTodayRange(now);
 
             const todayFichajes = await tx.fichaje.findMany({
                 where: {
@@ -80,7 +81,7 @@ exports.createFichaje = async (req, res) => {
                     userId,
                     tipo,
                     department: user.department,
-                    timestamp: new Date(),
+                    timestamp: now,
                     latitude: latitude ? parseFloat(latitude) : null,
                     longitude: longitude ? parseFloat(longitude) : null,
                     accuracy: accuracy ? parseFloat(accuracy) : null
@@ -121,10 +122,7 @@ exports.getCurrentFichaje = async (req, res) => {
         const userId = req.user.userId;
 
         // Obtener fichajes del día actual usando fecha local consistente
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
+        const { today, tomorrow } = getTodayRange();
 
         const todayFichajes = await prisma.fichaje.findMany({
             where: {
