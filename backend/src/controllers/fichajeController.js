@@ -32,23 +32,23 @@ exports.createFichaje = async (req, res) => {
             return res.status(400).json({ error: 'Tipo de fichaje inválido' });
         }
 
-        // Obtener usuario para department
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { department: true }
-        });
-
-        if (!user) {
-            return res.status(404).json({ error: 'Usuario no encontrado' });
-        }
-
-        // Validar que el usuario tenga un departamento asignado
-        if (!user.department) {
-            return res.status(400).json({ error: 'Usuario sin departamento asignado. Contacta con administración.' });
-        }
-
         // Use transaction to prevent race conditions
         const result = await prisma.$transaction(async (tx) => {
+            // Obtener usuario para department dentro de la transacción
+            const user = await tx.user.findUnique({
+                where: { id: userId },
+                select: { department: true }
+            });
+
+            if (!user) {
+                throw new ValidationError('Usuario no encontrado');
+            }
+
+            // Validar que el usuario tenga un departamento asignado
+            if (!user.department) {
+                throw new ValidationError('Usuario sin departamento asignado. Contacta con administración.');
+            }
+
             // Obtener fichajes del día actual dentro de la transacción
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
@@ -74,7 +74,7 @@ exports.createFichaje = async (req, res) => {
                 throw new ValidationError(`Debes fichar ${expectedTipo === FichajeTipo.ENTRADA ? 'entrada' : 'salida'} primero`);
             }
 
-            // Crear fichaje con timestamp preciso
+            // Crear fichaje
             const fichaje = await tx.fichaje.create({
                 data: {
                     userId,
