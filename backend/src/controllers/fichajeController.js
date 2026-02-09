@@ -7,8 +7,18 @@ const {
     groupFichajesByDay,
     validateFichajeSequence,
     getLastFichajeOfDay,
-    getNextFichajeTipo
+    getNextFichajeTipo,
+    getTodayRange
 } = require('../utils/fichajeUtils');
+
+// Custom error class for validation errors
+class ValidationError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ValidationError';
+        this.statusCode = 400;
+    }
+}
 
 /**
  * POST /api/fichajes
@@ -23,69 +33,83 @@ exports.createFichaje = async (req, res) => {
             return res.status(400).json({ error: 'Tipo de fichaje inválido' });
         }
 
-        // Obtener usuario para department
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { department: true }
-        });
-
-        if (!user) {
-            return res.status(404).json({ error: 'Usuario no encontrado' });
-        }
-
-        // Obtener fichajes del día actual
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-
-        const todayFichajes = await prisma.fichaje.findMany({
-            where: {
-                userId,
-                timestamp: {
-                    gte: today,
-                    lt: tomorrow
-                }
-            },
-            orderBy: { timestamp: 'asc' }
-        });
-
-        // Validar secuencia
-        const lastFichaje = getLastFichajeOfDay(todayFichajes);
-        const expectedTipo = getNextFichajeTipo(lastFichaje);
-
-        if (tipo !== expectedTipo) {
-            return res.status(400).json({
-                error: `Debes fichar ${expectedTipo === FichajeTipo.ENTRADA ? 'entrada' : 'salida'} primero`
+        // Use transaction to prevent race conditions
+        const result = await prisma.$transaction(async (tx) => {
+            // Capture timestamp at the start for consistency
+            const now = new Date();
+            
+            // Obtener usuario para department dentro de la transacción
+            const user = await tx.user.findUnique({
+                where: { id: userId },
+                select: { department: true }
             });
-        }
 
-        // Crear fichaje
-        const fichaje = await prisma.fichaje.create({
-            data: {
-                userId,
-                tipo,
-                department: user.department,
-                timestamp: new Date(),
-                latitude: latitude ? parseFloat(latitude) : null,
-                longitude: longitude ? parseFloat(longitude) : null,
-                accuracy: accuracy ? parseFloat(accuracy) : null
+            if (!user) {
+                throw new ValidationError('Usuario no encontrado');
             }
+
+            // Validar que el usuario tenga un departamento asignado
+            if (!user.department) {
+                throw new ValidationError('Usuario sin departamento asignado. Contacta con administración.');
+            }
+
+            // Obtener fichajes del día actual dentro de la transacción
+            const { today, tomorrow } = getTodayRange(now);
+
+            const todayFichajes = await tx.fichaje.findMany({
+                where: {
+                    userId,
+                    timestamp: {
+                        gte: today,
+                        lt: tomorrow
+                    }
+                },
+                orderBy: { timestamp: 'asc' }
+            });
+
+            // Validar secuencia
+            const lastFichaje = getLastFichajeOfDay(todayFichajes);
+            const expectedTipo = getNextFichajeTipo(lastFichaje);
+
+            if (tipo !== expectedTipo) {
+                throw new ValidationError(`Debes fichar ${expectedTipo === FichajeTipo.ENTRADA ? 'entrada' : 'salida'} primero`);
+            }
+
+            // Crear fichaje
+            const fichaje = await tx.fichaje.create({
+                data: {
+                    userId,
+                    tipo,
+                    department: user.department,
+                    timestamp: now,
+                    latitude: latitude ? parseFloat(latitude) : null,
+                    longitude: longitude ? parseFloat(longitude) : null,
+                    accuracy: accuracy ? parseFloat(accuracy) : null
+                }
+            });
+
+            return fichaje;
         });
 
         // Determinar estado actual
         const hasActiveEntry = tipo === FichajeTipo.ENTRADA;
 
         res.json({
-            fichaje,
+            fichaje: result,
             status: {
                 hasActiveEntry,
-                currentFichaje: hasActiveEntry ? fichaje : null
+                currentFichaje: hasActiveEntry ? result : null
             }
         });
     } catch (error) {
         console.error('Error creating fichaje:', error);
-        res.status(500).json({ error: 'Error al crear fichaje' });
+        
+        // Handle specific validation errors
+        if (error instanceof ValidationError) {
+            return res.status(error.statusCode).json({ error: error.message });
+        }
+        
+        res.status(500).json({ error: 'Error al crear fichaje. Por favor, inténtalo de nuevo.' });
     }
 };
 
@@ -97,11 +121,8 @@ exports.getCurrentFichaje = async (req, res) => {
     try {
         const userId = req.user.userId;
 
-        // Obtener fichajes del día actual
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
+        // Obtener fichajes del día actual usando fecha local consistente
+        const { today, tomorrow } = getTodayRange();
 
         const todayFichajes = await prisma.fichaje.findMany({
             where: {

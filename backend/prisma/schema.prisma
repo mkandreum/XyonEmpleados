@@ -177,6 +177,7 @@ model Fichaje {
   
   @@index([userId, timestamp])
   @@index([department, timestamp])
+  @@index([userId, tipo, timestamp])
 }
 
 model DepartmentSchedule {
