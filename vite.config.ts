@@ -6,6 +6,21 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
+    build: {
+      // Generate source maps for production debugging
+      sourcemap: false,
+      // Ensure file names include content hash for cache busting
+      rollupOptions: {
+        output: {
+          // Add hash to chunk names for better cache busting
+          chunkFileNames: 'assets/[name]-[hash].js',
+          entryFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash].[ext]',
+        },
+      },
+      // Increase chunk size warning limit
+      chunkSizeWarningLimit: 1000,
+    },
     server: {
       port: 5173,
       host: '0.0.0.0',
@@ -27,6 +42,55 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+        workbox: {
+          // Clean up old caches
+          cleanupOutdatedCaches: true,
+          // Skip waiting and claim clients immediately for faster updates
+          skipWaiting: true,
+          clientsClaim: true,
+          // Runtime caching strategies
+          runtimeCaching: [
+            {
+              // Cache API responses with network-first strategy
+              urlPattern: /^https:\/\/.*\/api\/.*/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'api-cache',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 60 * 5, // 5 minutes
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            {
+              // Cache images with cache-first strategy
+              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'images-cache',
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                },
+              },
+            },
+            {
+              // Cache fonts with cache-first strategy
+              urlPattern: /\.(?:woff|woff2|ttf|otf)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'fonts-cache',
+                expiration: {
+                  maxEntries: 30,
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+                },
+              },
+            },
+          ],
+        },
         manifest: {
           name: 'Xyon Empleados',
           short_name: 'Xyon',

@@ -95,11 +95,34 @@ app.use(morgan('dev'));
 
 // Serve uploaded files statically
 // Serve ONLY public files statically (logos, avatars)
-app.use('/uploads/public', express.static(path.join(__dirname, '../uploads/public')));
+app.use('/uploads/public', express.static(path.join(__dirname, '../uploads/public'), {
+    maxAge: '1d', // Cache for 1 day
+    etag: true,
+    lastModified: true,
+}));
 
-// Static files (build from frontend)
-// We assume the frontend will be built into a 'public' folder inside backend or similar
-app.use(express.static(path.join(__dirname, '../public')));
+// Static files (build from frontend) with aggressive caching for hashed assets
+app.use(express.static(path.join(__dirname, '../public'), {
+    maxAge: '1y', // Cache hashed assets for 1 year
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+        // For HTML files, prevent caching to ensure users get the latest version
+        if (filePath.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+        // For hashed assets (JS, CSS with hash in filename), aggressive caching
+        else if (/\.[a-f0-9]{8,}\.(js|css|woff2?|ttf|eot|svg|png|jpg|jpeg|gif|webp|ico)$/i.test(filePath)) {
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+        // For other assets, moderate caching
+        else {
+            res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
+        }
+    }
+}));
 
 const routes = require('./routes');
 
@@ -117,6 +140,9 @@ app.get('*', (req, res) => {
     }
     // Prevent caching of index.html to ensure users always get the latest version
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Last-Modified', new Date().toUTCString());
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
