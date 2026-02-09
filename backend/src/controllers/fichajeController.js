@@ -10,6 +10,15 @@ const {
     getNextFichajeTipo
 } = require('../utils/fichajeUtils');
 
+// Custom error class for validation errors
+class ValidationError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ValidationError';
+        this.statusCode = 400;
+    }
+}
+
 /**
  * POST /api/fichajes
  * Crear nuevo fichaje (entrada o salida)
@@ -62,7 +71,7 @@ exports.createFichaje = async (req, res) => {
             const expectedTipo = getNextFichajeTipo(lastFichaje);
 
             if (tipo !== expectedTipo) {
-                throw new Error(`INVALID_SEQUENCE:Debes fichar ${expectedTipo === FichajeTipo.ENTRADA ? 'entrada' : 'salida'} primero`);
+                throw new ValidationError(`Debes fichar ${expectedTipo === FichajeTipo.ENTRADA ? 'entrada' : 'salida'} primero`);
             }
 
             // Crear fichaje con timestamp preciso
@@ -95,9 +104,8 @@ exports.createFichaje = async (req, res) => {
         console.error('Error creating fichaje:', error);
         
         // Handle specific validation errors
-        if (error.message && error.message.startsWith('INVALID_SEQUENCE:')) {
-            const errorMsg = error.message.split(':')[1];
-            return res.status(400).json({ error: errorMsg });
+        if (error instanceof ValidationError) {
+            return res.status(error.statusCode).json({ error: error.message });
         }
         
         res.status(500).json({ error: 'Error al crear fichaje. Por favor, inténtalo de nuevo.' });
