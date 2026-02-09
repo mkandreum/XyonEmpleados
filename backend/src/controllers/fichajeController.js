@@ -33,59 +33,74 @@ exports.createFichaje = async (req, res) => {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
 
-        // Obtener fichajes del día actual
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-
-        const todayFichajes = await prisma.fichaje.findMany({
-            where: {
-                userId,
-                timestamp: {
-                    gte: today,
-                    lt: tomorrow
-                }
-            },
-            orderBy: { timestamp: 'asc' }
-        });
-
-        // Validar secuencia
-        const lastFichaje = getLastFichajeOfDay(todayFichajes);
-        const expectedTipo = getNextFichajeTipo(lastFichaje);
-
-        if (tipo !== expectedTipo) {
-            return res.status(400).json({
-                error: `Debes fichar ${expectedTipo === FichajeTipo.ENTRADA ? 'entrada' : 'salida'} primero`
-            });
+        // Validar que el usuario tenga un departamento asignado
+        if (!user.department) {
+            return res.status(400).json({ error: 'Usuario sin departamento asignado. Contacta con administración.' });
         }
 
-        // Crear fichaje
-        const fichaje = await prisma.fichaje.create({
-            data: {
-                userId,
-                tipo,
-                department: user.department,
-                timestamp: new Date(),
-                latitude: latitude ? parseFloat(latitude) : null,
-                longitude: longitude ? parseFloat(longitude) : null,
-                accuracy: accuracy ? parseFloat(accuracy) : null
+        // Use transaction to prevent race conditions
+        const result = await prisma.$transaction(async (tx) => {
+            // Obtener fichajes del día actual dentro de la transacción
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            const todayFichajes = await tx.fichaje.findMany({
+                where: {
+                    userId,
+                    timestamp: {
+                        gte: today,
+                        lt: tomorrow
+                    }
+                },
+                orderBy: { timestamp: 'asc' }
+            });
+
+            // Validar secuencia
+            const lastFichaje = getLastFichajeOfDay(todayFichajes);
+            const expectedTipo = getNextFichajeTipo(lastFichaje);
+
+            if (tipo !== expectedTipo) {
+                throw new Error(`INVALID_SEQUENCE:Debes fichar ${expectedTipo === FichajeTipo.ENTRADA ? 'entrada' : 'salida'} primero`);
             }
+
+            // Crear fichaje con timestamp preciso
+            const fichaje = await tx.fichaje.create({
+                data: {
+                    userId,
+                    tipo,
+                    department: user.department,
+                    timestamp: new Date(),
+                    latitude: latitude ? parseFloat(latitude) : null,
+                    longitude: longitude ? parseFloat(longitude) : null,
+                    accuracy: accuracy ? parseFloat(accuracy) : null
+                }
+            });
+
+            return fichaje;
         });
 
         // Determinar estado actual
         const hasActiveEntry = tipo === FichajeTipo.ENTRADA;
 
         res.json({
-            fichaje,
+            fichaje: result,
             status: {
                 hasActiveEntry,
-                currentFichaje: hasActiveEntry ? fichaje : null
+                currentFichaje: hasActiveEntry ? result : null
             }
         });
     } catch (error) {
         console.error('Error creating fichaje:', error);
-        res.status(500).json({ error: 'Error al crear fichaje' });
+        
+        // Handle specific validation errors
+        if (error.message && error.message.startsWith('INVALID_SEQUENCE:')) {
+            const errorMsg = error.message.split(':')[1];
+            return res.status(400).json({ error: errorMsg });
+        }
+        
+        res.status(500).json({ error: 'Error al crear fichaje. Por favor, inténtalo de nuevo.' });
     }
 };
 
@@ -97,9 +112,9 @@ exports.getCurrentFichaje = async (req, res) => {
     try {
         const userId = req.user.userId;
 
-        // Obtener fichajes del día actual
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // Obtener fichajes del día actual usando fecha local consistente
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
 
