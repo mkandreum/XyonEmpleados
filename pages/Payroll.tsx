@@ -52,6 +52,35 @@ export const PayrollPage: React.FC = () => {
     }
   };
 
+  const downloadPdf = async (pdfUrl: string, filename: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(pdfUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download file');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      showAlert('Error al descargar el PDF', 'error');
+    }
+  };
+
   const downloadSelected = () => {
     if (selectedPayrolls.size === 0) {
       showAlert('Selecciona al menos una nómina para descargar', 'warning');
@@ -61,9 +90,10 @@ export const PayrollPage: React.FC = () => {
     selectedPayrolls.forEach(id => {
       const payroll = payrolls.find(p => p.id === id);
       if (payroll?.pdfUrl) {
-        // Open in new tab with slight delay to avoid popup blocker
+        const filename = `nomina-${payroll.month}-${payroll.year}.pdf`;
+        // Download with slight delay to avoid issues
         setTimeout(() => {
-          window.open(payroll.pdfUrl, '_blank');
+          downloadPdf(payroll.pdfUrl, filename);
         }, 100 * Array.from(selectedPayrolls).indexOf(id));
       }
     });
@@ -204,15 +234,13 @@ export const PayrollPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <a
-                        href={payroll.pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={() => downloadPdf(payroll.pdfUrl, `nomina-${payroll.month}-${payroll.year}.pdf`)}
                         className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm"
                       >
                         <Download size={16} />
                         Descargar
-                      </a>
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -267,15 +295,13 @@ export const PayrollPage: React.FC = () => {
                     <div className="text-base font-bold text-slate-900 dark:text-white">
                       {payroll.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€
                     </div>
-                    <a
-                      href={payroll.pdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={() => downloadPdf(payroll.pdfUrl, `nomina-${payroll.month}-${payroll.year}.pdf`)}
                       className="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     >
                       <Download size={14} />
                       Descargar PDF
-                    </a>
+                    </button>
                   </div>
                 </div>
               ))}
