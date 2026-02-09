@@ -52,9 +52,19 @@ export const PayrollPage: React.FC = () => {
     }
   };
 
+  /**
+   * Downloads a PDF file with proper authentication
+   * @param pdfUrl - The URL of the PDF file to download
+   * @param filename - The filename to save the PDF as
+   */
   const downloadPdf = async (pdfUrl: string, filename: string) => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        showAlert('Sesión expirada. Por favor, inicia sesión nuevamente', 'error');
+        return;
+      }
+
       const response = await fetch(pdfUrl, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -62,7 +72,12 @@ export const PayrollPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to download file');
+        if (response.status === 401 || response.status === 403) {
+          showAlert('No autorizado. Por favor, inicia sesión nuevamente', 'error');
+        } else {
+          showAlert(`Error al descargar el PDF (${response.status})`, 'error');
+        }
+        return;
       }
 
       const blob = await response.blob();
@@ -77,7 +92,7 @@ export const PayrollPage: React.FC = () => {
       document.body.removeChild(a);
     } catch (error) {
       console.error('Error downloading PDF:', error);
-      showAlert('Error al descargar el PDF', 'error');
+      showAlert('Error al descargar el PDF. Intenta nuevamente', 'error');
     }
   };
 
