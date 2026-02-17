@@ -48,8 +48,25 @@ export default defineConfig(({ mode }) => {
           // Skip waiting and claim clients immediately for faster updates
           skipWaiting: true,
           clientsClaim: true,
+          // Only precache JS, CSS, and font assets - NOT HTML
+          globPatterns: ['**/*.{js,css,woff,woff2,ttf,otf}'],
+          // NEVER cache navigation (HTML) - session guard in index.html must always run fresh
+          navigateFallback: null,
           // Runtime caching strategies
           runtimeCaching: [
+            {
+              // Navigation requests: ALWAYS network (index.html has session guard)
+              urlPattern: ({ request }) => request.mode === 'navigate',
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'navigation-cache',
+                expiration: {
+                  maxEntries: 1,
+                  maxAgeSeconds: 60 * 5, // 5 minutes max
+                },
+                networkTimeoutSeconds: 3,
+              },
+            },
             {
               // Cache API responses with network-first strategy
               urlPattern: /^https:\/\/.*\/api\/.*/i,

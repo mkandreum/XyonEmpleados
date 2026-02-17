@@ -15,6 +15,50 @@
 
 <body>
   <div id="root"></div>
+  <!-- Session guard: runs BEFORE any cached JS bundle loads -->
+  <script>
+    (function() {
+      try {
+        var token = localStorage.getItem('token');
+        if (token) {
+          var parts = token.split('.');
+          if (parts.length === 3) {
+            var payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+            if (payload.exp && (payload.exp * 1000) < Date.now()) {
+              // Token expired - clear session immediately
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              if (window.location.pathname !== '/login' &&
+                  window.location.pathname !== '/register' &&
+                  window.location.pathname !== '/forgot-password' &&
+                  window.location.pathname !== '/reset-password') {
+                window.location.replace('/login?expired=1');
+              }
+            }
+          } else {
+            // Invalid token format
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          }
+        }
+      } catch(e) {
+        // If anything fails, clear potentially corrupt session
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+
+      // Force Service Worker update on every page load
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          regs.forEach(function(reg) { reg.update(); });
+        });
+        // Listen for new SW and reload page to activate it
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+          window.location.reload();
+        });
+      }
+    })();
+  </script>
   <script type="module" src="/index.tsx"></script>
 </body>
 
