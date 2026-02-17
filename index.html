@@ -17,7 +17,7 @@
   <div id="root"></div>
   <!-- Session guard: runs BEFORE any cached JS bundle loads -->
   <script>
-    (function() {
+    (function () {
       try {
         var token = localStorage.getItem('token');
         if (token) {
@@ -29,9 +29,9 @@
               localStorage.removeItem('token');
               localStorage.removeItem('user');
               if (window.location.pathname !== '/login' &&
-                  window.location.pathname !== '/register' &&
-                  window.location.pathname !== '/forgot-password' &&
-                  window.location.pathname !== '/reset-password') {
+                window.location.pathname !== '/register' &&
+                window.location.pathname !== '/forgot-password' &&
+                window.location.pathname !== '/reset-password') {
                 window.location.replace('/login?expired=1');
               }
             }
@@ -41,7 +41,7 @@
             localStorage.removeItem('user');
           }
         }
-      } catch(e) {
+      } catch (e) {
         // If anything fails, clear potentially corrupt session
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -49,12 +49,18 @@
 
       // Force Service Worker update on every page load
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(regs) {
-          regs.forEach(function(reg) { reg.update(); });
-        });
-        // Listen for new SW and reload page to activate it
-        navigator.serviceWorker.addEventListener('controllerchange', function() {
-          window.location.reload();
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          for (var i = 0; i < regs.length; i++) {
+            // If token is expired, we need to kill the SW to get the new version
+            var token = localStorage.getItem('token');
+            if (token) {
+              var p = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+              if (p.exp && (p.exp * 1000) < Date.now()) {
+                regs[i].unregister();
+              }
+            }
+            regs[i].update();
+          }
         });
       }
     })();

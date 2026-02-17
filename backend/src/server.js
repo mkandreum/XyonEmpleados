@@ -138,11 +138,17 @@ app.get('*', (req, res) => {
     if (req.path.startsWith('/api')) {
         return res.status(404).json({ error: 'API endpoint not found' });
     }
-    // Prevent caching of index.html to ensure users always get the latest version
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+
+    // EXTREME anti-cache headers
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-    res.setHeader('Last-Modified', new Date().toUTCString());
+    res.setHeader('Surrogate-Control', 'no-store');
+
+    // If the browser supports it, this will clear EVERYTHING if they are having issues
+    // We don't want to run this always, but for index.html it helps break the SW lock
+    // res.setHeader('Clear-Site-Data', '"cache", "storage"'); // Too aggressive for every hit
+
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
