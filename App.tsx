@@ -165,6 +165,7 @@ const AppRoutes = () => {
 
 import { ThemeProvider } from './context/ThemeContext';
 import { Toaster } from 'react-hot-toast';
+import { forceLogout, isTokenExpired } from './services/api';
 
 /**
  * Background watchdog that periodically checks if the session is still valid.
@@ -177,30 +178,13 @@ function SessionWatchdog() {
     React.useEffect(() => {
         if (!isAuthenticated) return;
 
-        const checkSession = () => {
+        const checkSession = async () => {
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            try {
-                // Decode payload (e.g., xxxxx.payload.xxxxx)
-                const parts = token.split('.');
-                if (parts.length !== 3) throw new Error('Invalid token');
-
-                const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-                const now = Math.floor(Date.now() / 1000);
-
-                // If expired or missing exp
-                if (!payload.exp || payload.exp < now) {
-                    console.warn('Watchdog: Token expired, forcing logout...');
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    window.location.href = '/login?expired=1';
-                }
-            } catch (err) {
-                console.error('Watchdog: Invalid session, clearing...', err);
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = '/login';
+            if (isTokenExpired(token)) {
+                console.warn('Watchdog: Token expired, forcing nuclear logout...');
+                await forceLogout();
             }
         };
 

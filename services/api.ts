@@ -27,7 +27,7 @@ function decodeTokenPayload(token: string): any | null {
 }
 
 // Helper: check if token is expired (with 60s buffer)
-function isTokenExpired(token: string): boolean {
+export function isTokenExpired(token: string): boolean {
     const payload = decodeTokenPayload(token);
     if (!payload || !payload.exp) return true;
     // exp is in seconds, Date.now() is in milliseconds
@@ -38,16 +38,41 @@ function isTokenExpired(token: string): boolean {
 // Flag to prevent multiple simultaneous logouts
 let isLoggingOut = false;
 
-function forceLogout() {
+export async function forceLogout() {
     if (isLoggingOut) return;
     isLoggingOut = true;
+
+    // 1. Clear session data
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    // Only redirect if not already on auth pages
+
+    // 2. Clear Caches and Service Workers to force a total refresh
+    try {
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (const registration of registrations) {
+                await registration.unregister();
+            }
+        }
+        if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            for (const name of cacheNames) {
+                await caches.delete(name);
+            }
+        }
+    } catch (err) {
+        console.error('Error during cache cleanup:', err);
+    }
+
+    // 3. Force redirect to login
     const currentPath = window.location.pathname;
     if (!['/login', '/register', '/forgot-password', '/reset-password'].includes(currentPath)) {
         window.location.href = '/login?expired=1';
+    } else {
+        // If already on login but something is weird, just reload
+        window.location.reload();
     }
+
     // Reset flag after a short delay
     setTimeout(() => { isLoggingOut = false; }, 2000);
 }
@@ -74,21 +99,21 @@ api.interceptors.response.use(
         if (error instanceof axios.Cancel) {
             return Promise.reject(error);
         }
-        
+
         const status = error.response?.status;
         const requestUrl = error.config?.url || '';
-        
+
         // Don't auto-logout on auth endpoints (login/register failures are expected)
-        const isAuthRoute = requestUrl.includes('/auth/login') || 
-                           requestUrl.includes('/auth/register') ||
-                           requestUrl.includes('/auth/forgot-password') ||
-                           requestUrl.includes('/auth/reset-password');
-        
+        const isAuthRoute = requestUrl.includes('/auth/login') ||
+            requestUrl.includes('/auth/register') ||
+            requestUrl.includes('/auth/forgot-password') ||
+            requestUrl.includes('/auth/reset-password');
+
         if ((status === 401 || status === 403) && !isAuthRoute) {
             console.warn(`Session expired or invalid (${status}) on ${requestUrl}. Logging out.`);
             forceLogout();
         }
-        
+
         return Promise.reject(error);
     }
 );
