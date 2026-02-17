@@ -135,8 +135,10 @@ app.get('/api/health', (req, res) => {
 
 // Fallback for SPA
 app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) {
-        return res.status(404).json({ error: 'API endpoint not found' });
+    // Don't serve index.html for API calls OR missing static assets (js, css, images)
+    if (req.path.startsWith('/api') ||
+        req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+        return res.status(404).json({ error: 'Resource not found' });
     }
 
     // EXTREME anti-cache headers
