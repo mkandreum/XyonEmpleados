@@ -11,10 +11,17 @@ exports.authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
-    if (!token) return res.sendStatus(401);
+    if (!token) {
+        return res.status(401).json({ error: 'No token provided', code: 'NO_TOKEN' });
+    }
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) return res.sendStatus(403);
+        if (err) {
+            if (err.name === 'TokenExpiredError') {
+                return res.status(403).json({ error: 'Token expired', code: 'TOKEN_EXPIRED' });
+            }
+            return res.status(403).json({ error: 'Invalid token', code: 'INVALID_TOKEN' });
+        }
         req.user = user;
         next();
     });

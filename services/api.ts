@@ -13,14 +13,85 @@ const api = axios.create({
     },
 });
 
-// Add auth token to requests
+// Helper: decode JWT payload without library
+function decodeTokenPayload(token: string): any | null {
+    try {
+        const parts = token.split('.');
+        if (parts.length !== 3) return null;
+        const payload = parts[1];
+        const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+        return JSON.parse(decoded);
+    } catch {
+        return null;
+    }
+}
+
+// Helper: check if token is expired (with 60s buffer)
+function isTokenExpired(token: string): boolean {
+    const payload = decodeTokenPayload(token);
+    if (!payload || !payload.exp) return true;
+    // exp is in seconds, Date.now() is in milliseconds
+    // Add 60 second buffer so we don't send a request that will fail
+    return (payload.exp * 1000) < (Date.now() + 60000);
+}
+
+// Flag to prevent multiple simultaneous logouts
+let isLoggingOut = false;
+
+function forceLogout() {
+    if (isLoggingOut) return;
+    isLoggingOut = true;
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    // Only redirect if not already on auth pages
+    const currentPath = window.location.pathname;
+    if (!['/login', '/register', '/forgot-password', '/reset-password'].includes(currentPath)) {
+        window.location.href = '/login?expired=1';
+    }
+    // Reset flag after a short delay
+    setTimeout(() => { isLoggingOut = false; }, 2000);
+}
+
+// Add auth token to requests (with proactive expiration check)
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
+        // Check if token is expired before sending the request
+        if (isTokenExpired(token)) {
+            // Token expired - force logout
+            forceLogout();
+            return Promise.reject(new axios.Cancel('Token expired'));
+        }
         config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
 });
+
+// Response interceptor: handle 401/403 for expired/invalid tokens
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error instanceof axios.Cancel) {
+            return Promise.reject(error);
+        }
+        
+        const status = error.response?.status;
+        const requestUrl = error.config?.url || '';
+        
+        // Don't auto-logout on auth endpoints (login/register failures are expected)
+        const isAuthRoute = requestUrl.includes('/auth/login') || 
+                           requestUrl.includes('/auth/register') ||
+                           requestUrl.includes('/auth/forgot-password') ||
+                           requestUrl.includes('/auth/reset-password');
+        
+        if ((status === 401 || status === 403) && !isAuthRoute) {
+            console.warn(`Session expired or invalid (${status}) on ${requestUrl}. Logging out.`);
+            forceLogout();
+        }
+        
+        return Promise.reject(error);
+    }
+);
 
 export const authService = {
     login: async (email: string, password: string) => {

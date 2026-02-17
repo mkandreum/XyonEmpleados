@@ -13,14 +13,22 @@ export const LoginPage: React.FC = () => {
   const [isError, setIsError] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const { settings } = useSettings();
 
-  // Load remembered email on mount
+  // Load remembered email on mount & check for expired session
   useEffect(() => {
     const rememberedEmail = localStorage.getItem('rememberedEmail');
     if (rememberedEmail) {
       setEmail(rememberedEmail);
       setRememberMe(true);
+    }
+    // Show expired session warning if redirected from interceptor
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('expired') === '1') {
+      setSessionExpired(true);
+      // Clean up the URL without triggering navigation
+      window.history.replaceState({}, '', '/login');
     }
   }, []);
 
@@ -65,6 +73,13 @@ export const LoginPage: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md animate-slide-up delay-100">
         <div className="bg-white py-8 px-4 shadow-xl rounded-xl sm:px-10 border border-slate-100 transition-colors">
+
+          {sessionExpired && (
+            <div className="mb-4 flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+              <Info className="h-5 w-5 flex-shrink-0 text-amber-500" />
+              <span>Tu sesión ha expirado. Por favor, inicia sesión de nuevo.</span>
+            </div>
+          )}
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>

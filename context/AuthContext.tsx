@@ -17,9 +17,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
     const storedUser = authService.getCurrentUser();
-    if (storedUser) {
-      setUser(storedUser);
+
+    if (storedUser && token) {
+      // Validate token is not expired before trusting stored user
+      try {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+          if (payload.exp && (payload.exp * 1000) > Date.now()) {
+            setUser(storedUser);
+          } else {
+            // Token expired - clear stored data
+            console.warn('Stored token is expired, clearing session');
+            authService.logout();
+          }
+        } else {
+          authService.logout();
+        }
+      } catch {
+        // Invalid token format - clear
+        authService.logout();
+      }
     }
     setIsLoading(false);
   }, []);
