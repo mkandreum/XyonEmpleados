@@ -147,7 +147,7 @@ app.get('*', (req, res) => {
 
     // THE NUCLEAR OPTION: Forces the browser to delete the Service Worker and Cache
     // This will break the "stuck" state of the old PWA version
-    res.setHeader('Clear-Site-Data', '"cache", "storage"');
+    // res.setHeader('Clear-Site-Data', '"cache", "storage"'); 
 
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
