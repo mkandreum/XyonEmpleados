@@ -145,9 +145,9 @@ app.get('*', (req, res) => {
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
 
-    // If the browser supports it, this will clear EVERYTHING if they are having issues
-    // We don't want to run this always, but for index.html it helps break the SW lock
-    // res.setHeader('Clear-Site-Data', '"cache", "storage"'); // Too aggressive for every hit
+    // THE NUCLEAR OPTION: Forces the browser to delete the Service Worker and Cache
+    // This will break the "stuck" state of the old PWA version
+    res.setHeader('Clear-Site-Data', '"cache", "storage"');
 
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
