@@ -166,9 +166,60 @@ const AppRoutes = () => {
 import { ThemeProvider } from './context/ThemeContext';
 import { Toaster } from 'react-hot-toast';
 
+/**
+ * Background watchdog that periodically checks if the session is still valid.
+ * It will force a hard logout and reload if the token is expired or older than 24h,
+ * ensuring users are kicked out without needing to interact with the page.
+ */
+function SessionWatchdog() {
+    const { isAuthenticated } = useAuth();
+
+    React.useEffect(() => {
+        if (!isAuthenticated) return;
+
+        const checkSession = () => {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            try {
+                // Decode payload (e.g., xxxxx.payload.xxxxx)
+                const parts = token.split('.');
+                if (parts.length !== 3) throw new Error('Invalid token');
+
+                const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+                const now = Math.floor(Date.now() / 1000);
+
+                // If expired or missing exp
+                if (!payload.exp || payload.exp < now) {
+                    console.warn('Watchdog: Token expired, forcing logout...');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login?expired=1';
+                }
+            } catch (err) {
+                console.error('Watchdog: Invalid session, clearing...', err);
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+            }
+        };
+
+        // Check every 30 seconds
+        const interval = setInterval(checkSession, 30000);
+
+        // Also check immediately when the component mounts
+        checkSession();
+
+        return () => clearInterval(interval);
+    }, [isAuthenticated]);
+
+    return null;
+}
+
 function App() {
     return (
         <AuthProvider>
+            <SessionWatchdog />
             <ThemeProvider>
                 <Router>
                     <AppRoutes />
