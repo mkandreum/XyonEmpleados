@@ -142,7 +142,7 @@ export const CalendarPage: React.FC = () => {
       // Firma y nombre (abajo a la derecha)
       if (signature) {
         doc.text(user?.name || '', 150, 270);
-        doc.addImage(signature, 'PNG', 160, 250, 40, 20);
+        doc.addImage(signature, 'PNG', 140, 275, 40, 20);
       }
 
       // Descargar
