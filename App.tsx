@@ -8,6 +8,7 @@ import { Dashboard } from './pages/Dashboard';
 import { PayrollPage } from './pages/Payroll';
 import { VacationsPage } from './pages/Vacations';
 import { AbsencesPage } from './pages/Absences';
+import { CalendarPage } from './pages/Calendar';
 import { NewsPage } from './pages/News';
 import { ProfilePage } from './pages/Profile';
 import { ForgotPassword } from './pages/ForgotPassword';
@@ -125,6 +126,11 @@ const AppRoutes = () => {
             <Route path="/vacations" element={
                 <ProtectedRoute>
                     <VacationsPage />
+                </ProtectedRoute>
+            } />
+            <Route path="/calendar" element={
+                <ProtectedRoute>
+                    <CalendarPage />
                 </ProtectedRoute>
             } />
             <Route path="/absences" element={

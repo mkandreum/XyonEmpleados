@@ -4,6 +4,7 @@ import {
     LayoutDashboard,
     FileText,
     CalendarDays,
+    CalendarRange,
     Newspaper,
     UserCircle,
     Users,
@@ -36,6 +37,7 @@ export const FloatingNavbar: React.FC = () => {
     const employeeItems: NavItem[] = [
         { path: '/', label: 'Inicio', icon: LayoutDashboard },
         { path: '/payroll', label: 'Nómina', icon: FileText },
+        { path: '/calendar', label: 'Calendario', icon: CalendarRange },
         { path: '/vacations', label: 'Ausencias', icon: CalendarDays },
         { path: '/news', label: 'Comunicados', icon: Newspaper },
     ];
