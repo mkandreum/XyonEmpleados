@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { sendTemplateEmail } = require('../services/emailService');
+const { createNotification } = require('./notificationController');
 
 /**
  * POST /api/late-notifications
@@ -82,16 +83,12 @@ exports.createLateNotification = async (req, res) => {
 
         console.log(`[DEBUG] LateNotification created: ${notification.id}`);
 
-        // Crear también una notificación general para el usuario
-        await prisma.notification.create({
-            data: {
-                userId,
-                title: 'Aviso de llegada tarde',
-                message: `Tu manager ${manager.role === 'ADMIN' ? 'el administrador' : manager.name} ha registrado una llegada tarde el ${new Date(fecha).toLocaleDateString('es-ES')}. Por favor, justifica tu ausencia.`,
-                read: false,
-                date: new Date()
-            }
-        });
+        // Crear también una notificación general para el usuario (con push)
+        await createNotification(
+            userId,
+            'Aviso de llegada tarde',
+            `Tu manager ${manager.role === 'ADMIN' ? 'el administrador' : manager.name} ha registrado una llegada tarde el ${new Date(fecha).toLocaleDateString('es-ES')}. Por favor, justifica tu ausencia.`
+        );
 
         // 🔔 ENVIAR EMAIL AL EMPLEADO
         const emailVariables = {
@@ -201,16 +198,12 @@ exports.justifyLateArrival = async (req, res) => {
         console.log(`[DEBUG] Notification justified. Manager ID to notify: ${notification.managerId}`);
 
         // Crear notificación para el manager
-        const newNotif = await prisma.notification.create({
-            data: {
-                userId: notification.managerId,
-                title: 'Justificación de llegada tarde',
-                message: `${updated.user.name} ha justificado su llegada tarde del ${new Date(notification.fecha).toLocaleDateString('es-ES')}: "${justificacion}"`,
-                read: false,
-                date: new Date()
-            }
-        });
-        console.log(`[DEBUG] Manager notification created: ${newNotif.id}`);
+        const newNotif = await createNotification(
+            notification.managerId,
+            'Justificación de llegada tarde',
+            `${updated.user.name} ha justificado su llegada tarde del ${new Date(notification.fecha).toLocaleDateString('es-ES')}: "${justificacion}"`
+        );
+        console.log(`[DEBUG] Manager notification created`);
 
         res.json(updated);
     } catch (error) {

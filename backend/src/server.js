@@ -4,6 +4,7 @@ const morgan = require('morgan');
 const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { getTodayRange } = require('./utils/fichajeUtils');
 require('dotenv').config();
 
 const app = express();
@@ -145,6 +146,7 @@ app.use(express.static(path.join(__dirname, '../public'), {
 }));
 
 const routes = require('./routes');
+const { createNotification } = require('./controllers/notificationController');
 
 // API Routes
 app.use('/api', routes);
@@ -231,11 +233,82 @@ async function initializeEmailTemplates() {
     }
 }
 
+// Periodic reminders to clock in near department start time
+async function sendEntryReminders() {
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    try {
+        const schedules = await prisma.departmentSchedule.findMany();
+        const { today, tomorrow } = getTodayRange(now);
+
+        for (const schedule of schedules) {
+            if (schedule.flexibleSchedule) continue;
+
+            const [h, m] = schedule.horaEntrada.split(':').map(Number);
+            const entryMinutes = h * 60 + m;
+            const windowStart = entryMinutes - 10; // 10 minutes before start
+            const windowEnd = entryMinutes + schedule.toleranciaMinutos; // until tolerance expires
+
+            if (currentMinutes < windowStart || currentMinutes > windowEnd) {
+                continue;
+            }
+
+            const users = await prisma.user.findMany({
+                where: { department: schedule.department },
+                select: { id: true, name: true }
+            });
+
+            for (const user of users) {
+                const hasEntryToday = await prisma.fichaje.findFirst({
+                    where: {
+                        userId: user.id,
+                        tipo: 'ENTRADA',
+                        timestamp: {
+                            gte: today,
+                            lt: tomorrow
+                        }
+                    }
+                });
+
+                if (hasEntryToday) continue;
+
+                // Prevent duplicate reminders in the same day
+                const existingReminder = await prisma.notification.findFirst({
+                    where: {
+                        userId: user.id,
+                        title: 'Recordatorio de fichaje',
+                        date: {
+                            gte: today,
+                            lt: tomorrow
+                        }
+                    }
+                });
+
+                if (existingReminder) continue;
+
+                await createNotification(
+                    user.id,
+                    'Recordatorio de fichaje',
+                    `Recuerda fichar tu entrada para ${schedule.department}.`
+                );
+            }
+        }
+    } catch (error) {
+        console.error('Error sending entry reminders:', error);
+    }
+}
+
 // Start server
 Promise.all([
     ensureAdminExists(),
     initializeEmailTemplates()
 ]).then(() => {
+    // Start reminder loop after startup
+    setInterval(sendEntryReminders, 5 * 60 * 1000); // every 5 minutes
+    // Kick off once shortly after boot
+    setTimeout(sendEntryReminders, 30 * 1000);
+
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });

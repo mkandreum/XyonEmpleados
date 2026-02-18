@@ -6,7 +6,7 @@ const { sendPushToUser } = require('../services/pushService');
 const createNotification = async (userId, title, message) => {
     try {
         console.log(`🔔 [NOTIFICATION] Creating notification for user ${userId}: ${title}`);
-        await prisma.notification.create({
+        const created = await prisma.notification.create({
             data: {
                 userId,
                 title,
@@ -25,6 +25,8 @@ const createNotification = async (userId, title, message) => {
         }).catch((err) => {
             console.error('❌ [NOTIFICATION] Error sending push notification:', err);
         });
+
+        return created;
     } catch (error) {
         console.error('❌ [NOTIFICATION] Error creating notification:', error);
     }
