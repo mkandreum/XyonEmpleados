@@ -18,6 +18,27 @@
   <!-- Session guard: runs BEFORE any cached JS bundle loads -->
   <script>
     (function () {
+      // One-time cache bust when asset version changes
+      var ASSET_VERSION = '2026-02-18-cal-nav';
+      try {
+        var stored = localStorage.getItem('asset_version');
+        if (stored !== ASSET_VERSION) {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (regs) {
+              regs.forEach(function (r) { r.unregister(); });
+            });
+          }
+          if ('caches' in window) {
+            caches.keys().then(function (names) {
+              names.forEach(function (n) { caches.delete(n); });
+            });
+          }
+          localStorage.setItem('asset_version', ASSET_VERSION);
+        }
+      } catch (e) {
+        console.warn('Cache version check failed', e);
+      }
+
       try {
         var token = localStorage.getItem('token');
         if (token) {
