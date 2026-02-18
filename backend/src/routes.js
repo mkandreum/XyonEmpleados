@@ -209,6 +209,7 @@ router.get('/fichajes/department/:dept/week', fichajeController.getDepartmentWee
 router.get('/department-schedules/:department', scheduleController.getSchedule);
 router.get('/department-schedules', isAdmin, scheduleController.getAllSchedules);
 router.post('/department-schedules', isAdmin, scheduleController.upsertSchedule);
+router.delete('/department-schedules/:department', isAdmin, scheduleController.deleteSchedule);
 
 // Late Arrival Notifications Routes
 router.post('/late-notifications', lateNotificationController.createLateNotification);

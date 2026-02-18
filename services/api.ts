@@ -482,6 +482,10 @@ export const scheduleService = {
         const response = await api.post<DepartmentSchedule>('/department-schedules', schedule);
         return response.data;
     },
+    delete: async (department: string) => {
+        const response = await api.delete(`/department-schedules/${department}`);
+        return response.data;
+    },
 };
 
 export const lateNotificationService = {

@@ -119,3 +119,30 @@ exports.getAllSchedules = async (req, res) => {
         res.status(500).json({ error: 'Error al obtener horarios' });
     }
 };
+
+/**
+ * DELETE /api/department-schedules/:department
+ * Eliminar horario de un departamento (solo admins)
+ */
+exports.deleteSchedule = async (req, res) => {
+    try {
+        const { department } = req.params;
+
+        const schedule = await prisma.departmentSchedule.findUnique({
+            where: { department }
+        });
+
+        if (!schedule) {
+            return res.status(404).json({ error: 'Horario no encontrado' });
+        }
+
+        await prisma.departmentSchedule.delete({
+            where: { department }
+        });
+
+        res.json({ success: true, message: 'Horario eliminado' });
+    } catch (error) {
+        console.error('Error deleting schedule:', error);
+        res.status(500).json({ error: 'Error al eliminar horario' });
+    }
+};

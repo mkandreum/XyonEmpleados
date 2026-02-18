@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { scheduleService, adminService } from '../services/api';
 import { DepartmentSchedule } from '../types';
-import { Clock, Plus, Edit2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Clock, Plus, Edit2, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
 
 export const ScheduleSettings: React.FC = () => {
     const [schedules, setSchedules] = useState<DepartmentSchedule[]>([]);
@@ -10,6 +10,7 @@ export const ScheduleSettings: React.FC = () => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState<Partial<DepartmentSchedule>>({});
     const [isCreating, setIsCreating] = useState(false);
+    const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
     useEffect(() => {
         loadData();
@@ -98,6 +99,17 @@ export const ScheduleSettings: React.FC = () => {
         } catch (error) {
             console.error('Error saving schedule:', error);
             alert('Error al guardar horario');
+        }
+    };
+
+    const handleDelete = async (department: string) => {
+        try {
+            await scheduleService.delete(department);
+            setDeleteConfirm(null);
+            await loadSchedules();
+        } catch (error) {
+            console.error('Error deleting schedule:', error);
+            alert('Error al eliminar horario');
         }
     };
 
@@ -223,13 +235,22 @@ export const ScheduleSettings: React.FC = () => {
                         <div key={schedule.id} className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow relative group">
                             <div className="flex justify-between items-start mb-4">
                                 <h4 className="font-bold text-lg text-slate-800 dark:text-white">{schedule.department}</h4>
-                                <button
-                                    onClick={() => handleEdit(schedule)}
-                                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all"
-                                    title="Editar"
-                                >
-                                    <Edit2 size={16} />
-                                </button>
+                                <div className="flex gap-1">
+                                    <button
+                                        onClick={() => handleEdit(schedule)}
+                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all"
+                                        title="Editar"
+                                    >
+                                        <Edit2 size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => setDeleteConfirm(schedule.department)}
+                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all"
+                                        title="Eliminar"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
                             </div>
 
                             {schedule.flexibleSchedule ? (
@@ -266,6 +287,32 @@ export const ScheduleSettings: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {deleteConfirm && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-sm w-full p-6 border border-slate-100 dark:border-slate-800">
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Eliminar horario</h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+                            ¿Estás seguro de que deseas eliminar el horario de <strong>{deleteConfirm}</strong>? Los empleados de este departamento no tendrán horario asignado.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setDeleteConfirm(null)}
+                                className="px-4 py-2 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={() => handleDelete(deleteConfirm)}
+                                className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
