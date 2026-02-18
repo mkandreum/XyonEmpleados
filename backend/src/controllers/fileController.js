@@ -4,6 +4,19 @@ const fs = require('fs');
 // Ensure uploads directories exist (using absolute path relative to this controller file)
 const uploadsBase = path.join(__dirname, '../../uploads');
 const privateDir = path.join(uploadsBase, 'private');
+// Legacy directory (before private/ structure was introduced)
+const legacyDir = uploadsBase;
+
+// Helper: find file in private or legacy directory
+function findFilePath(type, filename) {
+    const privatePath = path.join(privateDir, type, filename);
+    if (fs.existsSync(privatePath)) return privatePath;
+
+    const legacyPath = path.join(legacyDir, type, filename);
+    if (fs.existsSync(legacyPath)) return legacyPath;
+
+    return null;
+}
 
 exports.getFile = async (req, res) => {
     try {
@@ -20,14 +33,15 @@ exports.getFile = async (req, res) => {
             return res.status(400).json({ error: 'Invalid file type' });
         }
 
-        const filePath = path.join(privateDir, type, filename);
-
-        // Security check: Prevent directory traversal
-        if (!filePath.startsWith(privateDir)) {
+        // Security: prevent directory traversal
+        if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        if (!fs.existsSync(filePath)) {
+        const filePath = findFilePath(type, filename);
+
+        if (!filePath) {
+            console.warn(`File not found: ${type}/${filename} (checked private/ and legacy/)`);
             return res.status(404).json({ error: 'File not found' });
         }
 
@@ -37,69 +51,52 @@ exports.getFile = async (req, res) => {
             return res.sendFile(filePath);
         }
 
-        // 2. Determine file ownership (Heuristic needed or DB lookup)
-        // Since we don't store file ownership in a separate table for generic uploads 
-        // (except usually linked in Prisma models), we might need to rely on the requesting context 
-        // OR enforce that filenames contain user IDs or rely on the frontend sending the token correctly 
-        // and the fact that users only see links to their own data in the UI.
-
-        // HOWEVER, "Security by UI hiding" is not enough.
-
-        // Strategy:
-        // - For Payrols: They are in `Payroll` table. We should look up if a payroll with this pdfUrl exists and belongs to user.
-        // - For Justifications: In `VacationRequest` or `LateArrivalNotification`.
-
-        // To implement distinct strict ownership checks:
         const { PrismaClient } = require('@prisma/client');
         const prisma = new PrismaClient();
 
         let hasAccess = false;
 
-        const relativeUrl = `/api/files/${type}/${filename}`;
+        // Look up ownership - check BOTH new and legacy URL formats
+        const newUrl = `/api/files/${type}/${filename}`;
+        const legacyUrl = `/uploads/${type}/${filename}`;
+        const legacyPrivateUrl = `/uploads/private/${type}/${filename}`;
 
         if (type === 'payrolls') {
             const payroll = await prisma.payroll.findFirst({
-                where: { pdfUrl: relativeUrl }
+                where: {
+                    OR: [
+                        { pdfUrl: newUrl },
+                        { pdfUrl: legacyUrl },
+                        { pdfUrl: legacyPrivateUrl },
+                        { pdfUrl: { contains: filename } }
+                    ]
+                }
             });
-
-            // If checking Manager logic for team payrolls (if applicable):
-            // if (user.role === 'MANAGER' && payroll) { ... check if payroll.userId is in team ... }
 
             if (payroll && payroll.userId === user.id) {
                 hasAccess = true;
             }
-            if (user.role === 'MANAGER') {
-                // Allow managers? Usually managers don't see payrolls of employees. Let's assume NO.
-            }
         } else if (type === 'justifications') {
-            // Check Vacation Requests
             const vacation = await prisma.vacationRequest.findFirst({
-                where: { justificationUrl: relativeUrl }
+                where: {
+                    OR: [
+                        { justificationUrl: newUrl },
+                        { justificationUrl: legacyUrl },
+                        { justificationUrl: legacyPrivateUrl },
+                        { justificationUrl: { contains: filename } }
+                    ]
+                }
             });
             if (vacation) {
                 if (vacation.userId === user.id) hasAccess = true;
 
-                // Managers can view justifications of their team?
-                // Complex logic: Check if user.department matches manager AND role is manager
+                // Managers can view justifications of their team
                 if (user.role === 'MANAGER') {
                     const requestUser = await prisma.user.findUnique({ where: { id: vacation.userId } });
                     if (requestUser && requestUser.department === user.department) {
                         hasAccess = true;
                     }
                 }
-            }
-
-            // Check Late Arrivals
-            if (!hasAccess) {
-                const late = await prisma.lateArrivalNotification.findFirst({
-                    where: { justificacionTexto: { contains: filename } } // Logic mismatch: url vs text. 
-                    // We need to verify how justificacion is stored. Currently likely just text, or url?
-                    // In schema check: LateArrivalNotification has `justificacionTexto`, no explicit URL field for file.
-                    // It might be embedded or not supported yet. Assuming Vacations mainly.
-                });
-                // If LateArrivals don't use file uploads yet, verify `types.ts` / schema.
-                // Schema says `justificacionTexto` String?. If we uploaded a file, where is the URL?
-                // If not implemented, skip.
             }
         }
 

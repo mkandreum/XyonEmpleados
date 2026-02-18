@@ -149,9 +149,10 @@ app.get('/api/health', (req, res) => {
 
 // Fallback for SPA
 app.get('*', (req, res) => {
-    // Don't serve index.html for API calls OR missing static assets (js, css, images)
+    // Don't serve index.html for API calls OR missing static assets
     if (req.path.startsWith('/api') ||
-        req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+        req.path.startsWith('/uploads/') ||
+        req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|pdf|doc|docx|xls|xlsx)$/)) {
         return res.status(404).json({ error: 'Resource not found' });
     }
 
@@ -161,11 +162,11 @@ app.get('*', (req, res) => {
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
 
-    // NUCLEAR OPTION: Forces browser to delete Service Worker and Cache
-    // This ensures users always get the latest deployment
-    res.setHeader('Clear-Site-Data', '"cache", "storage"');
+    // Clear browser cache (NOT storage - that would delete auth token)
+    res.setHeader('Clear-Site-Data', '"cache"');
 
     res.sendFile(path.join(__dirname, '../public/index.html'));
+});
 });
 
 const { PrismaClient } = require('@prisma/client');
