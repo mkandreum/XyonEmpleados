@@ -43,25 +43,22 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
         workbox: {
-          // Clean up old caches aggressively
           cleanupOutdatedCaches: true,
           skipWaiting: true,
           clientsClaim: true,
-          // DO NOT precache anything - let the browser load fresh from server
+          // No precache lists; we rely on hashed assets + HTML no-store
           globPatterns: [],
-          // No navigation fallback
           navigateFallback: null,
-          // Minimal runtime caching - NetworkFirst for everything
           runtimeCaching: [
             {
-              // ALL requests: Network first, no stale cache
+              // Runtime caching off for app shell and assets: always network first, short-lived
               urlPattern: /.*/i,
               handler: 'NetworkFirst',
               options: {
-                cacheName: 'all-cache',
+                cacheName: 'runtime-cache',
                 expiration: {
-                  maxEntries: 50,
-                  maxAgeSeconds: 60 * 5, // 5 minutes max
+                  maxEntries: 30,
+                  maxAgeSeconds: 60, // 1 minute to minimize stale risk
                 },
                 networkTimeoutSeconds: 5,
               },
