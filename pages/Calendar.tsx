@@ -115,7 +115,7 @@ export const CalendarPage: React.FC = () => {
       const rangeInfo = { range: { isStart, isEnd } };
 
       if (vacation.type === 'SICK_LEAVE') {
-        return { color: 'bg-emerald-500', textColor: 'text-emerald-600', label: 'Baja médica', shortLabel: '🏥', ...rangeInfo };
+        return { color: 'bg-emerald-500', textColor: 'text-emerald-600', label: 'Horas médicas', shortLabel: '🏥', ...rangeInfo };
       }
       if (vacation.type === 'PERSONAL' || vacation.type === 'OTHER') {
         return { color: 'bg-amber-400', textColor: 'text-amber-600', label: 'Permiso', shortLabel: 'P', ...rangeInfo };
@@ -293,7 +293,7 @@ export const CalendarPage: React.FC = () => {
           <LegendDot color="bg-rose-500" label="No fichado" />
           <LegendDot color="bg-blue-500" label="Vacaciones" />
           <LegendDot color="bg-red-500" label="Rechazadas" />
-          <LegendDot color="bg-emerald-500" label="Baja médica" outline />
+          <LegendDot color="bg-emerald-500" label="Horas médicas" outline />
           <LegendDot color="bg-amber-400" label="Permiso" outline />
         </div>
       </div>

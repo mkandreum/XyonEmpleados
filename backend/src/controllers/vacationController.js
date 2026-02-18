@@ -283,7 +283,7 @@ exports.managerRejectVacation = async (req, res) => {
         const getTypeLabel = (t, st) => {
             switch (t) {
                 case 'VACATION': return 'Vacaciones';
-                case 'SICK_LEAVE': return 'Baja Médica';
+                case 'SICK_LEAVE': return 'Horas médicas';
                 case 'PERSONAL': return 'Asuntos Propios';
                 case 'OVERTIME': return 'Horas Exceso';
                 case 'OTHER': return st || 'Otros Permisos';

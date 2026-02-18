@@ -425,7 +425,7 @@ exports.getAttendanceReport = async (req, res) => {
                 const typeMap = {
                     'VACATION': 'Vacaciones',
                     'PERSONAL': 'Permiso personal',
-                    'SICK_LEAVE': 'Baja médica',
+                    'SICK_LEAVE': 'Horas médicas',
                     'OVERTIME': 'Compensación horas',
                     'OTHER': 'Otro permiso'
                 };
