@@ -19,6 +19,10 @@ type DayBadge = {
   color: string;
   label: string;
   detail?: string;
+  range?: {
+    isStart: boolean;
+    isEnd: boolean;
+  };
 };
 
 export const CalendarPage: React.FC = () => {
@@ -68,6 +72,8 @@ export const CalendarPage: React.FC = () => {
 
   const dayBadge = (date: Date): DayBadge | null => {
     const dayKey = toISODate(date);
+    const todayIso = toISODate(new Date());
+    const isFuture = date.getTime() > new Date(todayIso + 'T00:00:00').getTime();
 
     // Check vacations/absences first
     const vacation = vacations.find((v) => {
@@ -77,22 +83,29 @@ export const CalendarPage: React.FC = () => {
     });
 
     if (vacation) {
+      const start = new Date(vacation.startDate);
+      const end = new Date(vacation.endDate);
+      const isStart = toISODate(start) === dayKey;
+      const isEnd = toISODate(end) === dayKey;
+      const rangeInfo = { range: { isStart, isEnd } } as const;
+
       if (vacation.type === 'SICK_LEAVE') {
-        return { color: 'bg-emerald-500 text-white', label: 'Médica' };
+        return { color: 'bg-emerald-500 text-white', label: 'Médica', ...rangeInfo };
       }
       if (vacation.type === 'PERSONAL' || vacation.type === 'OTHER') {
-        return { color: 'bg-amber-400 text-white', label: 'Permiso' };
+        return { color: 'bg-amber-400 text-white', label: 'Permiso', ...rangeInfo };
       }
       if (vacation.status === VacationStatus.APPROVED) {
-        return { color: 'bg-blue-500 text-white', label: 'Vacaciones' };
+        return { color: 'bg-blue-500 text-white', label: 'Vacaciones', ...rangeInfo };
       }
       if (vacation.status === VacationStatus.REJECTED) {
-        return { color: 'bg-red-500 text-white', label: 'Rechazado' };
+        return { color: 'bg-red-500 text-white', label: 'Rechazado', ...rangeInfo };
       }
-      return { color: 'bg-amber-500 text-white', label: 'Pendiente' };
+      return { color: 'bg-amber-500 text-white', label: 'Pendiente', ...rangeInfo };
     }
 
     const stats = fichajeDays[dayKey];
+    if (!stats && isFuture) return null; // no badge for future days without data
     if (!stats) return { color: 'bg-rose-500 text-white', label: 'Sin fichar' };
 
     const goodDay = stats.isComplete && !stats.isLate && !stats.isEarlyDeparture;
@@ -152,11 +165,21 @@ export const CalendarPage: React.FC = () => {
               const dayNumber = date.getDate();
               const isToday = toISODate(date) === toISODate(new Date());
 
+              const rangeClasses = badge?.range ? `
+                ${badge.range.isStart ? 'rounded-l-xl pl-1' : 'rounded-none'}
+                ${badge.range.isEnd ? 'rounded-r-xl pr-1' : 'rounded-none'}
+              ` : '';
+
               return (
                 <div
                   key={dayNumber}
                   className={`relative aspect-square rounded-xl border border-slate-100 dark:border-slate-800 p-1 sm:p-2 flex flex-col gap-1 justify-between bg-white dark:bg-slate-950/40 ${isToday ? 'ring-2 ring-blue-500/60' : ''}`}
                 >
+                  {badge?.range && (
+                    <div
+                      className={`absolute inset-1 sm:inset-[6px] ${badge.color} opacity-20 ${rangeClasses}`}
+                    />
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{dayNumber}</span>
                     {badge && (
