@@ -75,18 +75,44 @@ export const CalendarPage: React.FC = () => {
         } catch {}
       }
 
-      // Tabla de fichajes (ejemplo simple, puedes mejorar el formato)
+      // Tabla de fichajes mejorada
       const daysInMonth = new Date(year, month, 0).getDate();
       const tableData = [];
       for (let d = 1; d <= daysInMonth; d++) {
         const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const stats = fichajeDays[dateStr];
+        let entrada = '';
+        let salida = '';
+        let horas = '';
+        let incidencia = '';
+        if (stats) {
+          // Buscar primer fichaje de entrada y último de salida
+          if (Array.isArray(stats.fichajes)) {
+            const entradaFichaje = stats.fichajes.find(f => f.tipo === 'ENTRADA');
+            const salidaFichaje = [...stats.fichajes].reverse().find(f => f.tipo === 'SALIDA');
+            entrada = entradaFichaje ? new Date(entradaFichaje.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+            salida = salidaFichaje ? new Date(salidaFichaje.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+          }
+          horas = typeof stats.horasTrabajadas === 'number' ? stats.horasTrabajadas.toFixed(2) : '';
+          // Incidencia legible
+          if (!stats.isComplete) {
+            incidencia = 'Incompleto';
+          } else if (stats.isLate && stats.isEarlyDeparture) {
+            incidencia = 'Tarde y salida temprana';
+          } else if (stats.isLate) {
+            incidencia = 'Tarde';
+          } else if (stats.isEarlyDeparture) {
+            incidencia = 'Salida temprana';
+          } else {
+            incidencia = '';
+          }
+        }
         tableData.push([
           dateStr,
-          stats?.entrada || '',
-          stats?.salida || '',
-          stats?.workedHours || '',
-          stats?.incidencia || '',
+          entrada,
+          salida,
+          horas,
+          incidencia,
         ]);
       }
       autoTable(doc, {
