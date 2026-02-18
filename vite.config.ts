@@ -43,67 +43,27 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
         workbox: {
-          // Clean up old caches
+          // Clean up old caches aggressively
           cleanupOutdatedCaches: true,
-          // Skip waiting and claim clients immediately for faster updates
           skipWaiting: true,
           clientsClaim: true,
-          // Only precache JS, CSS, and font assets - NOT HTML
-          globPatterns: ['**/*.{js,css,woff,woff2,ttf,otf}'],
-          // NEVER cache navigation (HTML) - session guard in index.html must always run fresh
+          // DO NOT precache anything - let the browser load fresh from server
+          globPatterns: [],
+          // No navigation fallback
           navigateFallback: null,
-          // Runtime caching strategies
+          // Minimal runtime caching - NetworkFirst for everything
           runtimeCaching: [
             {
-              // Navigation requests: ALWAYS network (index.html has session guard)
-              urlPattern: ({ request }) => request.mode === 'navigate',
+              // ALL requests: Network first, no stale cache
+              urlPattern: /.*/i,
               handler: 'NetworkFirst',
               options: {
-                cacheName: 'navigation-cache',
-                expiration: {
-                  maxEntries: 1,
-                  maxAgeSeconds: 60 * 5, // 5 minutes max
-                },
-                networkTimeoutSeconds: 3,
-              },
-            },
-            {
-              // Cache API responses with network-first strategy
-              urlPattern: /^https:\/\/.*\/api\/.*/i,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'api-cache',
+                cacheName: 'all-cache',
                 expiration: {
                   maxEntries: 50,
-                  maxAgeSeconds: 60 * 5, // 5 minutes
+                  maxAgeSeconds: 60 * 5, // 5 minutes max
                 },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
-              },
-            },
-            {
-              // Cache images with cache-first strategy
-              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'images-cache',
-                expiration: {
-                  maxEntries: 100,
-                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-                },
-              },
-            },
-            {
-              // Cache fonts with cache-first strategy
-              urlPattern: /\.(?:woff|woff2|ttf|otf)$/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'fonts-cache',
-                expiration: {
-                  maxEntries: 30,
-                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-                },
+                networkTimeoutSeconds: 5,
               },
             },
           ],

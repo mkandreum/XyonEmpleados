@@ -101,6 +101,20 @@ app.use('/uploads/public', express.static(path.join(__dirname, '../uploads/publi
     lastModified: true,
 }));
 
+// Force no-cache on service worker file
+app.get('/sw.js', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.sendFile(path.join(__dirname, '../public/sw.js'));
+});
+app.get('/registerSW.js', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.sendFile(path.join(__dirname, '../public/registerSW.js'));
+});
+
 // Static files (build from frontend) with aggressive caching for hashed assets
 app.use(express.static(path.join(__dirname, '../public'), {
     maxAge: '1y', // Cache hashed assets for 1 year
@@ -147,9 +161,9 @@ app.get('*', (req, res) => {
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
 
-    // THE NUCLEAR OPTION: Forces the browser to delete the Service Worker and Cache
-    // This will break the "stuck" state of the old PWA version
-    // res.setHeader('Clear-Site-Data', '"cache", "storage"'); 
+    // NUCLEAR OPTION: Forces browser to delete Service Worker and Cache
+    // This ensures users always get the latest deployment
+    res.setHeader('Clear-Site-Data', '"cache", "storage"');
 
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });

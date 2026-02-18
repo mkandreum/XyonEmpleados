@@ -47,21 +47,22 @@
         localStorage.removeItem('user');
       }
 
-      // Force Service Worker update on every page load
+      // NUCLEAR: Unregister ALL service workers and clear caches on every page load
+      // This ensures users always get the latest deployment
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function (regs) {
           for (var i = 0; i < regs.length; i++) {
-            // If token is expired, we need to kill the SW to get the new version
-            var token = localStorage.getItem('token');
-            if (token) {
-              var p = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-              if (p.exp && (p.exp * 1000) < Date.now()) {
-                regs[i].unregister();
-              }
-            }
-            regs[i].update();
+            regs[i].unregister();
           }
         });
+        // Also clear all caches
+        if ('caches' in window) {
+          caches.keys().then(function (names) {
+            for (var i = 0; i < names.length; i++) {
+              caches.delete(names[i]);
+            }
+          });
+        }
       }
     })();
   </script>
