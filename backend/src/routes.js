@@ -31,6 +31,23 @@ router.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// BUILD VERSION (public, no auth - used by frontend to detect new deploys)
+router.get('/version', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    // Read version from version.json written at build time
+    const fs = require('fs');
+    const path = require('path');
+    try {
+        const versionFile = path.join(__dirname, '../version.json');
+        if (fs.existsSync(versionFile)) {
+            const data = JSON.parse(fs.readFileSync(versionFile, 'utf8'));
+            return res.json(data);
+        }
+    } catch (e) { /* ignore */ }
+    res.json({ version: 'unknown', buildTime: new Date().toISOString() });
+});
+
 
 // Public Routes (NO AUTH REQUIRED)
 router.post('/auth/register', authLimiter, validate(registerSchema), authController.register);

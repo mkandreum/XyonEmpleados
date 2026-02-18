@@ -25,6 +25,9 @@ COPY backend/ .
 # Copy built frontend to backend's public directory
 COPY --from=frontend-builder /app/dist ./public
 
+# Copy version.json generated during frontend build (prebuild script)
+COPY --from=frontend-builder /app/backend/version.json ./version.json
+
 # Copy Prisma schema
 COPY backend/prisma ./prisma
 
