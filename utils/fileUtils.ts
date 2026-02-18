@@ -22,14 +22,14 @@ function normalizeFileUrl(url: string): string {
         // not a valid URL, use as-is
     }
 
-    // Convert /uploads/private/payrolls/xxx.pdf → /api/files/payrolls/xxx.pdf
-    const privateMatch = path.match(/^\/uploads\/private\/(payrolls|justifications)\/(.+)$/);
+        // Convert /uploads/private/payrolls/xxx.pdf → /api/files/payrolls/xxx.pdf
+        const privateMatch = path.match(/^\/uploads\/private\/(payrolls?|justifications?|justificante)\/(.+)$/);
     if (privateMatch) {
         return `/api/files/${privateMatch[1]}/${privateMatch[2]}`;
     }
 
-    // Convert /uploads/payrolls/xxx.pdf → /api/files/payrolls/xxx.pdf
-    const legacyMatch = path.match(/^\/uploads\/(payrolls|justifications)\/(.+)$/);
+        // Convert /uploads/payrolls/xxx.pdf → /api/files/payrolls/xxx.pdf
+        const legacyMatch = path.match(/^\/uploads\/(payrolls?|justifications?|justificante)\/(.+)$/);
     if (legacyMatch) {
         return `/api/files/${legacyMatch[1]}/${legacyMatch[2]}`;
     }

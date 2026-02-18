@@ -7,6 +7,14 @@ const privateDir = path.join(uploadsBase, 'private');
 // Legacy directory (before private/ structure was introduced)
 const legacyDir = uploadsBase;
 
+// Map incoming type to a canonical folder name
+function canonicalizeType(rawType) {
+    const t = (rawType || '').toLowerCase();
+    if (['payroll', 'payrolls'].includes(t)) return 'payrolls';
+    if (['justification', 'justifications', 'justificante'].includes(t)) return 'justifications';
+    return t;
+}
+
 // Helper: find file in private or legacy directory
 function findFilePath(type, filename) {
     const privatePath = path.join(privateDir, type, filename);
@@ -20,7 +28,8 @@ function findFilePath(type, filename) {
 
 exports.getFile = async (req, res) => {
     try {
-        const { type, filename } = req.params;
+        const { type: rawType, filename } = req.params;
+        const type = canonicalizeType(rawType);
         const user = req.user; // Set by authenticateToken middleware
 
         if (!user) {
