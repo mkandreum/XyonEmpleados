@@ -76,7 +76,23 @@
       setInterval(checkServerVersion, 2 * 60 * 1000);
 
       // ──────────────────────────────────────
-      // 3. Session / token expiry guard
+      // 3. Force reload when a new SW takes control
+      //    This is the KEY fix: even if this HTML is the OLD cached version,
+      //    when the new SW activates (skipWaiting+clientsClaim), this listener
+      //    triggers and forces a reload, which then loads fresh HTML from network.
+      // ──────────────────────────────────────
+      var refreshing = false;
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (refreshing) return;
+          refreshing = true;
+          console.log('[sw] New service worker took control, reloading...');
+          window.location.reload();
+        });
+      }
+
+      // ──────────────────────────────────────
+      // 4. Session / token expiry guard
       // ──────────────────────────────────────
       try {
         var token = localStorage.getItem('token');

@@ -102,12 +102,52 @@ app.use('/uploads/public', express.static(path.join(__dirname, '../uploads/publi
     lastModified: true,
 }));
 
-// Force no-cache on service worker file
+// Force no-cache on service worker file + inject cache cleanup
 app.get('/sw.js', (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-    res.sendFile(path.join(__dirname, '../public/sw.js'));
+    res.setHeader('Content-Type', 'application/javascript');
+
+    const fs = require('fs');
+    const swPath = path.join(__dirname, '../public/sw.js');
+
+    // Prepend aggressive cache cleanup code to the generated SW
+    // This ensures that when the new SW activates, it DELETES all old caches
+    // and forces all open windows to reload immediately
+    const cleanupCode = `
+// === INJECTED CACHE CLEANUP (server-side) ===
+self.addEventListener('activate', function(event) {
+  event.waitUntil(
+    caches.keys().then(function(cacheNames) {
+      return Promise.all(
+        cacheNames.map(function(cacheName) {
+          console.log('[sw-cleanup] Deleting old cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(function() {
+      console.log('[sw-cleanup] All caches deleted, reloading clients...');
+      return self.clients.matchAll({ type: 'window' });
+    }).then(function(clients) {
+      clients.forEach(function(client) {
+        client.navigate(client.url);
+      });
+    })
+  );
+});
+// === END INJECTED CACHE CLEANUP ===
+`;
+
+    if (fs.existsSync(swPath)) {
+        const swContent = fs.readFileSync(swPath, 'utf8');
+        res.send(cleanupCode + swContent);
+    } else {
+        // If no sw.js exists yet (first deploy), serve a no-op cleanup SW
+        res.send(cleanupCode + `
+self.addEventListener('install', function() { self.skipWaiting(); });
+`);
+    }
 });
 app.get('/registerSW.js', (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');

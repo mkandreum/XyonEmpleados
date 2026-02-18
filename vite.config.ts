@@ -46,52 +46,12 @@ export default defineConfig(({ mode }) => {
           cleanupOutdatedCaches: true,
           skipWaiting: true,
           clientsClaim: true,
-          // IMPORTANT: No precaching - we don't want the SW to cache HTML at all
+          // ZERO caching - SW exists only for PWA installability
+          // This prevents ANY stale content issues
           globPatterns: [],
           navigateFallback: null,
-          // Enable navigation preload so navigations always hit the network
           navigationPreload: true,
-          runtimeCaching: [
-            {
-              // ONLY cache hashed static assets (JS/CSS produced by Vite with content hash)
-              // These are safe to cache long-term because the hash changes on every build
-              urlPattern: /\/assets\/.*\.[a-f0-9]{8,}\.(js|css)$/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'hashed-assets',
-                expiration: {
-                  maxEntries: 50,
-                  maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-                },
-              },
-            },
-            {
-              // Cache fonts from Google Fonts
-              urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
-              handler: 'CacheFirst',
-              options: {
-                cacheName: 'google-fonts',
-                expiration: {
-                  maxEntries: 10,
-                  maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
-                },
-              },
-            },
-            {
-              // Cache uploaded images (avatars, logos, news images)
-              urlPattern: /\/uploads\/public\/.*/i,
-              handler: 'StaleWhileRevalidate',
-              options: {
-                cacheName: 'uploaded-images',
-                expiration: {
-                  maxEntries: 30,
-                  maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
-                },
-              },
-            },
-            // CRITICAL: Do NOT cache HTML, API calls, or service worker files
-            // Navigations (HTML) always go to the network, no fallback
-          ],
+          runtimeCaching: [],
         },
         manifest: {
           name: 'Xyon Empleados',
