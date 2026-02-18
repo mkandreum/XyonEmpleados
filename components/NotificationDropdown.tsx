@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Check, X, AlertCircle, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 interface Notification {
     id: string;
@@ -16,16 +17,28 @@ export const NotificationDropdown: React.FC = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const { token } = useAuth();
+    const { isAuthenticated } = useAuth();
+    const prevNotificationsRef = useRef<Notification[]>([]);
+    const hasLoadedOnceRef = useRef(false);
 
     const fetchNotifications = React.useCallback(async () => {
         try {
-            console.log('🔔 [FRONTEND] Fetching notifications...');
             const response = await api.get('/notifications');
             if (response.data && Array.isArray(response.data.notifications)) {
                 setNotifications(response.data.notifications);
                 setUnreadCount(response.data.unreadCount || 0);
-                console.log(`🔔 [FRONTEND] Loaded ${response.data.notifications.length} notifications, ${response.data.unreadCount} unread`);
+
+                const prevIds = new Set(prevNotificationsRef.current.map(n => n.id));
+                const newUnread = response.data.notifications.filter((n: Notification) => !n.read && !prevIds.has(n.id));
+                if (hasLoadedOnceRef.current && newUnread.length > 0) {
+                    const message = newUnread.length === 1
+                        ? newUnread[0].title
+                        : `Tienes ${newUnread.length} nuevas notificaciones`;
+                    toast(message, { icon: '🔔' });
+                }
+
+                prevNotificationsRef.current = response.data.notifications;
+                hasLoadedOnceRef.current = true;
             } else {
                 console.warn('Invalid notifications response format', response.data);
                 setNotifications([]);
@@ -38,14 +51,13 @@ export const NotificationDropdown: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (token) {
+        if (isAuthenticated) {
             fetchNotifications();
             // Poll every 5 seconds for near-real-time updates
-            console.log('🔔 [FRONTEND] Starting notification polling (every 5s)');
             const interval = setInterval(fetchNotifications, 5000);
             return () => clearInterval(interval);
         }
-    }, [token, fetchNotifications]);
+    }, [isAuthenticated, fetchNotifications]);
 
     // Close when clicking outside
     useEffect(() => {
