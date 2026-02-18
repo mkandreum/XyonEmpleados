@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { payrollService } from '../services/api';
-import { Download, FileText, Calendar, DollarSign, TrendingUp, CheckSquare, Square } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { payrollService, uploadService } from '../services/api';
+import { Download, FileText, Calendar, DollarSign, TrendingUp, CheckSquare, Square, Upload, CheckCircle, Loader2 } from 'lucide-react';
 import { useModal } from '../hooks/useModal';
 import { Modal } from '../components/Modal';
 import { openProtectedFile } from '../utils/fileUtils';
@@ -11,6 +11,7 @@ interface Payroll {
   year: number;
   amount: number;
   pdfUrl: string;
+  signedPdfUrl?: string;
   status: string;
 }
 
@@ -18,6 +19,9 @@ export const PayrollPage: React.FC = () => {
   const [payrolls, setPayrolls] = useState<Payroll[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPayrolls, setSelectedPayrolls] = useState<Set<string>>(new Set());
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadTargetId, setUploadTargetId] = useState<string | null>(null);
   const { modalState, showAlert, closeModal } = useModal();
 
   useEffect(() => {
@@ -72,6 +76,49 @@ export const PayrollPage: React.FC = () => {
         }, 300 * index);
       }
     });
+  };
+
+  const triggerSignedUpload = (payrollId: string) => {
+    setUploadTargetId(payrollId);
+    fileInputRef.current?.click();
+  };
+
+  const handleSignedFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadTargetId) return;
+
+    if (file.type !== 'application/pdf') {
+      showAlert('Solo se permiten archivos PDF', 'warning');
+      e.target.value = '';
+      return;
+    }
+
+    setUploadingId(uploadTargetId);
+    try {
+      // Upload the file
+      const uploadResult = await uploadService.uploadPayroll(file);
+      // Set the signed URL on the payroll
+      await payrollService.uploadSigned(uploadTargetId, uploadResult.url);
+      // Refresh payrolls list
+      await fetchPayrolls();
+      showAlert('Nómina firmada subida correctamente', 'success');
+    } catch (error) {
+      console.error('Error uploading signed payroll:', error);
+      showAlert('Error al subir la nómina firmada', 'error');
+    } finally {
+      setUploadingId(null);
+      setUploadTargetId(null);
+      e.target.value = '';
+    }
+  };
+
+  const downloadPayrollPdf = async (payroll: Payroll) => {
+    try {
+      await openProtectedFile(payroll.pdfUrl);
+    } catch (error) {
+      console.error('Error opening payroll:', error);
+      showAlert('No se pudo abrir la nómina', 'error');
+    }
   };
 
   const lastPayroll = payrolls[0];
@@ -168,6 +215,7 @@ export const PayrollPage: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Importe Neto</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Estado</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Acciones</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Firmada</th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
@@ -210,25 +258,40 @@ export const PayrollPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
-                        onClick={async () => {
-                          try {
-                            await openProtectedFile(payroll.pdfUrl);
-                          } catch (error) {
-                            console.error('Error opening payroll:', error);
-                            showAlert('No se pudo abrir la nómina', 'error');
-                          }
-                        }}
+                        onClick={() => downloadPayrollPdf(payroll)}
                         className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm"
                       >
                         <Download size={16} />
                         Descargar
                       </button>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {payroll.signedPdfUrl ? (
+                        <div className="flex items-center gap-2">
+                          <CheckCircle size={16} className="text-emerald-500" />
+                          <button
+                            onClick={async () => { try { await openProtectedFile(payroll.signedPdfUrl!); } catch { showAlert('No se pudo abrir', 'error'); } }}
+                            className="text-emerald-600 dark:text-emerald-400 text-sm font-medium hover:underline"
+                          >
+                            Ver firmada
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => triggerSignedUpload(payroll.id)}
+                          disabled={uploadingId === payroll.id}
+                          className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium text-sm disabled:opacity-50"
+                        >
+                          {uploadingId === payroll.id ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                          Subir firmada
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                     No hay nóminas disponibles
                   </td>
                 </tr>
@@ -277,20 +340,33 @@ export const PayrollPage: React.FC = () => {
                     <div className="text-base font-bold text-slate-900 dark:text-white">
                       {payroll.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€
                     </div>
-                    <button
-                      onClick={async () => {
-                        try {
-                          await openProtectedFile(payroll.pdfUrl);
-                        } catch (error) {
-                          console.error('Error opening payroll:', error);
-                          showAlert('No se pudo abrir la nómina', 'error');
-                        }
-                      }}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                    >
-                      <Download size={14} />
-                      Descargar PDF
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => downloadPayrollPdf(payroll)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      >
+                        <Download size={14} />
+                        PDF
+                      </button>
+                      {payroll.signedPdfUrl ? (
+                        <button
+                          onClick={async () => { try { await openProtectedFile(payroll.signedPdfUrl!); } catch { showAlert('No se pudo abrir', 'error'); } }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg text-emerald-700 dark:text-emerald-400 text-sm font-medium transition-colors"
+                        >
+                          <CheckCircle size={14} />
+                          Firmada
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => triggerSignedUpload(payroll.id)}
+                          disabled={uploadingId === payroll.id}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-amber-700 dark:text-amber-400 text-sm font-medium transition-colors disabled:opacity-50"
+                        >
+                          {uploadingId === payroll.id ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                          Firmar
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -302,6 +378,14 @@ export const PayrollPage: React.FC = () => {
           )}
         </div>
       </div>
+      {/* Hidden file input for signed payroll upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept=".pdf"
+        onChange={handleSignedFileSelected}
+        className="hidden"
+      />
       {/* Global Modal */}
       <Modal
         isOpen={modalState.isOpen}

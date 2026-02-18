@@ -24,6 +24,7 @@ export interface Payroll {
   year: number;
   amount: number;
   pdfUrl: string;
+  signedPdfUrl?: string;
   status: 'PAID' | 'PENDING';
 }
 

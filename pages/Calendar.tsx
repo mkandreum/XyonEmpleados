@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, X, Download } from 'lucide-react';
 import { fichajeService, vacationService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { FichajeDayStats, VacationRequest, VacationStatus } from '../types';
@@ -34,6 +34,28 @@ export const CalendarPage: React.FC = () => {
   const [vacations, setVacations] = useState<VacationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const downloadReport = async () => {
+    setDownloading(true);
+    try {
+      const month = currentMonth.getMonth() + 1;
+      const year = currentMonth.getFullYear();
+      const blob = await fichajeService.getAttendanceReport(month, year);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reporte-asistencia-${year}-${String(month).padStart(2, '0')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading report', err);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const loadData = async (reference: Date) => {
     if (!user?.id) return;
@@ -140,16 +162,27 @@ export const CalendarPage: React.FC = () => {
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 hidden sm:block">Fichajes, vacaciones y permisos en un vistazo.</p>
           </div>
         </div>
-        <div className="flex items-center justify-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-2 py-1 shadow-sm self-center">
-          <button onClick={() => changeMonth(-1)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full" aria-label="Mes anterior">
-            <ChevronLeft size={16} />
+        <div className="flex items-center gap-2 self-center">
+          <button
+            onClick={downloadReport}
+            disabled={downloading || loading}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-emerald-600 text-white rounded-full hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-sm"
+            title="Descargar reporte de asistencia del mes"
+          >
+            {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+            <span className="hidden sm:inline">Reporte</span>
           </button>
-          <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 min-w-[120px] text-center capitalize">
-            {monthLabel}
-          </span>
-          <button onClick={() => changeMonth(1)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full" aria-label="Mes siguiente">
-            <ChevronRight size={16} />
-          </button>
+          <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-2 py-1 shadow-sm">
+            <button onClick={() => changeMonth(-1)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full" aria-label="Mes anterior">
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 min-w-[120px] text-center capitalize">
+              {monthLabel}
+            </span>
+            <button onClick={() => changeMonth(1)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full" aria-label="Mes siguiente">
+              <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
       </div>
 

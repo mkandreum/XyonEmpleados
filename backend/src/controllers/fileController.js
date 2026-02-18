@@ -78,7 +78,11 @@ exports.getFile = async (req, res) => {
                         { pdfUrl: newUrl },
                         { pdfUrl: legacyUrl },
                         { pdfUrl: legacyPrivateUrl },
-                        { pdfUrl: { contains: filename } }
+                        { pdfUrl: { contains: filename } },
+                        { signedPdfUrl: newUrl },
+                        { signedPdfUrl: legacyUrl },
+                        { signedPdfUrl: legacyPrivateUrl },
+                        { signedPdfUrl: { contains: filename } }
                     ]
                 }
             });

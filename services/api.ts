@@ -172,6 +172,14 @@ export const payrollService = {
     getAll: async () => {
         const response = await api.get<Payroll[]>('/payrolls');
         return response.data;
+    },
+    uploadSigned: async (id: string, signedPdfUrl: string) => {
+        const response = await api.put<Payroll>(`/payrolls/${id}/signed`, { signedPdfUrl });
+        return response.data;
+    },
+    getDownloadInfo: async (id: string) => {
+        const response = await api.get<{ pdfUrl: string; filename: string }>(`/payrolls/${id}/download`);
+        return response.data;
     }
 };
 
@@ -446,6 +454,13 @@ export const fichajeService = {
     },
     getMonth: async (userId: string) => {
         const response = await api.get<FichajeDayStats[]>(`/fichajes/month/${userId}`);
+        return response.data;
+    },
+    getAttendanceReport: async (month: number, year: number) => {
+        const response = await api.get('/fichajes/report', {
+            params: { month, year },
+            responseType: 'blob'
+        });
         return response.data;
     },
     getDepartmentWeek: async (department: string) => {

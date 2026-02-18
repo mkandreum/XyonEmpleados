@@ -61,15 +61,16 @@ model User {
 
 
 model Payroll {
-  id        String   @id @default(uuid())
-  month     String
-  year      Int
-  amount    Float
-  pdfUrl    String
-  status    String   @default("PAID") // 'PAID' | 'PENDING'
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id           String   @id @default(uuid())
+  month        String
+  year         Int
+  amount       Float
+  pdfUrl       String
+  signedPdfUrl String?
+  status       String   @default("PAID") // 'PAID' | 'PENDING'
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
 }
 
 model VacationRequest {

@@ -173,6 +173,8 @@ router.post('/users/change-password', validate(changePasswordSchema), authContro
 
 // Payrolls
 router.get('/payrolls', payrollController.getAllPayrolls);
+router.put('/payrolls/:id/signed', payrollController.uploadSignedPayroll);
+router.get('/payrolls/:id/download', payrollController.downloadPayroll);
 
 // Vacations
 router.get('/vacations', vacationController.getAllVacations);
@@ -198,6 +200,7 @@ router.put('/notifications/read-all', notificationController.markAllAsRead);
 router.post('/fichajes', fichajeController.createFichaje);
 router.get('/fichajes/current', fichajeController.getCurrentFichaje);
 router.get('/fichajes/history', fichajeController.getHistory);
+router.get('/fichajes/report', fichajeController.getAttendanceReport);
 router.get('/fichajes/week/:userId', fichajeController.getWeek);
 router.get('/fichajes/month/:userId', fichajeController.getMonth);
 router.get('/fichajes/department/:dept/week', fichajeController.getDepartmentWeek);

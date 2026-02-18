@@ -313,6 +313,181 @@ exports.getMonth = async (req, res) => {
 };
 
 /**
+ * GET /api/fichajes/report
+ * Genera un CSV de reporte mensual de asistencia
+ * Query params: month (1-12), year (YYYY), userId (optional, admin only)
+ */
+exports.getAttendanceReport = async (req, res) => {
+    try {
+        const requestUserId = req.user.userId;
+        const userRole = req.user.role;
+        const { month, year, userId } = req.query;
+
+        const reportMonth = month ? parseInt(month) : new Date().getMonth() + 1;
+        const reportYear = year ? parseInt(year) : new Date().getFullYear();
+
+        // Only admins can view other users' reports
+        const targetUserId = (userRole === 'ADMIN' && userId) ? userId : requestUserId;
+
+        // Get user info
+        const user = await prisma.user.findUnique({
+            where: { id: targetUserId },
+            select: { id: true, name: true, email: true, department: true, position: true }
+        });
+
+        if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+        // Get schedule
+        const schedule = await prisma.departmentSchedule.findUnique({
+            where: { department: user.department }
+        });
+
+        // Date range for the month
+        const startOfMonth = new Date(reportYear, reportMonth - 1, 1);
+        const endOfMonth = new Date(reportYear, reportMonth, 0, 23, 59, 59, 999);
+
+        // Get fichajes
+        const fichajes = await prisma.fichaje.findMany({
+            where: {
+                userId: targetUserId,
+                timestamp: { gte: startOfMonth, lte: endOfMonth }
+            },
+            orderBy: { timestamp: 'asc' }
+        });
+
+        // Get vacations/absences
+        const vacations = await prisma.vacationRequest.findMany({
+            where: {
+                userId: targetUserId,
+                OR: [
+                    { startDate: { lte: endOfMonth }, endDate: { gte: startOfMonth } }
+                ]
+            }
+        });
+
+        // Group fichajes by day
+        const grouped = groupFichajesByDay(fichajes, schedule);
+        const fichajeMap = {};
+        grouped.forEach(day => { fichajeMap[day.date] = day; });
+
+        // Build CSV
+        const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+        const lines = [];
+        // BOM for Excel UTF-8
+        const BOM = '\uFEFF';
+
+        // Header info
+        lines.push(`Reporte de Asistencia - ${monthNames[reportMonth - 1]} ${reportYear}`);
+        lines.push(`Empleado;${user.name}`);
+        lines.push(`Departamento;${user.department}`);
+        lines.push(`Puesto;${user.position || '-'}`);
+        lines.push('');
+        lines.push('Fecha;Día;Primera Entrada;Última Salida;Horas Trabajadas;Estado;Observaciones');
+
+        const daysInMonth = new Date(reportYear, reportMonth, 0).getDate();
+        let totalHours = 0;
+        let daysWorked = 0;
+        let daysAbsent = 0;
+        let daysVacation = 0;
+        let daysLate = 0;
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const date = new Date(reportYear, reportMonth - 1, d);
+            const dateKey = date.toISOString().split('T')[0];
+            const dayName = dayNames[date.getDay()];
+            const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+            const isFuture = date > new Date();
+
+            // Check vacation/absence
+            const vacation = vacations.find(v => {
+                const start = new Date(v.startDate);
+                const end = new Date(v.endDate);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
+                return date >= start && date <= end;
+            });
+
+            const stats = fichajeMap[dateKey];
+
+            let firstEntry = '-';
+            let lastExit = '-';
+            let hoursStr = '-';
+            let status = '';
+            let observations = '';
+
+            if (isWeekend && !vacation && !stats) {
+                status = 'Fin de semana';
+            } else if (isFuture) {
+                status = '-';
+            } else if (vacation) {
+                const typeMap = {
+                    'VACATION': 'Vacaciones',
+                    'PERSONAL': 'Permiso personal',
+                    'SICK_LEAVE': 'Baja médica',
+                    'OVERTIME': 'Compensación horas',
+                    'OTHER': 'Otro permiso'
+                };
+                status = typeMap[vacation.type] || vacation.type;
+                observations = vacation.status === 'APPROVED' ? 'Aprobado' : vacation.status === 'REJECTED' ? 'Rechazado' : 'Pendiente';
+                if (vacation.type === 'VACATION') daysVacation++;
+            } else if (stats) {
+                const sortedFichajes = stats.fichajes.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                const entradas = sortedFichajes.filter(f => f.tipo === 'ENTRADA');
+                const salidas = sortedFichajes.filter(f => f.tipo === 'SALIDA');
+
+                if (entradas.length > 0) {
+                    firstEntry = new Date(entradas[0].timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                }
+                if (salidas.length > 0) {
+                    lastExit = new Date(salidas[salidas.length - 1].timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                }
+
+                hoursStr = stats.horasTrabajadas.toFixed(2);
+                totalHours += stats.horasTrabajadas;
+                daysWorked++;
+
+                if (stats.isComplete && !stats.isLate && !stats.isEarlyDeparture) {
+                    status = 'Correcto';
+                } else {
+                    const issues = [];
+                    if (stats.isLate) { issues.push('Llegada tarde'); daysLate++; }
+                    if (stats.isEarlyDeparture) issues.push('Salida anticipada');
+                    if (!stats.isComplete) issues.push('Incompleto');
+                    status = 'Incidencia';
+                    observations = issues.join(', ');
+                }
+            } else if (!isWeekend) {
+                status = 'No fichado';
+                observations = 'Ausencia sin justificar';
+                daysAbsent++;
+            }
+
+            lines.push(`${dateKey};${dayName};${firstEntry};${lastExit};${hoursStr};${status};${observations}`);
+        }
+
+        // Summary
+        lines.push('');
+        lines.push('RESUMEN');
+        lines.push(`Días trabajados;${daysWorked}`);
+        lines.push(`Días vacaciones;${daysVacation}`);
+        lines.push(`Días ausente;${daysAbsent}`);
+        lines.push(`Llegadas tarde;${daysLate}`);
+        lines.push(`Total horas;${totalHours.toFixed(2)}`);
+
+        const csv = BOM + lines.join('\r\n');
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="reporte-asistencia-${user.name.replace(/\s+/g, '_')}-${reportYear}-${String(reportMonth).padStart(2, '0')}.csv"`);
+        res.send(csv);
+    } catch (error) {
+        console.error('Error generating attendance report:', error);
+        res.status(500).json({ error: 'Error al generar reporte de asistencia' });
+    }
+};
+
+/**
  * GET /api/fichajes/department/:dept/week
  * Fichajes semanales por departamento (solo managers/admins)
  */
