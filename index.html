@@ -47,23 +47,6 @@
         localStorage.removeItem('user');
       }
 
-      // NUCLEAR: Unregister ALL service workers and clear caches on every page load
-      // This ensures users always get the latest deployment
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function (regs) {
-          for (var i = 0; i < regs.length; i++) {
-            regs[i].unregister();
-          }
-        });
-        // Also clear all caches
-        if ('caches' in window) {
-          caches.keys().then(function (names) {
-            for (var i = 0; i < names.length; i++) {
-              caches.delete(names[i]);
-            }
-          });
-        }
-      }
     })();
   </script>
   <script type="module" src="/index.tsx"></script>

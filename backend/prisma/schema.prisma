@@ -56,6 +56,7 @@ model User {
   fichajes    Fichaje[]
   lateNotificationsReceived LateArrivalNotification[] @relation("UserLateNotifications")
   lateNotificationsSent     LateArrivalNotification[] @relation("ManagerNotifications")
+  pushSubscriptions        PushSubscription[]
 }
 
 
@@ -235,4 +236,17 @@ model EmailTemplate {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model PushSubscription {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint        String   @unique
+  keys            Json
+  expirationTime  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
 }

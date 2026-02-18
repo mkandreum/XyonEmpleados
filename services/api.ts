@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User, Payroll, VacationRequest, NewsItem, Notification, Event, Holiday, DepartmentBenefits, UserBenefitsBalance, GlobalSettings, AdminStats, Fichaje, FichajeTipo, FichajeStatus, FichajeDayStats, DepartmentSchedule, LateArrivalNotification, InvitationCode } from '../types';
+import { User, Payroll, VacationRequest, NewsItem, Notification, Event, Holiday, DepartmentBenefits, UserBenefitsBalance, GlobalSettings, AdminStats, Fichaje, FichajeTipo, FichajeStatus, FichajeDayStats, DepartmentSchedule, LateArrivalNotification, InvitationCode, PushSubscriptionPayload } from '../types';
 
 // The API URL will depend on where the backend is served. 
 // In development, Vite proxy can handle /api.
@@ -488,6 +488,21 @@ export const lateNotificationService = {
     },
     markAsRead: async (id: string) => {
         const response = await api.put<LateArrivalNotification>(`/late-notifications/${id}/read`);
+        return response.data;
+    },
+};
+
+export const pushService = {
+    getPublicKey: async () => {
+        const response = await api.get<{ publicKey: string }>('/push/public-key');
+        return response.data.publicKey;
+    },
+    saveSubscription: async (subscription: PushSubscriptionPayload) => {
+        const response = await api.post('/push/subscriptions', subscription);
+        return response.data;
+    },
+    deleteSubscription: async (endpoint: string) => {
+        const response = await api.delete('/push/subscriptions', { data: { endpoint } });
         return response.data;
     },
 };

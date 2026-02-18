@@ -114,6 +114,12 @@ app.get('/registerSW.js', (req, res) => {
     res.setHeader('Expires', '0');
     res.sendFile(path.join(__dirname, '../public/registerSW.js'));
 });
+app.get('/push-sw.js', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.sendFile(path.join(__dirname, '../public/push-sw.js'));
+});
 
 // Static files (build from frontend) with aggressive caching for hashed assets
 app.use(express.static(path.join(__dirname, '../public'), {

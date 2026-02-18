@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { User } from '../types';
 import { authService } from '../services/api';
+import { ensurePushSubscription, clearPushSubscription } from '../services/pushClient';
 
 interface AuthContextType {
   user: User | null;
@@ -60,8 +61,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = () => {
     authService.logout();
+    clearPushSubscription();
     setUser(null);
   };
+
+  useEffect(() => {
+    if (!user) return;
+
+    ensurePushSubscription().catch((err) => {
+      console.warn('Push subscription failed or skipped:', err);
+    });
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, isLoading }}>

@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { sendPushToUser } = require('../services/pushService');
 
 // Internal helper to create notifications
 const createNotification = async (userId, title, message) => {
@@ -15,6 +16,15 @@ const createNotification = async (userId, title, message) => {
             }
         });
         console.log(`✅ [NOTIFICATION] Notification created successfully for user ${userId}`);
+
+        // Fire-and-forget push delivery if configured
+        sendPushToUser(userId, {
+            title,
+            body: message,
+            url: '/notifications'
+        }).catch((err) => {
+            console.error('❌ [NOTIFICATION] Error sending push notification:', err);
+        });
     } catch (error) {
         console.error('❌ [NOTIFICATION] Error creating notification:', error);
     }
@@ -50,10 +60,14 @@ const markAsRead = async (req, res) => {
         const { id } = req.params;
         const userId = req.user.userId;
 
-        await prisma.notification.update({
-            where: { id },
+        const result = await prisma.notification.updateMany({
+            where: { id, userId },
             data: { read: true }
         });
+
+        if (result.count === 0) {
+            return res.status(404).json({ error: 'Notification not found' });
+        }
 
         res.json({ success: true });
     } catch (error) {

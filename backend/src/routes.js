@@ -16,6 +16,7 @@ const scheduleController = require('./controllers/scheduleController');
 const lateNotificationController = require('./controllers/lateNotificationController');
 const fileController = require('./controllers/fileController');
 const emailTemplateController = require('./controllers/emailTemplateController');
+const pushController = require('./controllers/pushController');
 const { isAdmin } = require('./middleware/auth');
 const { validate, loginSchema, registerSchema, changePasswordSchema, updateProfileSchema, vacationRequestSchema } = require('./middleware/validation');
 
@@ -88,6 +89,11 @@ router.get('/holidays/next', contentController.getNextHoliday);
 
 // Protected Routes (AUTH REQUIRED)
 router.use(authenticateToken);
+
+// Push Notifications (requires auth)
+router.get('/push/public-key', pushController.getVapidPublicKey);
+router.post('/push/subscriptions', pushController.saveSubscription);
+router.delete('/push/subscriptions', pushController.deleteSubscription);
 
 // Stats Routes
 router.get('/admin/stats', isAdmin, statsController.getAdminStats);

@@ -66,6 +66,15 @@ export interface Notification {
   date: string;
 }
 
+export interface PushSubscriptionPayload {
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+  expirationTime?: number | null;
+}
+
 export interface Event {
   id: string;
   title: string;
