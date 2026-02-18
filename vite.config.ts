@@ -50,7 +50,6 @@ export default defineConfig(({ mode }) => {
           // This prevents ANY stale content issues
           globPatterns: [],
           navigateFallback: null,
-          navigationPreload: true,
           runtimeCaching: [],
         },
         manifest: {
