@@ -9,6 +9,7 @@ export const AdminUsers: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<Partial<User> | null>(null);
@@ -65,10 +66,18 @@ export const AdminUsers: React.FC = () => {
         setSearchTerm(e.target.value);
     };
 
-    const filteredUsers = users.filter(user =>
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredUsers = users.filter(user => {
+        const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesDept = !selectedDepartment || user.department === selectedDepartment;
+        return matchesSearch && matchesDept;
+    });
+
+    // Count users per department
+    const deptCounts = users.reduce<Record<string, number>>((acc, u) => {
+        acc[u.department] = (acc[u.department] || 0) + 1;
+        return acc;
+    }, {});
 
     const handleCreate = () => {
         setEditingUser(null);
@@ -207,6 +216,35 @@ export const AdminUsers: React.FC = () => {
                     onChange={handleSearch}
                 />
             </div>
+
+            {/* Department Filter */}
+            {departments.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide animate-slide-up delay-100">
+                    <button
+                        onClick={() => setSelectedDepartment(null)}
+                        className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                            !selectedDepartment
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        }`}
+                    >
+                        Todos ({users.length})
+                    </button>
+                    {departments.map(dept => (
+                        <button
+                            key={dept}
+                            onClick={() => setSelectedDepartment(selectedDepartment === dept ? null : dept)}
+                            className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                                selectedDepartment === dept
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                            }`}
+                        >
+                            {dept} ({deptCounts[dept] || 0})
+                        </button>
+                    ))}
+                </div>
+            )}
 
             {/* Users Table (Desktop) */}
             <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden hidden sm:block transition-colors animate-slide-up delay-150">
