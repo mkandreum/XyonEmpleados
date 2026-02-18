@@ -10,6 +10,7 @@ export const AbsencesPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [rowUploading, setRowUploading] = useState<Record<string, boolean>>({});
     const [benefits, setBenefits] = useState<any>(null);
 
     // Form state
@@ -57,12 +58,27 @@ export const AbsencesPage: React.FC = () => {
         }
     };
 
+    const handleRowJustificationUpload = async (vacationId: string, file: File) => {
+        setRowUploading(prev => ({ ...prev, [vacationId]: true }));
+        try {
+            const uploadResult = await uploadService.uploadJustification(file);
+            await vacationService.updateJustification(vacationId, uploadResult.url);
+            await fetchData();
+            alert('Justificante subido correctamente');
+        } catch (error) {
+            console.error('Row upload error:', error);
+            alert('Error al subir el justificante');
+        } finally {
+            setRowUploading(prev => ({ ...prev, [vacationId]: false }));
+        }
+    };
+
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validate justification for non-vacation types
-        if ((formData.type === 'SICK_LEAVE' || formData.type === 'PERSONAL') && !formData.justificationUrl) {
-            alert('El justificante es obligatorio para bajas médicas y ausencias justificadas');
+        // Validate justification only for personal absences
+        if (formData.type === 'PERSONAL' && !formData.justificationUrl) {
+            alert('El justificante es obligatorio para ausencias justificadas');
             return;
         }
 
@@ -94,7 +110,7 @@ export const AbsencesPage: React.FC = () => {
         }
     };
 
-    const requiresJustification = formData.type === 'SICK_LEAVE' || formData.type === 'PERSONAL';
+    const requiresJustification = formData.type === 'PERSONAL';
 
     // Vacation data for chart
     const totalVacationDays = benefits?.totalBenefits?.vacationDays || 22;
@@ -303,6 +319,7 @@ export const AbsencesPage: React.FC = () => {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Fechas</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Días</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Estado</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Justificante</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
@@ -325,11 +342,44 @@ export const AbsencesPage: React.FC = () => {
                                                     {vacation.status === VacationStatus.REJECTED && 'Rechazado'}
                                                 </span>
                                             </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {vacation.justificationUrl ? (
+                                                    <a
+                                                        href={vacation.justificationUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium"
+                                                    >
+                                                        <FileText size={14} />
+                                                        Ver
+                                                    </a>
+                                                ) : vacation.type === 'SICK_LEAVE' ? (
+                                                    <label className="inline-flex items-center gap-2 text-xs font-medium text-blue-600 dark:text-blue-400 cursor-pointer">
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*,.pdf"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) {
+                                                                    handleRowJustificationUpload(vacation.id, file);
+                                                                    e.currentTarget.value = '';
+                                                                }
+                                                            }}
+                                                            className="hidden"
+                                                            disabled={rowUploading[vacation.id]}
+                                                        />
+                                                        <Upload size={14} />
+                                                        {rowUploading[vacation.id] ? 'Subiendo...' : 'Subir'}
+                                                    </label>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400 dark:text-slate-500">-</span>
+                                                )}
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={4} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400 transition-colors">
+                                        <td colSpan={5} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400 transition-colors">
                                             No tienes solicitudes registradas
                                         </td>
                                     </tr>

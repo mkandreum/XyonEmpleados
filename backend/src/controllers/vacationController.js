@@ -89,6 +89,56 @@ exports.createVacation = async (req, res) => {
     }
 };
 
+// Update justification URL for an existing request (owner only)
+exports.updateJustification = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { justificationUrl } = req.body;
+
+        if (!justificationUrl) {
+            return res.status(400).json({ error: 'Justification URL is required' });
+        }
+
+        const request = await prisma.vacationRequest.findUnique({
+            where: { id },
+            include: { user: { select: { id: true, department: true, name: true } } }
+        });
+
+        if (!request) {
+            return res.status(404).json({ error: 'Request not found' });
+        }
+
+        if (request.userId !== req.user.userId) {
+            return res.status(403).json({ error: 'Not allowed to update this request' });
+        }
+
+        const updated = await prisma.vacationRequest.update({
+            where: { id },
+            data: { justificationUrl }
+        });
+
+        const managers = await prisma.user.findMany({
+            where: {
+                department: request.user.department,
+                role: 'MANAGER'
+            }
+        });
+
+        for (const manager of managers) {
+            await createNotification(
+                manager.id,
+                'Justificante subido',
+                `${request.user.name} ha subido un justificante para su solicitud.`
+            );
+        }
+
+        res.json(updated);
+    } catch (error) {
+        console.error('Update justification error:', error);
+        res.status(500).json({ error: 'Failed to update justification' });
+    }
+};
+
 // Manager: Get team vacation requests (same department, PENDING_MANAGER)
 exports.getTeamVacations = async (req, res) => {
     try {

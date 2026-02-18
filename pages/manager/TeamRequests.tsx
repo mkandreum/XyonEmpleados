@@ -156,6 +156,11 @@ export const TeamRequests: React.FC = () => {
                                                             <span className={`px-2.5 py-1 rounded-md text-xs font-bold border ${getTypeColor(request.type)}`}>
                                                                 {getTypeLabel(request.type, request.subtype)}
                                                             </span>
+                                                            {request.justificationUrl && (
+                                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                                                    Justificante
+                                                                </span>
+                                                            )}
                                                             <span className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
                                                                 <Clock className="w-3.5 h-3.5" />
                                                                 Solicitado el {new Date(request.id ? parseInt(request.id.substring(0, 8), 16) * 1000 : Date.now()).toLocaleDateString()}

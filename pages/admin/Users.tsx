@@ -36,9 +36,12 @@ export const AdminUsers: React.FC = () => {
             ]);
             setUsers(usersData);
 
-            if (settingsData && settingsData.DEPARTMENTS) {
+            const departmentsValue = settingsData?.DEPARTMENTS
+                || (settingsData?.key === 'DEPARTMENTS' ? settingsData?.value : undefined);
+
+            if (departmentsValue) {
                 try {
-                    setDepartments(JSON.parse(settingsData.DEPARTMENTS));
+                    setDepartments(JSON.parse(departmentsValue));
                 } catch (e) {
                     console.error("Error parsing departments:", e);
                     setDepartments(['General']);
@@ -146,7 +149,7 @@ export const AdminUsers: React.FC = () => {
         setNewDeptName('');
 
         try {
-            await adminService.updateSettings({ key: 'DEPARTMENTS', value: JSON.stringify(updatedDepts) });
+            await adminService.updateSettings({ DEPARTMENTS: JSON.stringify(updatedDepts) });
             toast.success("Departamento agregado");
         } catch (error) {
             toast.error("Error al guardar departamentos");
@@ -158,7 +161,7 @@ export const AdminUsers: React.FC = () => {
         setDepartments(updatedDepts);
 
         try {
-            await adminService.updateSettings({ key: 'DEPARTMENTS', value: JSON.stringify(updatedDepts) });
+            await adminService.updateSettings({ DEPARTMENTS: JSON.stringify(updatedDepts) });
             toast.success("Departamento eliminado");
         } catch (error) {
             toast.error("Error al guardar departamentos");

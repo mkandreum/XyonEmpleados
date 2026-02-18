@@ -183,6 +183,10 @@ export const vacationService = {
     create: async (data: Partial<VacationRequest>) => {
         const response = await api.post<VacationRequest>('/vacations', data);
         return response.data;
+    },
+    updateJustification: async (id: string, justificationUrl: string) => {
+        const response = await api.patch<VacationRequest>(`/vacations/${id}/justification`, { justificationUrl });
+        return response.data;
     }
 };
 

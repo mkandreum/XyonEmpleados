@@ -18,6 +18,7 @@ export const VacationsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [uploading, setUploading] = useState(false);
+    const [rowUploading, setRowUploading] = useState<Record<string, boolean>>({});
     const { modalState, showAlert, closeModal } = useModal();
 
     // Form state
@@ -86,6 +87,21 @@ export const VacationsPage: React.FC = () => {
         }
     };
 
+    const handleRowJustificationUpload = async (vacationId: string, file: File) => {
+        setRowUploading(prev => ({ ...prev, [vacationId]: true }));
+        try {
+            const uploadResult = await uploadService.uploadJustification(file);
+            await vacationService.updateJustification(vacationId, uploadResult.url);
+            await fetchVacations();
+            showAlert('Justificante subido correctamente', 'success');
+        } catch (error) {
+            console.error('Row upload error:', error);
+            showAlert('Error al subir el justificante', 'error');
+        } finally {
+            setRowUploading(prev => ({ ...prev, [vacationId]: false }));
+        }
+    };
+
     // Calculate natural days (including weekends)
     const calculateNaturalDays = (start: Date, end: Date): number => {
         const diffTime = Math.abs(end.getTime() - start.getTime());
@@ -110,8 +126,8 @@ export const VacationsPage: React.FC = () => {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validate justification only for SICK_LEAVE and OTHER types
-        const requiresJustification = formData.type === 'SICK_LEAVE' || formData.type === 'OTHER';
+        // Validate justification only for certain types (SICK_LEAVE is optional)
+        const requiresJustification = formData.type === 'OTHER' || formData.type === 'PERSONAL';
         if (requiresJustification && !formData.justificationUrl) {
             showAlert('El justificante es obligatorio para este tipo de solicitud', 'warning');
             return;
@@ -171,7 +187,7 @@ export const VacationsPage: React.FC = () => {
     };
 
     // Derived states
-    const requiresJustification = formData.type === 'SICK_LEAVE' || formData.type === 'OTHER';
+    const requiresJustification = formData.type === 'OTHER' || formData.type === 'PERSONAL';
     const showSubtypeDropdown = formData.type === 'OTHER';
 
     // Subtypes list
@@ -422,16 +438,17 @@ export const VacationsPage: React.FC = () => {
                                     <th className="px-6 py-3">Duración</th>
                                     <th className="px-6 py-3">Tipo</th>
                                     <th className="px-6 py-3">Estado</th>
+                                    <th className="px-6 py-3">Justificante</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 transition-colors">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={4} className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">Cargando...</td>
+                                        <td colSpan={5} className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">Cargando...</td>
                                     </tr>
                                 ) : vacations.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4} className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">No hay solicitudes registradas.</td>
+                                        <td colSpan={5} className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">No hay solicitudes registradas.</td>
                                     </tr>
                                 ) : (
                                     vacations.map(vac => (
@@ -453,6 +470,39 @@ export const VacationsPage: React.FC = () => {
                                                             vac.status === VacationStatus.PENDING_ADMIN ? 'Pendiente Admin' :
                                                                 vac.status === VacationStatus.PENDING ? 'Pendiente' : 'Rechazado'}
                                                 </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {vac.justificationUrl ? (
+                                                    <a
+                                                        href={getAbsoluteUrl(vac.justificationUrl)}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium"
+                                                    >
+                                                        <FileText size={14} />
+                                                        Ver
+                                                    </a>
+                                                ) : vac.type === 'SICK_LEAVE' ? (
+                                                    <label className="inline-flex items-center gap-2 text-xs font-medium text-blue-600 dark:text-blue-400 cursor-pointer">
+                                                        <input
+                                                            type="file"
+                                                            accept=".pdf,.jpg,.jpeg,.png"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) {
+                                                                    handleRowJustificationUpload(vac.id, file);
+                                                                    e.currentTarget.value = '';
+                                                                }
+                                                            }}
+                                                            className="hidden"
+                                                            disabled={rowUploading[vac.id]}
+                                                        />
+                                                        <Upload size={14} />
+                                                        {rowUploading[vac.id] ? 'Subiendo...' : 'Subir'}
+                                                    </label>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400 dark:text-slate-500">-</span>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
@@ -493,6 +543,39 @@ export const VacationsPage: React.FC = () => {
                                             <span className="text-xs text-slate-400 dark:text-slate-500">
                                                 {new Date(vac.createdAt).toLocaleDateString()}
                                             </span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs">
+                                            {vac.justificationUrl ? (
+                                                <a
+                                                    href={getAbsoluteUrl(vac.justificationUrl)}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                                                >
+                                                    <FileText size={14} />
+                                                    Ver justificante
+                                                </a>
+                                            ) : vac.type === 'SICK_LEAVE' ? (
+                                                <label className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium cursor-pointer">
+                                                    <input
+                                                        type="file"
+                                                        accept=".pdf,.jpg,.jpeg,.png"
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                handleRowJustificationUpload(vac.id, file);
+                                                                e.currentTarget.value = '';
+                                                            }
+                                                        }}
+                                                        className="hidden"
+                                                        disabled={rowUploading[vac.id]}
+                                                    />
+                                                    <Upload size={14} />
+                                                    {rowUploading[vac.id] ? 'Subiendo...' : 'Subir justificante'}
+                                                </label>
+                                            ) : (
+                                                <span className="text-slate-400 dark:text-slate-500">Sin justificante</span>
+                                            )}
                                         </div>
                                     </div>
                                 ))

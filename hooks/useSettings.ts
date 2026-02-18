@@ -4,7 +4,8 @@ interface GlobalSettings {
     companyName?: string;
     logoUrl?: string;
     adminLogoUrl?: string;
-    [key: string]: string | undefined;
+    departments?: string[];
+    [key: string]: string | string[] | undefined;
 }
 
 export const useSettings = () => {
@@ -17,15 +18,24 @@ export const useSettings = () => {
                 const response = await fetch('/api/public/logo');
                 const data = await response.json();
 
+                const fallbackDepartments = ['IT', 'HR', 'Sales', 'Marketing', 'General'];
+                const departments = Array.isArray(data.departments) && data.departments.length > 0
+                    ? data.departments
+                    : fallbackDepartments;
+
                 // Use settings as-is - relative URLs work with Vite proxy
-                setSettings(data);
+                setSettings({
+                    ...data,
+                    departments
+                });
             } catch (error) {
                 console.error('❌ Error fetching settings:', error);
                 // Use defaults if fetch fails
                 setSettings({
                     companyName: 'XyonEmpleados',
                     logoUrl: '',
-                    adminLogoUrl: ''
+                    adminLogoUrl: '',
+                    departments: ['IT', 'HR', 'Sales', 'Marketing', 'General']
                 });
             } finally {
                 setLoading(false);

@@ -55,10 +55,27 @@ router.get('/public/logo', async (req, res) => {
             where: { key: 'companyName' }
         });
 
+        const departmentsSetting = await prisma.globalSettings.findUnique({
+            where: { key: 'DEPARTMENTS' }
+        });
+
+        let departments = ['General'];
+        if (departmentsSetting?.value) {
+            try {
+                const parsed = JSON.parse(departmentsSetting.value);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    departments = parsed;
+                }
+            } catch (parseError) {
+                console.error('Error parsing departments setting:', parseError);
+            }
+        }
+
         res.json({
             logoUrl: logoSetting?.value || '/default-logo.png',
             adminLogoUrl: adminLogoSetting?.value || '/default-logo.png',
-            companyName: companySetting?.value || 'XyonEmpleados'
+            companyName: companySetting?.value || 'XyonEmpleados',
+            departments
         });
     } catch (error) {
         console.error('Error fetching public settings:', error);
@@ -137,6 +154,7 @@ router.get('/payrolls', payrollController.getAllPayrolls);
 // Vacations
 router.get('/vacations', vacationController.getAllVacations);
 router.post('/vacations', validate(vacationRequestSchema), vacationController.createVacation);
+router.patch('/vacations/:id/justification', vacationController.updateJustification);
 
 // Manager routes (protected - requires MANAGER role)
 router.get('/manager/team-vacations', vacationController.getTeamVacations);

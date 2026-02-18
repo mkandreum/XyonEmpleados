@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/api';
 import { User, Lock, Mail, Briefcase, Building } from 'lucide-react';
@@ -19,6 +19,16 @@ export const RegisterPage: React.FC = () => {
         department: 'General',
         invitationCode: ''
     });
+
+    const departmentOptions = Array.isArray(settings.departments) && settings.departments.length > 0
+        ? settings.departments
+        : ['IT', 'HR', 'Sales', 'Marketing', 'General'];
+
+    useEffect(() => {
+        if (!departmentOptions.includes(formData.department)) {
+            setFormData(prev => ({ ...prev, department: departmentOptions[0] || 'General' }));
+        }
+    }, [departmentOptions, formData.department]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({
@@ -149,11 +159,9 @@ export const RegisterPage: React.FC = () => {
                                         onChange={handleChange}
                                         className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors"
                                     >
-                                        <option value="IT">IT</option>
-                                        <option value="HR">Recursos Humanos</option>
-                                        <option value="Sales">Ventas</option>
-                                        <option value="Marketing">Marketing</option>
-                                        <option value="General">General</option>
+                                        {departmentOptions.map((dept) => (
+                                            <option key={dept} value={dept}>{dept}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
