@@ -85,6 +85,21 @@ export const CalendarPage: React.FC = () => {
         let salida = '';
         let horas = '';
         let incidencia = '';
+        let ausencia = '';
+        // Buscar si hay ausencia/vacaciones ese día
+        const vac = vacations.find(v => {
+          const start = new Date(v.startDate);
+          const end = new Date(v.endDate);
+          const current = new Date(dateStr);
+          return current >= start && current <= end && v.status === 'APPROVED';
+        });
+        if (vac) {
+          if (vac.type === 'VACATION') ausencia = 'Vacaciones';
+          else if (vac.type === 'SICK_LEAVE') ausencia = 'Horas médicas';
+          else if (vac.type === 'PERSONAL') ausencia = 'Permiso';
+          else if (vac.type === 'OVERTIME') ausencia = 'Horas extra';
+          else ausencia = 'Ausencia';
+        }
         if (stats) {
           // Buscar primer fichaje de entrada y último de salida
           if (Array.isArray(stats.fichajes)) {
@@ -113,10 +128,11 @@ export const CalendarPage: React.FC = () => {
           salida,
           horas,
           incidencia,
+          ausencia,
         ]);
       }
       autoTable(doc, {
-        head: [['Fecha', 'Entrada', 'Salida', 'Horas', 'Incidencia']],
+        head: [['Fecha', 'Entrada', 'Salida', 'Horas', 'Incidencia', 'Ausencia/Vacaciones']],
         body: tableData,
         startY: 40,
         theme: 'grid',
