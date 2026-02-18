@@ -220,12 +220,6 @@ export const CalendarPage: React.FC = () => {
         <div className="flex items-center gap-2 self-center">
           <button
             onClick={handleDownloadClick}
-                  {/* Modal de firma */}
-                  <SignatureModal
-                    isOpen={showSignatureModal}
-                    onClose={() => setShowSignatureModal(false)}
-                    onConfirm={handleSignatureConfirm}
-                  />
             disabled={downloading || loading}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-emerald-600 text-white rounded-full hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-sm"
             title="Descargar reporte de asistencia del mes"
@@ -233,6 +227,12 @@ export const CalendarPage: React.FC = () => {
             {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
             <span className="hidden sm:inline">Reporte</span>
           </button>
+          {/* Modal de firma */}
+          <SignatureModal
+            isOpen={showSignatureModal}
+            onClose={() => setShowSignatureModal(false)}
+            onConfirm={handleSignatureConfirm}
+          />
           <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-2 py-1 shadow-sm">
             <button onClick={() => changeMonth(-1)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full" aria-label="Mes anterior">
               <ChevronLeft size={16} />
