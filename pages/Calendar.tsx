@@ -1,8 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import SignatureModal from '../components/SignatureModal';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, X, Download } from 'lucide-react';
 import { fichajeService, vacationService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { FichajeDayStats, VacationRequest, VacationStatus } from '../types';
+import { useSettings } from '../hooks/useSettings';
 
 function toISODate(date: Date) {
   return date.toISOString().split('T')[0];
@@ -29,29 +33,80 @@ type DayBadge = {
 
 export const CalendarPage: React.FC = () => {
   const { user } = useAuth();
+  const { settings } = useSettings();
   const [currentMonth, setCurrentMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [fichajeDays, setFichajeDays] = useState<Record<string, FichajeDayStats>>({});
   const [vacations, setVacations] = useState<VacationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
 
-  const downloadReport = async () => {
+  // Abre el modal de firma
+  const handleDownloadClick = () => {
+    setShowSignatureModal(true);
+  };
+
+  // Genera el PDF bonito con la firma
+  const handleSignatureConfirm = async (signature: string) => {
+    setShowSignatureModal(false);
     setDownloading(true);
+    setSignatureDataUrl(signature);
     try {
       const month = currentMonth.getMonth() + 1;
       const year = currentMonth.getFullYear();
-      const blob = await fichajeService.getAttendanceReport(month, year);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `reporte-asistencia-${year}-${String(month).padStart(2, '0')}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Generar PDF
+      const doc = new jsPDF();
+      // Cabecera
+      doc.setFontSize(18);
+      doc.text('Reporte de Asistencia', 14, 18);
+      doc.setFontSize(12);
+      doc.text(`${user?.name || ''} - ${monthLabel}`, 14, 28);
+
+      // Logo empresa (si existe)
+      if (settings?.logoUrl) {
+        try {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.src = settings.logoUrl;
+          await new Promise((resolve) => { img.onload = resolve; });
+          doc.addImage(img, 'PNG', 160, 10, 35, 18);
+        } catch {}
+      }
+
+      // Tabla de fichajes (ejemplo simple, puedes mejorar el formato)
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const tableData = [];
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const stats = fichajeDays[dateStr];
+        tableData.push([
+          dateStr,
+          stats?.entrada || '',
+          stats?.salida || '',
+          stats?.workedHours || '',
+          stats?.incidencia || '',
+        ]);
+      }
+      autoTable(doc, {
+        head: [['Fecha', 'Entrada', 'Salida', 'Horas', 'Incidencia']],
+        body: tableData,
+        startY: 40,
+        theme: 'grid',
+        headStyles: { fillColor: [16, 185, 129] }, // Tailwind emerald-600
+      });
+
+      // Firma y nombre (abajo a la derecha)
+      if (signature) {
+        doc.text(user?.name || '', 150, 270);
+        doc.addImage(signature, 'PNG', 160, 250, 40, 20);
+      }
+
+      // Descargar
+      doc.save(`reporte-asistencia-${year}-${String(month).padStart(2, '0')}.pdf`);
     } catch (err) {
-      console.error('Error downloading report', err);
+      console.error('Error generating PDF', err);
     } finally {
       setDownloading(false);
     }
@@ -164,7 +219,13 @@ export const CalendarPage: React.FC = () => {
         </div>
         <div className="flex items-center gap-2 self-center">
           <button
-            onClick={downloadReport}
+            onClick={handleDownloadClick}
+                  {/* Modal de firma */}
+                  <SignatureModal
+                    isOpen={showSignatureModal}
+                    onClose={() => setShowSignatureModal(false)}
+                    onConfirm={handleSignatureConfirm}
+                  />
             disabled={downloading || loading}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-emerald-600 text-white rounded-full hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-sm"
             title="Descargar reporte de asistencia del mes"
