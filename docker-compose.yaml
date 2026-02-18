@@ -6,6 +6,17 @@ services:
     restart: always
     ports:
       - "3000:3000"
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.xyonempleados.loadbalancer.server.port=3000
+      - traefik.http.routers.xyonempleados.rule=Host(`${APP_HOST}`)
+      - traefik.http.routers.xyonempleados.entrypoints=web,websecure
+      - traefik.http.routers.xyonempleados.tls=true
+      - traefik.http.routers.xyonempleados.tls.certresolver=letsencrypt
+      - traefik.http.middlewares.xyonempleados-nocache.headers.customresponseheaders.Cache-Control=no-store
+      - traefik.http.middlewares.xyonempleados-nocache.headers.customresponseheaders.Pragma=no-cache
+      - traefik.http.middlewares.xyonempleados-nocache.headers.customresponseheaders.Expires=0
+      - traefik.http.routers.xyonempleados.middlewares=xyonempleados-nocache
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1" ]
       interval: 30s
