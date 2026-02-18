@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react';
 import { fichajeService, vacationService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { FichajeDayStats, VacationRequest, VacationStatus } from '../types';
@@ -16,8 +16,10 @@ function isBetween(target: Date, start: Date, end: Date) {
 const weekdayLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
 type DayBadge = {
-  color: string;
-  label: string;
+  color: string;       // tailwind bg class for the dot
+  textColor: string;   // tailwind text class 
+  label: string;       // full label for detail panel
+  shortLabel: string;  // 1-2 char for mobile dot
   detail?: string;
   range?: {
     isStart: boolean;
@@ -31,6 +33,7 @@ export const CalendarPage: React.FC = () => {
   const [fichajeDays, setFichajeDays] = useState<Record<string, FichajeDayStats>>({});
   const [vacations, setVacations] = useState<VacationRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
   const loadData = async (reference: Date) => {
     if (!user?.id) return;
@@ -62,7 +65,7 @@ export const CalendarPage: React.FC = () => {
   const days = useMemo(() => {
     const total = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
     const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-    const offset = (firstDay.getDay() + 6) % 7; // convert Sunday=0 to Monday=0
+    const offset = (firstDay.getDay() + 6) % 7;
     return Array.from({ length: offset + total }).map((_, idx) => {
       if (idx < offset) return null;
       const dayNum = idx - offset + 1;
@@ -70,7 +73,7 @@ export const CalendarPage: React.FC = () => {
     });
   }, [currentMonth]);
 
-  const dayBadge = (date: Date): DayBadge | null => {
+  const getDayBadge = (date: Date): DayBadge | null => {
     const dayKey = toISODate(date);
     const todayIso = toISODate(new Date());
     const isFuture = date.getTime() > new Date(todayIso + 'T00:00:00').getTime();
@@ -87,67 +90,73 @@ export const CalendarPage: React.FC = () => {
       const end = new Date(vacation.endDate);
       const isStart = toISODate(start) === dayKey;
       const isEnd = toISODate(end) === dayKey;
-      const rangeInfo = { range: { isStart, isEnd } } as const;
+      const rangeInfo = { range: { isStart, isEnd } };
 
       if (vacation.type === 'SICK_LEAVE') {
-        return { color: 'bg-emerald-500 text-white', label: 'Médica', ...rangeInfo };
+        return { color: 'bg-emerald-500', textColor: 'text-emerald-600', label: 'Baja médica', shortLabel: '🏥', ...rangeInfo };
       }
       if (vacation.type === 'PERSONAL' || vacation.type === 'OTHER') {
-        return { color: 'bg-amber-400 text-white', label: 'Permiso', ...rangeInfo };
+        return { color: 'bg-amber-400', textColor: 'text-amber-600', label: 'Permiso', shortLabel: 'P', ...rangeInfo };
       }
       if (vacation.status === VacationStatus.APPROVED) {
-        return { color: 'bg-blue-500 text-white', label: 'Vacaciones', ...rangeInfo };
+        return { color: 'bg-blue-500', textColor: 'text-blue-600', label: 'Vacaciones', shortLabel: '🏖', ...rangeInfo };
       }
       if (vacation.status === VacationStatus.REJECTED) {
-        return { color: 'bg-red-500 text-white', label: 'Rechazado', ...rangeInfo };
+        return { color: 'bg-red-500', textColor: 'text-red-600', label: 'Rechazado', shortLabel: '✗', ...rangeInfo };
       }
-      return { color: 'bg-amber-500 text-white', label: 'Pendiente', ...rangeInfo };
+      return { color: 'bg-amber-500', textColor: 'text-amber-600', label: 'Pendiente', shortLabel: '⏳', ...rangeInfo };
     }
 
     const stats = fichajeDays[dayKey];
-    if (!stats && isFuture) return null; // no badge for future days without data
-    if (!stats) return { color: 'bg-rose-500 text-white', label: 'Sin fichar' };
+    if (!stats && isFuture) return null;
+    if (!stats) return { color: 'bg-rose-500', textColor: 'text-rose-600', label: 'No fichado', shortLabel: '✗' };
 
     const goodDay = stats.isComplete && !stats.isLate && !stats.isEarlyDeparture;
-    if (goodDay) return { color: 'bg-emerald-500 text-white', label: 'OK', detail: `${stats.horasTrabajadas}h` };
+    if (goodDay) return { color: 'bg-emerald-500', textColor: 'text-emerald-600', label: 'Fichado correcto', shortLabel: '✓', detail: `${stats.horasTrabajadas}h` };
 
     const badDay = stats.isLate || stats.isEarlyDeparture || !stats.isComplete;
-    if (badDay) return { color: 'bg-amber-500 text-white', label: 'Revisar', detail: `${stats.horasTrabajadas}h` };
+    if (badDay) return { color: 'bg-amber-500', textColor: 'text-amber-600', label: 'Revisar fichaje', shortLabel: '!', detail: `${stats.horasTrabajadas}h` };
 
     return null;
   };
 
   const changeMonth = (delta: number) => {
     setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
+    setSelectedDay(null);
   };
 
   const monthLabel = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(currentMonth);
 
+  const selectedBadge = selectedDay ? getDayBadge(selectedDay) : null;
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-2">
-          <CalendarIcon className="text-blue-600" size={22} />
+          <CalendarIcon className="text-blue-600 shrink-0" size={22} />
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Mi calendario</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Fichajes, vacaciones y permisos en un vistazo.</p>
+            <h1 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white">Mi calendario</h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 hidden sm:block">Fichajes, vacaciones y permisos en un vistazo.</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-3 py-1 shadow-sm">
-          <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full" aria-label="Mes anterior">
-            <ChevronLeft size={18} />
+        <div className="flex items-center justify-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full px-2 py-1 shadow-sm self-center">
+          <button onClick={() => changeMonth(-1)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full" aria-label="Mes anterior">
+            <ChevronLeft size={16} />
           </button>
-          <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 min-w-[120px] text-center">
+          <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 min-w-[120px] text-center capitalize">
             {monthLabel}
           </span>
-          <button onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full" aria-label="Mes siguiente">
-            <ChevronRight size={18} />
+          <button onClick={() => changeMonth(1)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full" aria-label="Mes siguiente">
+            <ChevronRight size={16} />
           </button>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 sm:p-6">
-        <div className="grid grid-cols-7 text-center text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 mb-2 sm:mb-3">
+      {/* Calendar grid */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-2 sm:p-6">
+        {/* Weekday headers */}
+        <div className="grid grid-cols-7 text-center text-[11px] sm:text-sm font-semibold text-slate-400 dark:text-slate-500 mb-1 sm:mb-3">
           {weekdayLabels.map((d) => (
             <div key={d} className="py-1">{d}</div>
           ))}
@@ -155,68 +164,115 @@ export const CalendarPage: React.FC = () => {
 
         {loading ? (
           <div className="flex items-center justify-center py-12 text-slate-500 dark:text-slate-400">
-            <Loader2 className="animate-spin mr-2" size={18} /> Cargando calendario...
+            <Loader2 className="animate-spin mr-2" size={18} /> Cargando...
           </div>
         ) : (
-          <div className="grid grid-cols-7 gap-1 sm:gap-2 text-sm">
+          <div className="grid grid-cols-7 gap-[2px] sm:gap-2">
             {days.map((date, idx) => {
               if (!date) return <div key={`empty-${idx}`} />;
-              const badge = dayBadge(date);
+              const badge = getDayBadge(date);
               const dayNumber = date.getDate();
               const isToday = toISODate(date) === toISODate(new Date());
-
-              const rangeClasses = badge?.range ? `
-                ${badge.range.isStart ? 'rounded-l-xl pl-1' : 'rounded-none'}
-                ${badge.range.isEnd ? 'rounded-r-xl pr-1' : 'rounded-none'}
-              ` : '';
+              const isSelected = selectedDay && toISODate(date) === toISODate(selectedDay);
+              const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
               return (
-                <div
+                <button
                   key={dayNumber}
-                  className={`relative aspect-square rounded-xl border border-slate-100 dark:border-slate-800 p-1 sm:p-2 flex flex-col gap-1 justify-between bg-white dark:bg-slate-950/40 ${isToday ? 'ring-2 ring-blue-500/60' : ''}`}
+                  onClick={() => setSelectedDay(date)}
+                  className={`
+                    relative flex flex-col items-center justify-center 
+                    aspect-square rounded-lg sm:rounded-xl
+                    transition-all duration-150
+                    ${isToday ? 'ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-slate-900' : ''}
+                    ${isSelected ? 'bg-blue-50 dark:bg-blue-900/30 scale-105' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}
+                    ${isWeekend && !badge ? 'opacity-40' : ''}
+                  `}
                 >
-                  {badge?.range && (
-                    <div
-                      className={`absolute inset-1 sm:inset-[6px] ${badge.color} opacity-20 ${rangeClasses}`}
-                    />
+                  {/* Day number */}
+                  <span className={`
+                    text-[11px] sm:text-sm font-medium leading-none
+                    ${isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-600 dark:text-slate-300'}
+                  `}>
+                    {dayNumber}
+                  </span>
+
+                  {/* Badge dot (mobile) / Badge pill (desktop) */}
+                  {badge && (
+                    <>
+                      {/* Mobile: colored dot */}
+                      <span className={`sm:hidden mt-0.5 w-2 h-2 rounded-full ${badge.color}`} />
+                      {/* Desktop: pill label */}
+                      <span className={`hidden sm:inline-block mt-1 text-[9px] px-1.5 py-0.5 rounded-full font-medium ${badge.color} text-white leading-none whitespace-nowrap`}>
+                        {badge.label.length > 10 ? badge.label.slice(0, 8) + '…' : badge.label}
+                      </span>
+                    </>
                   )}
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{dayNumber}</span>
-                    {badge && (
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${badge.color}`}>{badge.label}</span>
-                    )}
-                  </div>
+
+                  {/* Detail text (hours) - desktop only */}
                   {badge?.detail && (
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400">{badge.detail}</span>
+                    <span className="hidden sm:block text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{badge.detail}</span>
                   )}
-                </div>
+
+                  {/* Vacation range connector */}
+                  {badge?.range && (
+                    <div className={`absolute inset-y-1 ${badge.range.isStart ? 'left-1/2 right-0' : badge.range.isEnd ? 'left-0 right-1/2' : 'left-0 right-0'} ${badge.color} opacity-10 -z-0`} />
+                  )}
+                </button>
               );
             })}
           </div>
         )}
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 sm:p-6 flex flex-wrap gap-3 text-sm text-slate-700 dark:text-slate-300">
-        <LegendDot color="bg-emerald-500" label="Fichado correcto" />
-        <LegendDot color="bg-amber-500" label="Fichaje con incidencias" />
-        <LegendDot color="bg-rose-500" label="No fichado" />
-        <LegendDot color="bg-blue-500" label="Vacaciones aprobadas" />
-        <LegendDot color="bg-red-500" label="Vacaciones rechazadas" />
-        <LegendDot color="bg-emerald-500" label="Baja / hora médica" outline />
-        <LegendDot color="bg-amber-400" label="Otros permisos" outline />
-        <LegendDot color="bg-amber-500" label="Solicitud pendiente" outline />
+      {/* Selected day detail panel */}
+      {selectedDay && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 animate-in slide-in-from-bottom-2">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-slate-800 dark:text-white text-sm">
+              {selectedDay.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </h3>
+            <button onClick={() => setSelectedDay(null)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
+              <X size={16} className="text-slate-400" />
+            </button>
+          </div>
+          {selectedBadge ? (
+            <div className="flex items-center gap-3">
+              <span className={`w-3 h-3 rounded-full ${selectedBadge.color} shrink-0`} />
+              <div>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{selectedBadge.label}</span>
+                {selectedBadge.detail && (
+                  <span className="text-sm text-slate-500 dark:text-slate-400 ml-2">({selectedBadge.detail})</span>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400">Sin datos para este día</p>
+          )}
+        </div>
+      )}
+
+      {/* Legend */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-3 sm:p-4">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+          <LegendDot color="bg-emerald-500" label="Correcto" />
+          <LegendDot color="bg-amber-500" label="Incidencia" />
+          <LegendDot color="bg-rose-500" label="No fichado" />
+          <LegendDot color="bg-blue-500" label="Vacaciones" />
+          <LegendDot color="bg-red-500" label="Rechazadas" />
+          <LegendDot color="bg-emerald-500" label="Baja médica" outline />
+          <LegendDot color="bg-amber-400" label="Permiso" outline />
+        </div>
       </div>
     </div>
   );
 };
 
-const LegendDot: React.FC<{ color: string; label: string; outline?: boolean }> = ({ color, label, outline }) => {
-  return (
-    <div className="flex items-center gap-2">
-      <span className={`w-3 h-3 rounded-full ${outline ? 'border' : ''} ${color}`} />
-      <span>{label}</span>
-    </div>
-  );
-};
+const LegendDot: React.FC<{ color: string; label: string; outline?: boolean }> = ({ color, label, outline }) => (
+  <div className="flex items-center gap-1.5">
+    <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${outline ? 'border-2 border-current' : color}`} />
+    <span>{label}</span>
+  </div>
+);
 
 export default CalendarPage;
