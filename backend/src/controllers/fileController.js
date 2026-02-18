@@ -31,8 +31,9 @@ exports.getFile = async (req, res) => {
         const { type: rawType, filename } = req.params;
         const type = canonicalizeType(rawType);
         const user = req.user; // Set by authenticateToken middleware
+        const userId = user?.userId || user?.id; // JWT stores userId
 
-        if (!user) {
+        if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
@@ -82,7 +83,7 @@ exports.getFile = async (req, res) => {
                 }
             });
 
-            if (payroll && payroll.userId === user.id) {
+            if (payroll && payroll.userId === userId) {
                 hasAccess = true;
             }
         } else if (type === 'justifications') {
@@ -97,7 +98,7 @@ exports.getFile = async (req, res) => {
                 }
             });
             if (vacation) {
-                if (vacation.userId === user.id) hasAccess = true;
+                if (vacation.userId === userId) hasAccess = true;
 
                 // Managers can view justifications of their team
                 if (user.role === 'MANAGER') {
@@ -112,7 +113,7 @@ exports.getFile = async (req, res) => {
         if (hasAccess) {
             return res.sendFile(filePath);
         } else {
-            console.warn(`⛔ Access denied for user ${user.id} to file ${filename}`);
+            console.warn(`⛔ Access denied for user ${userId} to file ${filename}`);
             return res.status(403).json({ error: 'Access denied to this file' });
         }
 
