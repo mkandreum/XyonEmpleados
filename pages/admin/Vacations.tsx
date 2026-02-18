@@ -3,6 +3,7 @@ import { adminService } from '../../services/api';
 import { Check, X, FileText, ChevronDown, ChevronRight, AlertCircle } from 'lucide-react';
 import { getTypeLabel, getTypeColor } from '../../utils/vacationUtils';
 import { getAbsoluteUrl } from '../../utils/urlUtils';
+import { openProtectedFile } from '../../utils/fileUtils';
 
 interface VacationRequest {
     id: string;
@@ -212,6 +213,15 @@ export const AdminVacations: React.FC = () => {
                                                         href={getAbsoluteUrl(request.justificationUrl)}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
+                                                        onClick={async (e) => {
+                                                            e.preventDefault();
+                                                            try {
+                                                                await openProtectedFile(request.justificationUrl || '');
+                                                            } catch (error) {
+                                                                console.error('Open file error:', error);
+                                                                alert('No se pudo abrir el justificante');
+                                                            }
+                                                        }}
                                                         className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 text-xs md:text-sm transition-colors"
                                                     >
                                                         <FileText size={16} />
@@ -344,6 +354,15 @@ export const AdminVacations: React.FC = () => {
                                                                             href={getAbsoluteUrl(request.justificationUrl)}
                                                                             target="_blank"
                                                                             rel="noopener noreferrer"
+                                                                            onClick={async (e) => {
+                                                                                e.preventDefault();
+                                                                                try {
+                                                                                    await openProtectedFile(request.justificationUrl || '');
+                                                                                } catch (error) {
+                                                                                    console.error('Open file error:', error);
+                                                                                    alert('No se pudo abrir el justificante');
+                                                                                }
+                                                                            }}
                                                                             className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
                                                                         >
                                                                             <FileText size={16} />
@@ -394,6 +413,15 @@ export const AdminVacations: React.FC = () => {
                                                                         href={getAbsoluteUrl(request.justificationUrl)}
                                                                         target="_blank"
                                                                         rel="noopener noreferrer"
+                                                                        onClick={async (e) => {
+                                                                            e.preventDefault();
+                                                                            try {
+                                                                                await openProtectedFile(request.justificationUrl || '');
+                                                                            } catch (error) {
+                                                                                console.error('Open file error:', error);
+                                                                                alert('No se pudo abrir el justificante');
+                                                                            }
+                                                                        }}
                                                                         className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 text-xs transition-colors"
                                                                     >
                                                                         <FileText size={14} />
@@ -456,6 +484,15 @@ export const AdminVacations: React.FC = () => {
                                                             href={getAbsoluteUrl(request.justificationUrl)}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
+                                                            onClick={async (e) => {
+                                                                e.preventDefault();
+                                                                try {
+                                                                    await openProtectedFile(request.justificationUrl || '');
+                                                                } catch (error) {
+                                                                    console.error('Open file error:', error);
+                                                                    alert('No se pudo abrir el justificante');
+                                                                }
+                                                            }}
                                                             className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
                                                         >
                                                             <FileText size={16} />
@@ -510,6 +547,15 @@ export const AdminVacations: React.FC = () => {
                                                         href={getAbsoluteUrl(request.justificationUrl)}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
+                                                        onClick={async (e) => {
+                                                            e.preventDefault();
+                                                            try {
+                                                                await openProtectedFile(request.justificationUrl || '');
+                                                            } catch (error) {
+                                                                console.error('Open file error:', error);
+                                                                alert('No se pudo abrir el justificante');
+                                                            }
+                                                        }}
                                                         className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 text-xs transition-colors"
                                                     >
                                                         <FileText size={14} />

@@ -8,6 +8,7 @@ import { getTypeLabel, getTypeColor } from '../utils/vacationUtils';
 import { useModal } from '../hooks/useModal';
 import { Modal } from '../components/Modal';
 import { DateRangePicker } from '../components/DateRangePicker';
+import { openProtectedFile } from '../utils/fileUtils';
 
 export const VacationsPage: React.FC = () => {
     const { user } = useAuth();
@@ -490,6 +491,15 @@ export const VacationsPage: React.FC = () => {
                                                         href={getAbsoluteUrl(vac.justificationUrl)}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
+                                                        onClick={async (e) => {
+                                                            e.preventDefault();
+                                                            try {
+                                                                await openProtectedFile(vac.justificationUrl || '');
+                                                            } catch (error) {
+                                                                console.error('Open file error:', error);
+                                                                showAlert('No se pudo abrir el justificante', 'error');
+                                                            }
+                                                        }}
                                                         className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium"
                                                     >
                                                         <FileText size={14} />
@@ -563,6 +573,15 @@ export const VacationsPage: React.FC = () => {
                                                     href={getAbsoluteUrl(vac.justificationUrl)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
+                                                    onClick={async (e) => {
+                                                        e.preventDefault();
+                                                        try {
+                                                            await openProtectedFile(vac.justificationUrl || '');
+                                                        } catch (error) {
+                                                            console.error('Open file error:', error);
+                                                            showAlert('No se pudo abrir el justificante', 'error');
+                                                        }
+                                                    }}
                                                     className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
                                                 >
                                                     <FileText size={14} />

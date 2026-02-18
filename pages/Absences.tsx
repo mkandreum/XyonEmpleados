@@ -4,6 +4,7 @@ import { VacationRequest, VacationStatus } from '../types';
 import { Plus, Calendar, AlertCircle, Upload, FileText, Clock, Briefcase, Heart } from 'lucide-react';
 import { getTypeLabel, getTypeColor } from '../utils/vacationUtils';
 import { getAbsoluteUrl } from '../utils/urlUtils';
+import { openProtectedFile } from '../utils/fileUtils';
 
 export const AbsencesPage: React.FC = () => {
     const [showRequestForm, setShowRequestForm] = useState(false);
@@ -349,6 +350,15 @@ export const AbsencesPage: React.FC = () => {
                                                         href={getAbsoluteUrl(vacation.justificationUrl)}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
+                                                        onClick={async (e) => {
+                                                            e.preventDefault();
+                                                            try {
+                                                                await openProtectedFile(vacation.justificationUrl || '');
+                                                            } catch (error) {
+                                                                console.error('Open file error:', error);
+                                                                alert('No se pudo abrir el justificante');
+                                                            }
+                                                        }}
                                                         className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium"
                                                     >
                                                         <FileText size={14} />

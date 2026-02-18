@@ -6,6 +6,7 @@ import { useModal } from '../../hooks/useModal';
 import { Modal } from '../../components/Modal';
 import { getTypeLabel, getTypeColor } from '../../utils/vacationUtils';
 import { getAbsoluteUrl } from '../../utils/urlUtils';
+import { openProtectedFile } from '../../utils/fileUtils';
 import { VacationGanttChart } from '../../components/VacationGanttChart';
 import toast from 'react-hot-toast';
 
@@ -190,6 +191,15 @@ export const TeamRequests: React.FC = () => {
                                                                 href={getAbsoluteUrl(request.justificationUrl)}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
+                                                                onClick={async (e) => {
+                                                                    e.preventDefault();
+                                                                    try {
+                                                                        await openProtectedFile(request.justificationUrl || '');
+                                                                    } catch (error) {
+                                                                        console.error('Open file error:', error);
+                                                                        toast.error('No se pudo abrir el justificante');
+                                                                    }
+                                                                }}
                                                                 className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline font-medium mt-1"
                                                             >
                                                                 <FileText size={16} />
