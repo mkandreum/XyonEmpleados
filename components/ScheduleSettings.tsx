@@ -1,18 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { scheduleService } from '../services/api';
+import { scheduleService, adminService } from '../services/api';
 import { DepartmentSchedule } from '../types';
 import { Clock, Plus, Edit2, CheckCircle, AlertCircle } from 'lucide-react';
 
 export const ScheduleSettings: React.FC = () => {
     const [schedules, setSchedules] = useState<DepartmentSchedule[]>([]);
+    const [departments, setDepartments] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState<Partial<DepartmentSchedule>>({});
     const [isCreating, setIsCreating] = useState(false);
 
     useEffect(() => {
-        loadSchedules();
+        loadData();
     }, []);
+
+    const loadData = async () => {
+        try {
+            const [schedulesData, settings] = await Promise.all([
+                scheduleService.getAll(),
+                adminService.getSettings()
+            ]);
+            setSchedules(schedulesData);
+
+            // Parse departments from settings
+            if (settings.DEPARTMENTS) {
+                try {
+                    const parsed = JSON.parse(settings.DEPARTMENTS);
+                    if (Array.isArray(parsed)) setDepartments(parsed);
+                } catch { /* ignore */ }
+            }
+        } catch (error) {
+            console.error('Error loading schedules:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const loadSchedules = async () => {
         try {
@@ -20,10 +43,13 @@ export const ScheduleSettings: React.FC = () => {
             setSchedules(data);
         } catch (error) {
             console.error('Error loading schedules:', error);
-        } finally {
-            setIsLoading(false);
         }
     };
+
+    // Departments that don't have a schedule yet
+    const availableDepartments = departments.filter(
+        d => !schedules.some(s => s.department === d)
+    );
 
     const handleEdit = (schedule: DepartmentSchedule) => {
         setEditingId(schedule.id);
@@ -106,14 +132,30 @@ export const ScheduleSettings: React.FC = () => {
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                     Departamento
                                 </label>
-                                <input
-                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white disabled:opacity-50"
-                                    value={formData.department}
-                                    onChange={e => setFormData({ ...formData, department: e.target.value })}
-                                    disabled={!isCreating}
-                                    placeholder="Ej: IT, MARKETING, RRHH"
-                                />
-                                <p className="text-xs text-slate-500 mt-1">Debe coincidir EXACTAMENTE con el departamento del usuario.</p>
+                                {isCreating ? (
+                                    availableDepartments.length > 0 ? (
+                                        <select
+                                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
+                                            value={formData.department}
+                                            onChange={e => setFormData({ ...formData, department: e.target.value })}
+                                        >
+                                            <option value="">Selecciona un departamento</option>
+                                            {availableDepartments.map(dept => (
+                                                <option key={dept} value={dept}>{dept}</option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <div className="px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-700 dark:text-amber-400">
+                                            Todos los departamentos ya tienen horario configurado.
+                                        </div>
+                                    )
+                                ) : (
+                                    <input
+                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg text-slate-900 dark:text-white disabled:opacity-50"
+                                        value={formData.department}
+                                        disabled
+                                    />
+                                )}
                             </div>
 
                             <div className="flex items-end">
