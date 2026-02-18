@@ -9,8 +9,8 @@ export const getAbsoluteUrl = (url: string | undefined): string => {
         return url;
     }
 
-    // If relative upload path, convert to absolute
-    if (url.startsWith('/uploads')) {
+    // If root-relative path, convert to absolute
+    if (url.startsWith('/')) {
         return `${window.location.origin}${url}`;
     }
 
