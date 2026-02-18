@@ -3,6 +3,7 @@ import { payrollService } from '../services/api';
 import { Download, FileText, Calendar, DollarSign, TrendingUp, CheckSquare, Square } from 'lucide-react';
 import { useModal } from '../hooks/useModal';
 import { Modal } from '../components/Modal';
+import { openProtectedFile } from '../utils/fileUtils';
 
 interface Payroll {
   id: string;
@@ -58,13 +59,17 @@ export const PayrollPage: React.FC = () => {
       return;
     }
 
-    selectedPayrolls.forEach(id => {
+    const ids = Array.from(selectedPayrolls);
+    ids.forEach((id, index) => {
       const payroll = payrolls.find(p => p.id === id);
       if (payroll?.pdfUrl) {
-        // Open in new tab with slight delay to avoid popup blocker
-        setTimeout(() => {
-          window.open(payroll.pdfUrl, '_blank');
-        }, 100 * Array.from(selectedPayrolls).indexOf(id));
+        setTimeout(async () => {
+          try {
+            await openProtectedFile(payroll.pdfUrl);
+          } catch (error) {
+            console.error('Error opening payroll:', error);
+          }
+        }, 300 * index);
       }
     });
   };
@@ -204,15 +209,20 @@ export const PayrollPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <a
-                        href={payroll.pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={async () => {
+                          try {
+                            await openProtectedFile(payroll.pdfUrl);
+                          } catch (error) {
+                            console.error('Error opening payroll:', error);
+                            showAlert('No se pudo abrir la nómina', 'error');
+                          }
+                        }}
                         className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm"
                       >
                         <Download size={16} />
                         Descargar
-                      </a>
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -267,15 +277,20 @@ export const PayrollPage: React.FC = () => {
                     <div className="text-base font-bold text-slate-900 dark:text-white">
                       {payroll.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€
                     </div>
-                    <a
-                      href={payroll.pdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={async () => {
+                        try {
+                          await openProtectedFile(payroll.pdfUrl);
+                        } catch (error) {
+                          console.error('Error opening payroll:', error);
+                          showAlert('No se pudo abrir la nómina', 'error');
+                        }
+                      }}
                       className="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     >
                       <Download size={14} />
                       Descargar PDF
-                    </a>
+                    </button>
                   </div>
                 </div>
               ))}

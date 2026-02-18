@@ -3,6 +3,7 @@ import { adminService, uploadService } from '../../services/api';
 import { Upload, X, FileText } from 'lucide-react';
 import { useModal } from '../../hooks/useModal';
 import { Modal } from '../../components/Modal';
+import { openProtectedFile } from '../../utils/fileUtils';
 
 interface PayrollFormData {
     userId: string;
@@ -139,14 +140,18 @@ export const AdminPayrolls: React.FC = () => {
                                             {payroll.amount} €
                                         </td>
                                         <td className="px-6 py-4 text-right space-x-4">
-                                            <a
-                                                href={payroll.pdfUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
+                                            <button
+                                                onClick={async () => {
+                                                    try {
+                                                        await openProtectedFile(payroll.pdfUrl);
+                                                    } catch (error) {
+                                                        console.error('Error opening payroll:', error);
+                                                    }
+                                                }}
                                                 className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                                             >
                                                 Ver PDF
-                                            </a>
+                                            </button>
                                             <button
                                                 onClick={() => handleDelete(payroll.id)}
                                                 className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
@@ -180,14 +185,18 @@ export const AdminPayrolls: React.FC = () => {
                         </div>
 
                         <div className="flex justify-between items-center pt-2 border-t border-slate-50 dark:border-slate-700/50">
-                            <a
-                                href={payroll.pdfUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        await openProtectedFile(payroll.pdfUrl);
+                                    } catch (error) {
+                                        console.error('Error opening payroll:', error);
+                                    }
+                                }}
                                 className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium"
                             >
                                 <FileText size={16} /> Ver PDF
-                            </a>
+                            </button>
                             <button
                                 onClick={() => handleDelete(payroll.id)}
                                 className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm"

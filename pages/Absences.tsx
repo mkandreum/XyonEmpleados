@@ -364,7 +364,7 @@ export const AbsencesPage: React.FC = () => {
                                                         <FileText size={14} />
                                                         Ver
                                                     </a>
-                                                ) : vacation.type === 'SICK_LEAVE' ? (
+                                                ) : (vacation.type === 'SICK_LEAVE' || vacation.type === 'OTHER') ? (
                                                     <label className="inline-flex items-center gap-2 text-xs font-medium text-blue-600 dark:text-blue-400 cursor-pointer">
                                                         <input
                                                             type="file"

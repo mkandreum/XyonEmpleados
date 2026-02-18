@@ -6,6 +6,7 @@ import { VacationRequest, Event, Holiday, UserBenefitsBalance, DepartmentBenefit
 import { Calendar, Clock, Briefcase, FileText, Download, ChevronRight, Plane, AlertTriangle } from 'lucide-react';
 import { DigitalClock } from '../components/DigitalClock';
 import { FichajeButton } from '../components/FichajeButton';
+import { openProtectedFile } from '../utils/fileUtils';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth() as any;
@@ -218,15 +219,19 @@ export const Dashboard: React.FC = () => {
             </div>
 
             {lastPayroll && (
-              <a
-                href={lastPayroll.pdfUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={async () => {
+                  try {
+                    await openProtectedFile(lastPayroll.pdfUrl);
+                  } catch (error) {
+                    console.error('Error opening payroll:', error);
+                  }
+                }}
                 className="flex items-center gap-2 bg-slate-900 dark:bg-slate-800 text-white px-5 py-3 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors font-medium shadow-sm"
               >
                 <Download size={18} />
                 Descargar PDF
-              </a>
+              </button>
             )}
           </div>
 
