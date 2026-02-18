@@ -15,85 +15,53 @@
 
 <body>
   <div id="root"></div>
-  <!-- Session guard + version auto-update: runs BEFORE any cached JS bundle loads -->
+  <!-- Kill any old service workers + version check -->
   <script>
     (function () {
-      // ──────────────────────────────────────
-      // 1. Cache-bust on asset version change
-      // ──────────────────────────────────────
-      var ASSET_VERSION = '__BUILD_VERSION__';
-      function nukeCaches() {
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(function (regs) {
-            regs.forEach(function (r) { r.unregister(); });
-          });
-        }
-        if ('caches' in window) {
-          caches.keys().then(function (names) {
-            names.forEach(function (n) { caches.delete(n); });
-          });
-        }
+      // 1. KILL all service workers and caches immediately
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (r) { r.unregister(); });
+        });
       }
+      if ('caches' in window) {
+        caches.keys().then(function (names) {
+          names.forEach(function (n) { caches.delete(n); });
+        });
+      }
+
+      // 2. Version check - reload if new deploy detected
+      var ASSET_VERSION = '__BUILD_VERSION__';
       try {
         var stored = localStorage.getItem('asset_version');
         if (stored && stored !== ASSET_VERSION && ASSET_VERSION !== '__BUILD_' + 'VERSION__') {
-          nukeCaches();
           localStorage.setItem('asset_version', ASSET_VERSION);
-          // Hard reload to pick up new assets
           window.location.reload(true);
-          return; // stop execution while reload happens
+          return;
         }
         if (ASSET_VERSION !== '__BUILD_' + 'VERSION__') {
           localStorage.setItem('asset_version', ASSET_VERSION);
         }
-      } catch (e) {
-        console.warn('Cache version check failed', e);
-      }
+      } catch (e) { }
 
-      // ──────────────────────────────────────
-      // 2. Poll /api/version every 2 min to detect new deploys
-      //    Works even if THIS page is served from old SW cache
-      // ──────────────────────────────────────
+      // 3. Poll /api/version every 2 min for new deploys
       function checkServerVersion() {
         fetch('/api/version', { cache: 'no-store' })
           .then(function (r) { return r.json(); })
           .then(function (data) {
             if (!data || !data.version) return;
             var local = localStorage.getItem('asset_version') || '';
-            // If server has a newer version than what we have locally
             if (local && data.version !== local) {
-              console.log('[version-check] New version detected:', data.version, 'current:', local);
               localStorage.setItem('asset_version', data.version);
-              nukeCaches();
-              setTimeout(function () { window.location.reload(true); }, 500);
+              window.location.reload(true);
             }
           })
-          .catch(function () { /* offline or api not ready yet */ });
+          .catch(function () { });
       }
-      // Check immediately on page load (after 3s to not block render)
       setTimeout(checkServerVersion, 3000);
-      // Then check every 2 minutes
       setInterval(checkServerVersion, 2 * 60 * 1000);
 
-      // ──────────────────────────────────────
-      // 3. Force reload when a new SW takes control
-      //    This is the KEY fix: even if this HTML is the OLD cached version,
-      //    when the new SW activates (skipWaiting+clientsClaim), this listener
-      //    triggers and forces a reload, which then loads fresh HTML from network.
-      // ──────────────────────────────────────
-      var refreshing = false;
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.addEventListener('controllerchange', function () {
-          if (refreshing) return;
-          refreshing = true;
-          console.log('[sw] New service worker took control, reloading...');
-          window.location.reload();
-        });
-      }
-
-      // ──────────────────────────────────────
       // 4. Session / token expiry guard
-      // ──────────────────────────────────────
       try {
         var token = localStorage.getItem('token');
         if (token) {

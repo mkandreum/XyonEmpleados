@@ -102,58 +102,33 @@ app.use('/uploads/public', express.static(path.join(__dirname, '../uploads/publi
     lastModified: true,
 }));
 
-// Force no-cache on service worker file + inject cache cleanup
+// Serve a SW-killer: unregisters itself and deletes all caches
+// This ensures any previously installed SW gets nuked on next check
 app.get('/sw.js', (req, res) => {
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
     res.setHeader('Content-Type', 'application/javascript');
-
-    const fs = require('fs');
-    const swPath = path.join(__dirname, '../public/sw.js');
-
-    // Prepend aggressive cache cleanup code to the generated SW
-    // This ensures that when the new SW activates, it DELETES all old caches
-    // and forces all open windows to reload immediately
-    const cleanupCode = `
-// === INJECTED CACHE CLEANUP (server-side) ===
+    res.send(`
+// Self-destructing service worker - removes itself and all caches
+self.addEventListener('install', function() { self.skipWaiting(); });
 self.addEventListener('activate', function(event) {
   event.waitUntil(
-    caches.keys().then(function(cacheNames) {
-      return Promise.all(
-        cacheNames.map(function(cacheName) {
-          console.log('[sw-cleanup] Deleting old cache:', cacheName);
-          return caches.delete(cacheName);
-        })
-      );
+    caches.keys().then(function(names) {
+      return Promise.all(names.map(function(n) { return caches.delete(n); }));
     }).then(function() {
-      console.log('[sw-cleanup] All caches deleted, reloading clients...');
+      return self.registration.unregister();
+    }).then(function() {
       return self.clients.matchAll({ type: 'window' });
     }).then(function(clients) {
-      clients.forEach(function(client) {
-        client.navigate(client.url);
-      });
+      clients.forEach(function(c) { c.navigate(c.url); });
     })
   );
 });
-// === END INJECTED CACHE CLEANUP ===
-`;
-
-    if (fs.existsSync(swPath)) {
-        const swContent = fs.readFileSync(swPath, 'utf8');
-        res.send(cleanupCode + swContent);
-    } else {
-        // If no sw.js exists yet (first deploy), serve a no-op cleanup SW
-        res.send(cleanupCode + `
-self.addEventListener('install', function() { self.skipWaiting(); });
 `);
-    }
 });
 app.get('/registerSW.js', (req, res) => {
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    res.sendFile(path.join(__dirname, '../public/registerSW.js'));
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Content-Type', 'application/javascript');
+    res.send('// No service worker');
 });
 app.get('/push-sw.js', (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
