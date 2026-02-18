@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { adminService } from '../../services/api';
 import { Check, X, FileText, ChevronDown, ChevronRight, AlertCircle } from 'lucide-react';
 import { getTypeLabel, getTypeColor } from '../../utils/vacationUtils';
+import { getAbsoluteUrl } from '../../utils/urlUtils';
 
 interface VacationRequest {
     id: string;
@@ -208,7 +209,7 @@ export const AdminVacations: React.FC = () => {
                                                 <>
                                                     <span className="hidden md:inline">•</span>
                                                     <a
-                                                        href={request.justificationUrl}
+                                                        href={getAbsoluteUrl(request.justificationUrl)}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 text-xs md:text-sm transition-colors"
@@ -340,7 +341,7 @@ export const AdminVacations: React.FC = () => {
                                                                 <td className="px-4 py-2">
                                                                     {request.justificationUrl && (
                                                                         <a
-                                                                            href={request.justificationUrl}
+                                                                            href={getAbsoluteUrl(request.justificationUrl)}
                                                                             target="_blank"
                                                                             rel="noopener noreferrer"
                                                                             className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
@@ -390,7 +391,7 @@ export const AdminVacations: React.FC = () => {
                                                             {request.justificationUrl && (
                                                                 <div className="pt-1 border-t border-slate-100 dark:border-slate-800 transition-colors">
                                                                     <a
-                                                                        href={request.justificationUrl}
+                                                                        href={getAbsoluteUrl(request.justificationUrl)}
                                                                         target="_blank"
                                                                         rel="noopener noreferrer"
                                                                         className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 text-xs transition-colors"
@@ -452,7 +453,7 @@ export const AdminVacations: React.FC = () => {
                                                 <td className="px-4 py-3">
                                                     {request.justificationUrl && (
                                                         <a
-                                                            href={request.justificationUrl}
+                                                            href={getAbsoluteUrl(request.justificationUrl)}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
@@ -506,7 +507,7 @@ export const AdminVacations: React.FC = () => {
                                             {request.justificationUrl && (
                                                 <div className="pt-1 border-t border-slate-100 dark:border-slate-800 transition-colors">
                                                     <a
-                                                        href={request.justificationUrl}
+                                                        href={getAbsoluteUrl(request.justificationUrl)}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 text-xs transition-colors"

@@ -5,6 +5,7 @@ import { CheckCircle, XCircle, Calendar, Clock, User as UserIcon, FileText } fro
 import { useModal } from '../../hooks/useModal';
 import { Modal } from '../../components/Modal';
 import { getTypeLabel, getTypeColor } from '../../utils/vacationUtils';
+import { getAbsoluteUrl } from '../../utils/urlUtils';
 import { VacationGanttChart } from '../../components/VacationGanttChart';
 import toast from 'react-hot-toast';
 
@@ -186,7 +187,7 @@ export const TeamRequests: React.FC = () => {
 
                                                         {request.justificationUrl && (
                                                             <a
-                                                                href={request.justificationUrl}
+                                                                href={getAbsoluteUrl(request.justificationUrl)}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline font-medium mt-1"

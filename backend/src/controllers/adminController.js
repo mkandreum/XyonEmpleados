@@ -5,6 +5,35 @@ const { createNotification } = require('./notificationController');
 const { updateUserBalanceLogic } = require('./benefitsController');
 const { sendTemplateEmail } = require('../services/emailService');
 
+const ensureDepartmentSetting = async (department) => {
+    if (!department) return;
+
+    const existing = await prisma.globalSettings.findUnique({
+        where: { key: 'DEPARTMENTS' }
+    });
+
+    let departments = [];
+    if (existing?.value) {
+        try {
+            const parsed = JSON.parse(existing.value);
+            if (Array.isArray(parsed)) {
+                departments = parsed;
+            }
+        } catch (error) {
+            console.error('Error parsing departments setting:', error);
+        }
+    }
+
+    if (!departments.includes(department)) {
+        const updated = [...departments, department];
+        await prisma.globalSettings.upsert({
+            where: { key: 'DEPARTMENTS' },
+            update: { value: JSON.stringify(updated) },
+            create: { key: 'DEPARTMENTS', value: JSON.stringify(updated) }
+        });
+    }
+};
+
 // --- User Management ---
 
 exports.getUsers = async (req, res) => {
@@ -61,6 +90,8 @@ exports.createUser = async (req, res) => {
             }
         });
 
+        await ensureDepartmentSetting(user.department);
+
         const { password: _, ...userNoPass } = user;
         res.status(201).json(userNoPass);
     } catch (error) {
@@ -85,6 +116,8 @@ exports.updateUser = async (req, res) => {
             where: { id },
             data: updateData
         });
+
+        await ensureDepartmentSetting(user.department);
 
         const { password: _, ...userNoPass } = user;
         res.json(userNoPass);

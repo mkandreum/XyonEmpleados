@@ -102,6 +102,13 @@ export const VacationsPage: React.FC = () => {
         }
     };
 
+    const isMedicalHoursSubtypeValue = (subtype?: string) => {
+        if (!subtype) return false;
+        const normalized = subtype.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return normalized.includes('Horas Consulta Medico')
+            || normalized.includes('Horas Acom. Medico');
+    };
+
     // Calculate natural days (including weekends)
     const calculateNaturalDays = (start: Date, end: Date): number => {
         const diffTime = Math.abs(end.getTime() - start.getTime());
@@ -126,8 +133,11 @@ export const VacationsPage: React.FC = () => {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validate justification only for certain types (SICK_LEAVE is optional)
-        const requiresJustification = formData.type === 'OTHER' || formData.type === 'PERSONAL';
+        const isMedicalHoursSubtype = isMedicalHoursSubtypeValue(formData.subtype);
+
+        // Validate justification only for certain types (SICK_LEAVE and medical hours are optional)
+        const requiresJustification = (formData.type === 'OTHER' && !isMedicalHoursSubtype)
+            || formData.type === 'PERSONAL';
         if (requiresJustification && !formData.justificationUrl) {
             showAlert('El justificante es obligatorio para este tipo de solicitud', 'warning');
             return;
@@ -187,7 +197,10 @@ export const VacationsPage: React.FC = () => {
     };
 
     // Derived states
-    const requiresJustification = formData.type === 'OTHER' || formData.type === 'PERSONAL';
+    const isMedicalHoursSubtype = isMedicalHoursSubtypeValue(formData.subtype);
+
+    const requiresJustification = (formData.type === 'OTHER' && !isMedicalHoursSubtype)
+        || formData.type === 'PERSONAL';
     const showSubtypeDropdown = formData.type === 'OTHER';
 
     // Subtypes list
@@ -374,7 +387,7 @@ export const VacationsPage: React.FC = () => {
                                 <button type="button" onClick={() => setShowRequestForm(false)} className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors">Cancelar</button>
                                 <button
                                     type="submit"
-                                    disabled={submitting || (requiresJustification && !formData.justificationUrl)}
+                                    disabled={submitting}
                                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                                 >
                                     {submitting ? 'Enviando...' : 'Enviar Solicitud'}
@@ -482,7 +495,7 @@ export const VacationsPage: React.FC = () => {
                                                         <FileText size={14} />
                                                         Ver
                                                     </a>
-                                                ) : vac.type === 'SICK_LEAVE' ? (
+                                                ) : (vac.type === 'SICK_LEAVE' || (vac.type === 'OTHER' && isMedicalHoursSubtypeValue(vac.subtype))) ? (
                                                     <label className="inline-flex items-center gap-2 text-xs font-medium text-blue-600 dark:text-blue-400 cursor-pointer">
                                                         <input
                                                             type="file"
@@ -555,7 +568,7 @@ export const VacationsPage: React.FC = () => {
                                                     <FileText size={14} />
                                                     Ver justificante
                                                 </a>
-                                            ) : vac.type === 'SICK_LEAVE' ? (
+                                            ) : (vac.type === 'SICK_LEAVE' || (vac.type === 'OTHER' && isMedicalHoursSubtypeValue(vac.subtype))) ? (
                                                 <label className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium cursor-pointer">
                                                     <input
                                                         type="file"

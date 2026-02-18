@@ -168,6 +168,10 @@ export const AdminUsers: React.FC = () => {
         }
     };
 
+    const departmentOptions = formData.department && !departments.includes(formData.department)
+        ? [formData.department, ...departments]
+        : (departments.length > 0 ? departments : ['General']);
+
     if (isLoading) return <div className="p-8 text-center text-slate-500">Cargando usuarios...</div>;
 
     return (
@@ -411,7 +415,7 @@ export const AdminUsers: React.FC = () => {
                                         onChange={e => setFormData({ ...formData, department: e.target.value })}
                                     >
                                         <option value="" disabled>Seleccionar...</option>
-                                        {departments.map((dept) => (
+                                        {departmentOptions.map((dept) => (
                                             <option key={dept} value={dept}>{dept}</option>
                                         ))}
                                     </select>
