@@ -167,7 +167,6 @@ app.get('*', (req, res) => {
 
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
-});
 
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
