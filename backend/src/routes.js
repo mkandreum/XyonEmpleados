@@ -258,5 +258,76 @@ router.get('/department-shifts/:department', authenticateToken, async (req, res)
     } catch (e) { res.status(500).json({ error: 'Error fetching shifts' }); }
 });
 
+// Create a new DepartmentShift (admin only)
+router.post('/department-shifts', isAdmin, async (req, res) => {
+    try {
+        const { PrismaClient } = require('@prisma/client');
+        const prisma = new PrismaClient();
+        const { department, name, activeDays, horaEntrada, horaSalida, horaEntradaTarde, horaSalidaMañana, toleranciaMinutos, flexibleSchedule, scheduleOverrides } = req.body;
+        if (!department || !name || !horaEntrada || !horaSalida) {
+            return res.status(400).json({ error: 'Departamento, nombre, hora de entrada y salida son obligatorios' });
+        }
+        const shift = await prisma.departmentShift.create({
+            data: {
+                department,
+                name,
+                activeDays: activeDays || 'LUNES,MARTES,MIERCOLES,JUEVES,VIERNES',
+                horaEntrada,
+                horaSalida,
+                horaEntradaTarde: horaEntradaTarde || null,
+                horaSalidaMañana: horaSalidaMañana || null,
+                toleranciaMinutos: toleranciaMinutos || 10,
+                flexibleSchedule: flexibleSchedule || false,
+                scheduleOverrides: scheduleOverrides || null,
+            }
+        });
+        res.json(shift);
+    } catch (e) {
+        console.error('Error creating department shift:', e);
+        res.status(500).json({ error: 'Error al crear turno' });
+    }
+});
+
+// Update a DepartmentShift (admin only)
+router.put('/department-shifts/:id', isAdmin, async (req, res) => {
+    try {
+        const { PrismaClient } = require('@prisma/client');
+        const prisma = new PrismaClient();
+        const { name, activeDays, horaEntrada, horaSalida, horaEntradaTarde, horaSalidaMañana, toleranciaMinutos, flexibleSchedule, scheduleOverrides } = req.body;
+        const shift = await prisma.departmentShift.update({
+            where: { id: req.params.id },
+            data: {
+                ...(name !== undefined && { name }),
+                ...(activeDays !== undefined && { activeDays }),
+                ...(horaEntrada !== undefined && { horaEntrada }),
+                ...(horaSalida !== undefined && { horaSalida }),
+                ...(horaEntradaTarde !== undefined && { horaEntradaTarde: horaEntradaTarde || null }),
+                ...(horaSalidaMañana !== undefined && { horaSalidaMañana: horaSalidaMañana || null }),
+                ...(toleranciaMinutos !== undefined && { toleranciaMinutos }),
+                ...(flexibleSchedule !== undefined && { flexibleSchedule }),
+                ...(scheduleOverrides !== undefined && { scheduleOverrides: scheduleOverrides || null }),
+            }
+        });
+        res.json(shift);
+    } catch (e) {
+        console.error('Error updating department shift:', e);
+        res.status(500).json({ error: 'Error al actualizar turno' });
+    }
+});
+
+// Delete a DepartmentShift (admin only)
+router.delete('/department-shifts/:id', isAdmin, async (req, res) => {
+    try {
+        const { PrismaClient } = require('@prisma/client');
+        const prisma = new PrismaClient();
+        await prisma.departmentShift.delete({ where: { id: req.params.id } });
+        res.json({ success: true, message: 'Turno eliminado' });
+    } catch (e) {
+        console.error('Error deleting department shift:', e);
+        res.status(500).json({ error: 'Error al eliminar turno' });
+    }
+});
+
 module.exports = router;
+
 
