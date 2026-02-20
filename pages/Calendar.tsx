@@ -46,6 +46,8 @@ export const CalendarPage: React.FC = () => {
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [adjustments, setAdjustments] = useState<FichajeAdjustment[]>([]);
   const [adjustingFichaje, setAdjustingFichaje] = useState<Fichaje | null>(null);
+  // Selector de vista: 'calendario' o 'cuadrante'
+  const [view, setView] = useState<'calendario' | 'cuadrante'>('calendario');
 
   const loadData = async (reference: Date) => {
     if (!user) return;
@@ -279,45 +281,66 @@ export const CalendarPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <CalendarIcon className="text-blue-600" />
-            Calendario de Asistencia
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400">Control de fichajes y ausencias mensuales</p>
+      {/* Selector de píldora */}
+      <div className="flex justify-center items-center gap-4 mt-6">
+        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
+          <button
+            className={`px-5 py-1.5 rounded-full font-semibold text-sm transition-all focus:outline-none ${view === 'calendario' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+            onClick={() => setView('calendario')}
+          >
+            Calendario
+          </button>
+          <button
+            className={`px-5 py-1.5 rounded-full font-semibold text-sm transition-all focus:outline-none ${view === 'cuadrante' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+            onClick={() => setView('cuadrante')}
+          >
+            Cuadrante
+          </button>
         </div>
-        <button
-          onClick={handleDownloadClick}
-          disabled={downloading}
-          className="bg-slate-900 dark:bg-slate-800 text-white px-4 py-2.5 rounded-xl hover:bg-slate-800 transition-all flex items-center gap-2 font-medium shadow-sm disabled:opacity-50"
-        >
-          {downloading ? <Clock className="animate-spin" size={18} /> : <Download size={18} />}
-          {downloading ? 'Generando...' : 'Descargar Reporte'}
-        </button>
       </div>
 
-      <SignatureModal
-        isOpen={showSignatureModal}
-        onClose={() => setShowSignatureModal(false)}
-        onConfirm={handleSignatureConfirm}
-      />
-
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm shadow-slate-200/50 dark:shadow-none">
-        {/* Header con mes */}
-        <div className="p-4 md:p-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-white capitalize">{monthLabel}</h2>
-          <div className="flex gap-2">
-            <button onClick={prevMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
-              <ChevronLeft size={20} />
-            </button>
-            <button onClick={nextMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
-              <ChevronRight size={20} />
+      {/* Vista Calendario */}
+      {view === 'calendario' && (
+        <>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <CalendarIcon className="text-blue-600" />
+                Calendario de Asistencia
+              </h1>
+              <p className="text-slate-500 dark:text-slate-400">Control de fichajes y ausencias mensuales</p>
+            </div>
+            <button
+              onClick={handleDownloadClick}
+              disabled={downloading}
+              className="bg-slate-900 dark:bg-slate-800 text-white px-4 py-2.5 rounded-xl hover:bg-slate-800 transition-all flex items-center gap-2 font-medium shadow-sm disabled:opacity-50"
+            >
+              {downloading ? <Clock className="animate-spin" size={18} /> : <Download size={18} />}
+              {downloading ? 'Generando...' : 'Descargar Reporte'}
             </button>
           </div>
-        </div>
 
-        {/* Labels de días */}
+          <SignatureModal
+            isOpen={showSignatureModal}
+            onClose={() => setShowSignatureModal(false)}
+            onConfirm={handleSignatureConfirm}
+          />
+
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm shadow-slate-200/50 dark:shadow-none">
+            {/* Header con mes */}
+            <div className="p-4 md:p-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-white capitalize">{monthLabel}</h2>
+              <div className="flex gap-2">
+                <button onClick={prevMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
+                  <ChevronLeft size={20} />
+                </button>
+                <button onClick={nextMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Labels de días */}
         <div className="grid grid-cols-7 border-b border-slate-50 dark:border-slate-800/50">
           {weekdayLabels.map(l => (
             <div key={l} className="py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">{l}</div>
@@ -378,156 +401,116 @@ export const CalendarPage: React.FC = () => {
         )}
       </div>
 
-      {/* Selected day detail panel */}
-      {selectedDay && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 animate-in slide-in-from-bottom-2">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-semibold text-slate-800 dark:text-white text-sm">
-              {selectedDay.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </h3>
-            <button onClick={() => setSelectedDay(null)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
-              <X size={16} className="text-slate-400" />
-            </button>
+      {/* ...existing code... */}
+          {/* Selected day detail panel */}
+          {selectedDay && (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 animate-in slide-in-from-bottom-2">
+              {/* ...existing code... */}
+            </div>
+          )}
+
+          {adjustingFichaje && (
+            <AdjustFichajeModal
+              fichaje={adjustingFichaje}
+              onClose={() => setAdjustingFichaje(null)}
+              onSuccess={() => {
+                toast.success('Solicitud enviada correctamente');
+                loadData(currentMonth);
+              }}
+            />
+          )}
+
+          {/* Legend */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-3 sm:p-4">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              <LegendDot color="bg-emerald-500" label="Correcto" />
+              <LegendDot color="bg-amber-500" label="Incidencia" />
+              <LegendDot color="bg-rose-500" label="No fichado" />
+              <LegendDot color="bg-blue-500" label="Vacaciones" />
+              <LegendDot color="bg-red-500" label="Rechazadas" />
+              <LegendDot color="bg-emerald-500" label="Horas médicas" outline />
+              <LegendDot color="bg-amber-400" label="Permiso" outline />
+            </div>
           </div>
-          {selectedBadge ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <span className={`w-3 h-3 rounded-full ${selectedBadge.color} shrink-0`} />
-                <div>
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{selectedBadge.label}</span>
-                  {selectedBadge.detail && (
-                    <span className="text-sm text-slate-500 dark:text-slate-400 ml-2">({selectedBadge.detail})</span>
+        </>
+      )}
+
+      {/* Vista Cuadrante */}
+      {view === 'cuadrante' && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm shadow-slate-200/50 dark:shadow-none">
+          <div className="p-4 md:p-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white capitalize flex items-center gap-2">
+              <CalendarIcon className="text-blue-600" />
+              Cuadrante mensual: Fichajes y Horarios
+            </h2>
+            <div className="flex gap-2">
+              <button onClick={prevMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
+                <ChevronLeft size={20} />
+              </button>
+              <button onClick={nextMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          </div>
+          {/* Labels de días */}
+          <div className="grid grid-cols-7 border-b border-slate-50 dark:border-slate-800/50">
+            {weekdayLabels.map(l => (
+              <div key={l} className="py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">{l}</div>
+            ))}
+          </div>
+          {/* Celdas del cuadrante */}
+          <div className="grid grid-cols-7">
+            {days.map((d, i) => {
+              const isToday = toISODate(d) === toISODate(new Date());
+              const isCurrentMonth = d.getMonth() === currentMonth.getMonth();
+              const stats = fichajeDays[toISODate(d)];
+              const vac = vacations.find(v => {
+                const start = new Date(v.startDate);
+                const end = new Date(v.endDate);
+                return d >= start && d <= end && v.status === 'APPROVED';
+              });
+              const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+              return (
+                <div
+                  key={i}
+                  className={`relative flex flex-col items-center justify-start aspect-square rounded-xl sm:rounded-2xl transition-all duration-200 p-1 mx-0.5 my-0.5 border border-transparent ${!isCurrentMonth ? 'opacity-20' : 'opacity-100'} ${isToday ? 'ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/20 z-10' : 'hover:bg-slate-50 dark:hover:bg-slate-800'} ${isWeekend ? 'bg-slate-50/50 dark:bg-slate-900/20' : ''}`}
+                >
+                  {/* Día */}
+                  <span className={`text-xs sm:text-sm font-medium leading-none mb-1 ${isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : isCurrentMonth ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}`}>
+                    {d.getDate()}
+                  </span>
+                  {/* Horario asignado */}
+                  {stats && stats.turno ? (
+                    <span className="block text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium mb-0.5">
+                      {stats.turno.label}
+                    </span>
+                  ) : (
+                    <span className="block text-[10px] text-slate-400 mb-0.5">-</span>
+                  )}
+                  {/* Fichajes */}
+                  {stats && stats.fichajes.length > 0 ? (
+                    <div className="flex flex-col gap-0.5 items-center w-full">
+                      {stats.fichajes.map((f, idx) => (
+                        <span key={idx} className={`inline-block px-1.5 py-0.5 rounded-full font-mono text-[10px] ${f.tipo === 'ENTRADA' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                          {f.tipo === 'ENTRADA' ? 'E' : 'S'} {new Date(f.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="block text-[10px] text-slate-400">Sin fichaje</span>
+                  )}
+                  {/* Ausencia o Vacaciones */}
+                  {vac && (
+                    <span className="block text-[10px] mt-0.5 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium">
+                      {vac.type === 'VACATION' ? 'Vacaciones' : 'Ausencia'}
+                    </span>
                   )}
                 </div>
-              </div>
-
-              {/* Fichajes del día */}
-              {fichajeDays[toISODate(selectedDay)] && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fichajes Registrados</p>
-                    {fichajeDays[toISODate(selectedDay)].turno && (
-                      <span className="text-[10px] bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-medium">
-                        {fichajeDays[toISODate(selectedDay)].turno?.label}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="grid gap-2">
-                    {fichajeDays[toISODate(selectedDay)].fichajes.map((f, i, arr) => {
-                      const adjustment = adjustments.find(a => a.fichajeId === f.id);
-                      const stats = fichajeDays[toISODate(selectedDay)];
-
-                      let hasIncidence = false;
-                      let incidenceLabel = '';
-
-                      if (stats.daySchedule && stats.turno && !stats.daySchedule.flexibleSchedule) {
-                        const time = new Date(f.timestamp);
-                        const timeStr = time.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-                        if (f.tipo === 'ENTRADA' && i === 0) {
-                          if (timeStr > (stats.turno.expectedEntry || '')) {
-                            hasIncidence = true;
-                            incidenceLabel = 'Llegada tarde';
-                          }
-                        } else if (f.tipo === 'SALIDA' && i === arr.length - 1) {
-                          if (timeStr < (stats.turno.expectedExit || '')) {
-                            hasIncidence = true;
-                            incidenceLabel = 'Salida anticipada';
-                          }
-                        }
-                      }
-
-                      return (
-                        <div key={i} className={`flex items-center justify-between p-3 rounded-xl border transition-all group ${hasIncidence
-                            ? 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-900/30'
-                            : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700'
-                          }`}>
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${f.tipo === 'ENTRADA' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
-                              }`}>
-                              {f.tipo === 'ENTRADA' ? 'E' : 'S'}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-bold text-slate-900 dark:text-white">
-                                  {new Date(f.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </p>
-                                {hasIncidence && (
-                                  <span className="flex items-center gap-0.5 text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded uppercase">
-                                    <AlertTriangle size={10} />
-                                    {incidenceLabel}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[10px] text-slate-400">{f.tipo === 'ENTRADA' ? 'Entrada' : 'Salida'}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            {adjustment ? (
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter ${adjustment.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
-                                  adjustment.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                }`}>
-                                {adjustment.status === 'PENDING' ? 'Pdte Ajuste' :
-                                  adjustment.status === 'APPROVED' ? 'Ajustado' : 'Rechazado'}
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => setAdjustingFichaje(f)}
-                                className="opacity-0 group-hover:opacity-100 text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded transition-all"
-                              >
-                                Ajustar
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    {!fichajeDays[toISODate(selectedDay)].isComplete && fichajeDays[toISODate(selectedDay)].fichajes.length > 0 && (
-                      <div className="mt-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-center border border-dashed border-slate-300 dark:border-slate-700">
-                        <p className="text-[10px] font-medium text-slate-500 flex items-center justify-center gap-1">
-                          <Clock size={12} />
-                          Jornada incompleta - Falta registro de {
-                            fichajeDays[toISODate(selectedDay)].fichajes[fichajeDays[toISODate(selectedDay)].fichajes.length - 1].tipo === 'ENTRADA' ? 'salida' : 'entrada'
-                          }
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-slate-400">Sin datos para este día</p>
-          )}
+              );
+            })}
+          </div>
         </div>
       )}
-
-      {adjustingFichaje && (
-        <AdjustFichajeModal
-          fichaje={adjustingFichaje}
-          onClose={() => setAdjustingFichaje(null)}
-          onSuccess={() => {
-            toast.success('Solicitud enviada correctamente');
-            loadData(currentMonth);
-          }}
-        />
-      )}
-
-      {/* Legend */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-3 sm:p-4">
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-          <LegendDot color="bg-emerald-500" label="Correcto" />
-          <LegendDot color="bg-amber-500" label="Incidencia" />
-          <LegendDot color="bg-rose-500" label="No fichado" />
-          <LegendDot color="bg-blue-500" label="Vacaciones" />
-          <LegendDot color="bg-red-500" label="Rechazadas" />
-          <LegendDot color="bg-emerald-500" label="Horas médicas" outline />
-          <LegendDot color="bg-amber-400" label="Permiso" outline />
-        </div>
-      </div>
     </div>
   );
 };
