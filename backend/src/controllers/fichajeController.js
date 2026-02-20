@@ -166,7 +166,7 @@ exports.getCurrentFichaje = async (req, res) => {
         if (hasActiveEntry) {
             try {
                 const user = await prisma.user.findUnique({ where: { id: userId } });
-                const schedule = await prisma.departmentSchedule.findUnique({
+                const schedule = await prisma.departmentSchedule.findFirst({
                     where: { department: user.department }
                 });
                 if (schedule) {
@@ -291,7 +291,7 @@ exports.getWeek = async (req, res) => {
             return res.status(404).json({ error: 'Usuario o departamento no encontrado' });
         }
 
-        const schedule = await prisma.departmentSchedule.findUnique({
+        const schedule = await prisma.departmentSchedule.findFirst({
             where: { department: user.department }
         });
 
@@ -345,7 +345,7 @@ exports.getMonth = async (req, res) => {
             return res.status(404).json({ error: 'Usuario o departamento no encontrado' });
         }
 
-        const schedule = await prisma.departmentSchedule.findUnique({
+        const schedule = await prisma.departmentSchedule.findFirst({
             where: { department: user.department }
         });
 
@@ -384,7 +384,7 @@ exports.getAttendanceReport = async (req, res) => {
         if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
         // Get schedule
-        const schedule = await prisma.departmentSchedule.findUnique({
+        const schedule = await prisma.departmentSchedule.findFirst({
             where: { department: user.department }
         });
 
@@ -577,7 +577,7 @@ exports.getDepartmentWeek = async (req, res) => {
         });
 
         // Obtener horario del departamento
-        const schedule = await prisma.departmentSchedule.findUnique({
+        const schedule = await prisma.departmentSchedule.findFirst({
             where: { department: dept }
         });
 

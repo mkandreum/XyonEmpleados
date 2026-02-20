@@ -45,7 +45,6 @@ export const FloatingNavbar: React.FC = () => {
     const managerItems: NavItem[] = [
         { path: '/manager/team', label: 'Equipo', icon: UserCircle },
         { path: '/manager/fichajes', label: 'Fichajes', icon: Clock },
-        { path: '/manager/adjustments', label: 'Ajustes', icon: AlertCircle },
     ];
 
     const adminItems: NavItem[] = [

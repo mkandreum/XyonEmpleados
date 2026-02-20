@@ -10,7 +10,7 @@ exports.getSchedule = async (req, res) => {
     try {
         const { department } = req.params;
 
-        const schedule = await prisma.departmentSchedule.findUnique({
+        const schedule = await prisma.departmentSchedule.findFirst({
             where: { department }
         });
 
@@ -34,7 +34,7 @@ exports.getSchedule = async (req, res) => {
             });
         }
 
-            res.json([schedule]);
+        res.json([schedule]);
     } catch (error) {
         console.error('Error getting schedule:', error);
         res.status(500).json({ error: 'Error al obtener horario' });
@@ -63,8 +63,10 @@ exports.upsertSchedule = async (req, res) => {
             scheduleJueves,
             scheduleViernes,
             scheduleSabado,
-            scheduleDomingo
+            scheduleDomingo,
+            name // Optional: if provided, use it. Default to "General"
         } = req.body;
+        const scheduleName = name || "General";
 
         if (!department || !horaEntrada || !horaSalida) {
             return res.status(400).json({
@@ -137,10 +139,11 @@ exports.upsertSchedule = async (req, res) => {
         };
 
         const schedule = await prisma.departmentSchedule.upsert({
-            where: { department },
+            where: { department_name: { department, name: scheduleName } },
             update: data,
             create: {
                 department,
+                name: scheduleName,
                 ...data
             }
         });
@@ -175,20 +178,20 @@ exports.getAllSchedules = async (req, res) => {
  */
 exports.deleteSchedule = async (req, res) => {
     try {
-        const { department } = req.params;
+        const { department, name } = req.params;
+        const scheduleName = name || 'General';
 
-        const schedule = await prisma.departmentSchedule.findUnique({
-            where: { department }
+        const schedule = await prisma.departmentSchedule.findFirst({
+            where: { department, name: scheduleName }
         });
 
         if (!schedule) {
             return res.status(404).json({ error: 'Horario no encontrado' });
         }
 
-            const { name } = req.params;
-            await prisma.departmentSchedule.delete({
-                where: { department_name: { department, name } }
-            });
+        await prisma.departmentSchedule.delete({
+            where: { department_name: { department, name: scheduleName } }
+        });
 
         res.json({ success: true, message: 'Horario eliminado' });
     } catch (error) {
@@ -205,7 +208,7 @@ exports.getResolvedSchedule = async (req, res) => {
     try {
         const { department } = req.params;
 
-        const schedule = await prisma.departmentSchedule.findUnique({
+        const schedule = await prisma.departmentSchedule.findFirst({
             where: { department }
         });
 

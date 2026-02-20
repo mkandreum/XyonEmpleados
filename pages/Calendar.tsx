@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { FichajeDayStats, VacationRequest, VacationStatus, Fichaje, FichajeAdjustment, FichajeAdjustmentStatus } from '../types';
 import { useSettings } from '../hooks/useSettings';
 import { AdjustFichajeModal } from '../components/AdjustFichajeModal';
+import { TeamCalendarView } from '../components/TeamCalendarView';
 import { toast } from 'react-hot-toast';
 
 function toISODate(date: Date) {
@@ -46,8 +47,8 @@ export const CalendarPage: React.FC = () => {
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [adjustments, setAdjustments] = useState<FichajeAdjustment[]>([]);
   const [adjustingFichaje, setAdjustingFichaje] = useState<Fichaje | null>(null);
-  // Selector de vista: 'calendario' o 'cuadrante'
-  const [view, setView] = useState<'calendario' | 'cuadrante'>('calendario');
+  // Selector de vista: 'calendario', 'cuadrante' o 'equipo'
+  const [view, setView] = useState<'calendario' | 'cuadrante' | 'equipo'>('calendario');
 
   const loadData = async (reference: Date) => {
     if (!user) return;
@@ -296,6 +297,14 @@ export const CalendarPage: React.FC = () => {
           >
             Cuadrante
           </button>
+          {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+            <button
+              className={`px-5 py-1.5 rounded-full font-semibold text-sm transition-all focus:outline-none ${view === 'equipo' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+              onClick={() => setView('equipo')}
+            >
+              C. Equipo
+            </button>
+          )}
         </div>
       </div>
 
@@ -341,67 +350,67 @@ export const CalendarPage: React.FC = () => {
             </div>
 
             {/* Labels de días */}
-        <div className="grid grid-cols-7 border-b border-slate-50 dark:border-slate-800/50">
-          {weekdayLabels.map(l => (
-            <div key={l} className="py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">{l}</div>
-          ))}
-        </div>
-
-        {/* Celdas del calendario */}
-        {loading ? (
-          <div className="h-[400px] flex items-center justify-center bg-slate-50/30 dark:bg-slate-900/10">
-            <div className="flex flex-col items-center gap-2">
-              <Clock className="animate-spin text-blue-500" size={32} />
-              <p className="text-sm font-medium text-slate-400">Cargando mensualidad...</p>
+            <div className="grid grid-cols-7 border-b border-slate-50 dark:border-slate-800/50">
+              {weekdayLabels.map(l => (
+                <div key={l} className="py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">{l}</div>
+              ))}
             </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-7">
-            {days.map((d, i) => {
-              const isToday = toISODate(d) === toISODate(new Date());
-              const isCurrentMonth = d.getMonth() === currentMonth.getMonth();
-              const isSelected = selectedDay && toISODate(d) === toISODate(selectedDay);
-              const badge = getDayBadge(d);
-              const isWeekend = d.getDay() === 0 || d.getDay() === 6;
 
-              return (
-                <button
-                  key={i}
-                  onClick={() => setSelectedDay(d)}
-                  className={`relative flex flex-col items-center justify-center aspect-square rounded-xl sm:rounded-2xl transition-all duration-200 p-1 mx-0.5 my-0.5
+            {/* Celdas del calendario */}
+            {loading ? (
+              <div className="h-[400px] flex items-center justify-center bg-slate-50/30 dark:bg-slate-900/10">
+                <div className="flex flex-col items-center gap-2">
+                  <Clock className="animate-spin text-blue-500" size={32} />
+                  <p className="text-sm font-medium text-slate-400">Cargando mensualidad...</p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-7">
+                {days.map((d, i) => {
+                  const isToday = toISODate(d) === toISODate(new Date());
+                  const isCurrentMonth = d.getMonth() === currentMonth.getMonth();
+                  const isSelected = selectedDay && toISODate(d) === toISODate(selectedDay);
+                  const badge = getDayBadge(d);
+                  const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedDay(d)}
+                      className={`relative flex flex-col items-center justify-center aspect-square rounded-xl sm:rounded-2xl transition-all duration-200 p-1 mx-0.5 my-0.5
                     ${!isCurrentMonth ? 'opacity-20' : 'opacity-100'}
                     ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/20 z-10' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}
                     ${isWeekend && !badge ? 'bg-slate-50/50 dark:bg-slate-900/20' : ''}
                   `}
-                >
-                  {/* Numero del día con indicador 'Hoy' */}
-                  <span className={`text-xs sm:text-sm font-medium leading-none mb-1 ${isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : isCurrentMonth ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}`}>
-                    {d.getDate()}
-                    {isToday && <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-blue-600 rounded-full" />}
-                  </span>
-
-                  {/* Badge visual (punto o etiqueta corta) */}
-                  {badge && (
-                    <>
-                      <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${badge.color} shadow-sm`} />
-                      <span className={`hidden sm:inline-block mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium ${badge.textColor} ${badge.color} leading-none whitespace-nowrap`}>
-                        {badge.detail || badge.shortLabel}
+                    >
+                      {/* Numero del día con indicador 'Hoy' */}
+                      <span className={`text-xs sm:text-sm font-medium leading-none mb-1 ${isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : isCurrentMonth ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}`}>
+                        {d.getDate()}
+                        {isToday && <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-blue-600 rounded-full" />}
                       </span>
-                    </>
-                  )}
 
-                  {/* Range connector for vacations */}
-                  {badge?.range && (
-                    <div className={`absolute inset-y-1 ${badge.range.isStart ? 'left-1/2 right-0' : badge.range.isEnd ? 'left-0 right-1/2' : 'left-0 right-0'} ${badge.color} opacity-10 -z-0`} />
-                  )}
-                </button>
-              );
-            })}
+                      {/* Badge visual (punto o etiqueta corta) */}
+                      {badge && (
+                        <>
+                          <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${badge.color} shadow-sm`} />
+                          <span className={`hidden sm:inline-block mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium ${badge.textColor} ${badge.color} leading-none whitespace-nowrap`}>
+                            {badge.detail || badge.shortLabel}
+                          </span>
+                        </>
+                      )}
+
+                      {/* Range connector for vacations */}
+                      {badge?.range && (
+                        <div className={`absolute inset-y-1 ${badge.range.isStart ? 'left-1/2 right-0' : badge.range.isEnd ? 'left-0 right-1/2' : 'left-0 right-0'} ${badge.color} opacity-10 -z-0`} />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* ...existing code... */}
+          {/* ...existing code... */}
           {/* Selected day detail panel */}
           {selectedDay && (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 animate-in slide-in-from-bottom-2">
@@ -435,81 +444,82 @@ export const CalendarPage: React.FC = () => {
         </>
       )}
 
-      {/* Vista Cuadrante */}
+      {/* Vista Cuadrante (Personal para empleados, Equipo para Managers) */}
       {view === 'cuadrante' && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm shadow-slate-200/50 dark:shadow-none">
-          <div className="p-4 md:p-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white capitalize flex items-center gap-2">
-              <CalendarIcon className="text-blue-600" />
-              Cuadrante mensual: Fichajes y Horarios
-            </h2>
-            <div className="flex gap-2">
-              <button onClick={prevMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
-                <ChevronLeft size={20} />
-              </button>
-              <button onClick={nextMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
-                <ChevronRight size={20} />
-              </button>
+        user?.role === 'MANAGER' || user?.role === 'ADMIN' ? (
+          <TeamCalendarView mode="shifts" />
+        ) : (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm shadow-slate-200/50 dark:shadow-none">
+            <div className="p-4 md:p-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-white capitalize flex items-center gap-2">
+                <CalendarIcon className="text-blue-600" />
+                Mi Cuadrante: Horarios y Fichajes
+              </h2>
+              <div className="flex gap-2">
+                <button onClick={prevMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
+                  <ChevronLeft size={20} />
+                </button>
+                <button onClick={nextMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            </div>
+            {/* Labels de días */}
+            <div className="grid grid-cols-7 border-b border-slate-50 dark:border-slate-800/50">
+              {weekdayLabels.map(l => (
+                <div key={l} className="py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">{l}</div>
+              ))}
+            </div>
+            {/* Celdas del cuadrante */}
+            <div className="grid grid-cols-7">
+              {days.map((d, i) => {
+                const isToday = toISODate(d) === toISODate(new Date());
+                const isCurrentMonth = d.getMonth() === currentMonth.getMonth();
+                const stats = fichajeDays[toISODate(d)];
+                const vac = vacations.find(v => {
+                  const start = new Date(v.startDate);
+                  const end = new Date(v.endDate);
+                  return d >= start && d <= end && v.status === 'APPROVED';
+                });
+                const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                return (
+                  <div
+                    key={i}
+                    className={`relative flex flex-col items-center justify-start aspect-square rounded-xl sm:rounded-2xl transition-all duration-200 p-1 mx-0.5 my-0.5 border border-transparent ${!isCurrentMonth ? 'opacity-20' : 'opacity-100'} ${isToday ? 'ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/20 z-10' : 'hover:bg-slate-50 dark:hover:bg-slate-800'} ${isWeekend ? 'bg-slate-50/50 dark:bg-slate-900/20' : ''}`}
+                  >
+                    <span className={`text-xs sm:text-sm font-medium leading-none mb-1 ${isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : isCurrentMonth ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}`}>
+                      {d.getDate()}
+                    </span>
+                    {stats && stats.turno && (
+                      <span className="block text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+                        {stats.turno.label}
+                      </span>
+                    )}
+                    {stats && stats.fichajes.length > 0 && (
+                      <div className="flex flex-col gap-0.5 items-center w-full">
+                        {stats.fichajes.slice(0, 2).map((f, idx) => (
+                          <span key={idx} className={`inline-block px-1 py-0.5 rounded-full font-mono text-[9px] ${f.tipo === 'ENTRADA' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                            {f.tipo === 'ENTRADA' ? 'E' : 'S'} {new Date(f.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {vac && (
+                      <span className="block text-[10px] mt-0.5 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-medium">
+                        {vac.type === 'VACATION' ? 'Vacaciones' : 'Ausencia'}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
-          {/* Labels de días */}
-          <div className="grid grid-cols-7 border-b border-slate-50 dark:border-slate-800/50">
-            {weekdayLabels.map(l => (
-              <div key={l} className="py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">{l}</div>
-            ))}
-          </div>
-          {/* Celdas del cuadrante */}
-          <div className="grid grid-cols-7">
-            {days.map((d, i) => {
-              const isToday = toISODate(d) === toISODate(new Date());
-              const isCurrentMonth = d.getMonth() === currentMonth.getMonth();
-              const stats = fichajeDays[toISODate(d)];
-              const vac = vacations.find(v => {
-                const start = new Date(v.startDate);
-                const end = new Date(v.endDate);
-                return d >= start && d <= end && v.status === 'APPROVED';
-              });
-              const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-              return (
-                <div
-                  key={i}
-                  className={`relative flex flex-col items-center justify-start aspect-square rounded-xl sm:rounded-2xl transition-all duration-200 p-1 mx-0.5 my-0.5 border border-transparent ${!isCurrentMonth ? 'opacity-20' : 'opacity-100'} ${isToday ? 'ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/20 z-10' : 'hover:bg-slate-50 dark:hover:bg-slate-800'} ${isWeekend ? 'bg-slate-50/50 dark:bg-slate-900/20' : ''}`}
-                >
-                  {/* Día */}
-                  <span className={`text-xs sm:text-sm font-medium leading-none mb-1 ${isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : isCurrentMonth ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}`}>
-                    {d.getDate()}
-                  </span>
-                  {/* Horario asignado */}
-                  {stats && stats.turno ? (
-                    <span className="block text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium mb-0.5">
-                      {stats.turno.label}
-                    </span>
-                  ) : (
-                    <span className="block text-[10px] text-slate-400 mb-0.5">-</span>
-                  )}
-                  {/* Fichajes */}
-                  {stats && stats.fichajes.length > 0 ? (
-                    <div className="flex flex-col gap-0.5 items-center w-full">
-                      {stats.fichajes.map((f, idx) => (
-                        <span key={idx} className={`inline-block px-1.5 py-0.5 rounded-full font-mono text-[10px] ${f.tipo === 'ENTRADA' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
-                          {f.tipo === 'ENTRADA' ? 'E' : 'S'} {new Date(f.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="block text-[10px] text-slate-400">Sin fichaje</span>
-                  )}
-                  {/* Ausencia o Vacaciones */}
-                  {vac && (
-                    <span className="block text-[10px] mt-0.5 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium">
-                      {vac.type === 'VACATION' ? 'Vacaciones' : 'Ausencia'}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        )
+      )}
+
+      {/* Vista Calendario Equipo (Manager/Admin Only) */}
+      {view === 'equipo' && (user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+        <TeamCalendarView mode="absences" />
       )}
     </div>
   );
