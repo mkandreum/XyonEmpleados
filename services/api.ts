@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User, Payroll, VacationRequest, NewsItem, Notification, Event, Holiday, DepartmentBenefits, UserBenefitsBalance, GlobalSettings, AdminStats, Fichaje, FichajeTipo, FichajeStatus, FichajeDayStats, DepartmentSchedule, LateArrivalNotification, InvitationCode, PushSubscriptionPayload } from '../types';
+import { User, Payroll, VacationRequest, NewsItem, Notification, Event, Holiday, DepartmentBenefits, UserBenefitsBalance, GlobalSettings, AdminStats, Fichaje, FichajeTipo, FichajeStatus, FichajeDayStats, DepartmentSchedule, LateArrivalNotification, InvitationCode, PushSubscriptionPayload, FichajeAdjustment, FichajeAdjustmentStatus } from '../types';
 
 // The API URL will depend on where the backend is served. 
 // In development, Vite proxy can handle /api.
@@ -478,6 +478,10 @@ export const scheduleService = {
         const response = await api.get<DepartmentSchedule[]>('/department-schedules');
         return response.data;
     },
+    getResolved: async (department: string) => {
+        const response = await api.get(`/department-schedules/${department}/resolved`);
+        return response.data;
+    },
     update: async (schedule: Partial<DepartmentSchedule> & { department: string }) => {
         const response = await api.post<DepartmentSchedule>('/department-schedules', schedule);
         return response.data;
@@ -510,6 +514,34 @@ export const lateNotificationService = {
         return response.data;
     },
 };
+
+export const fichajeAdjustmentService = {
+    create: async (data: { fichajeId: string; requestedTimestamp: string; reason: string }) => {
+        const response = await api.post<FichajeAdjustment>('/fichaje-adjustments', data);
+        return response.data;
+    },
+    getMyRequests: async () => {
+        const response = await api.get<FichajeAdjustment[]>('/fichaje-adjustments');
+        return response.data;
+    },
+    getPending: async () => {
+        const response = await api.get<FichajeAdjustment[]>('/fichaje-adjustments/pending');
+        return response.data;
+    },
+    getAll: async () => {
+        const response = await api.get<FichajeAdjustment[]>('/fichaje-adjustments/all');
+        return response.data;
+    },
+    approve: async (id: string) => {
+        const response = await api.patch<FichajeAdjustment>(`/fichaje-adjustments/${id}/approve`);
+        return response.data;
+    },
+    reject: async (id: string, rejectionReason: string) => {
+        const response = await api.patch<FichajeAdjustment>(`/fichaje-adjustments/${id}/reject`, { rejectionReason });
+        return response.data;
+    },
+};
+
 
 export const pushService = {
     getPublicKey: async () => {

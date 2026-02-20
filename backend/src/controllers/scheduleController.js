@@ -1,9 +1,10 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { getScheduleForDay, getAllDaySchedules, DAY_FIELD_MAP } = require('../services/smartScheduleService');
 
 /**
  * GET /api/department-schedules/:department
- * Obtener horario de un departamento
+ * Obtener horario de un departamento (incluye horarios por día resueltos)
  */
 exports.getSchedule = async (req, res) => {
     try {
@@ -22,7 +23,14 @@ exports.getSchedule = async (req, res) => {
                 toleranciaMinutos: 10,
                 horaEntradaTarde: null,
                 horaSalidaMañana: null,
-                flexibleSchedule: false
+                flexibleSchedule: false,
+                scheduleLunes: null,
+                scheduleMartes: null,
+                scheduleMiercoles: null,
+                scheduleJueves: null,
+                scheduleViernes: null,
+                scheduleSabado: null,
+                scheduleDomingo: null
             });
         }
 
@@ -36,6 +44,7 @@ exports.getSchedule = async (req, res) => {
 /**
  * POST /api/department-schedules
  * Crear o actualizar horario de departamento (solo admins)
+ * Now supports per-day schedule overrides
  */
 exports.upsertSchedule = async (req, res) => {
     try {
@@ -46,7 +55,15 @@ exports.upsertSchedule = async (req, res) => {
             horaEntradaTarde,
             horaSalidaMañana,
             toleranciaMinutos,
-            flexibleSchedule
+            flexibleSchedule,
+            // Per-day overrides
+            scheduleLunes,
+            scheduleMartes,
+            scheduleMiercoles,
+            scheduleJueves,
+            scheduleViernes,
+            scheduleSabado,
+            scheduleDomingo
         } = req.body;
 
         if (!department || !horaEntrada || !horaSalida) {
@@ -75,24 +92,56 @@ exports.upsertSchedule = async (req, res) => {
             });
         }
 
+        // Validate per-day schedules
+        const daySchedules = { scheduleLunes, scheduleMartes, scheduleMiercoles, scheduleJueves, scheduleViernes, scheduleSabado, scheduleDomingo };
+        for (const [dayName, daySchedule] of Object.entries(daySchedules)) {
+            if (daySchedule && typeof daySchedule === 'object' && !daySchedule.dayOff) {
+                if (daySchedule.horaEntrada && !timeRegex.test(daySchedule.horaEntrada)) {
+                    return res.status(400).json({
+                        error: `Formato de hora inválido en ${dayName}. Use HH:mm`
+                    });
+                }
+                if (daySchedule.horaSalida && !timeRegex.test(daySchedule.horaSalida)) {
+                    return res.status(400).json({
+                        error: `Formato de hora inválido en ${dayName}. Use HH:mm`
+                    });
+                }
+                if (daySchedule.horaEntradaTarde && !timeRegex.test(daySchedule.horaEntradaTarde)) {
+                    return res.status(400).json({
+                        error: `Formato de hora entrada tarde inválido en ${dayName}. Use HH:mm`
+                    });
+                }
+                if (daySchedule.horaSalidaMañana && !timeRegex.test(daySchedule.horaSalidaMañana)) {
+                    return res.status(400).json({
+                        error: `Formato de hora salida mañana inválido en ${dayName}. Use HH:mm`
+                    });
+                }
+            }
+        }
+
+        const data = {
+            horaEntrada,
+            horaSalida,
+            horaEntradaTarde: horaEntradaTarde || null,
+            horaSalidaMañana: horaSalidaMañana || null,
+            toleranciaMinutos: toleranciaMinutos || 10,
+            flexibleSchedule: flexibleSchedule || false,
+            // Per-day overrides (store as JSON, null if not provided)
+            scheduleLunes: scheduleLunes || null,
+            scheduleMartes: scheduleMartes || null,
+            scheduleMiercoles: scheduleMiercoles || null,
+            scheduleJueves: scheduleJueves || null,
+            scheduleViernes: scheduleViernes || null,
+            scheduleSabado: scheduleSabado || null,
+            scheduleDomingo: scheduleDomingo || null
+        };
+
         const schedule = await prisma.departmentSchedule.upsert({
             where: { department },
-            update: {
-                horaEntrada,
-                horaSalida,
-                horaEntradaTarde: horaEntradaTarde || null,
-                horaSalidaMañana: horaSalidaMañana || null,
-                toleranciaMinutos: toleranciaMinutos || 10,
-                flexibleSchedule: flexibleSchedule || false
-            },
+            update: data,
             create: {
                 department,
-                horaEntrada,
-                horaSalida,
-                horaEntradaTarde: horaEntradaTarde || null,
-                horaSalidaMañana: horaSalidaMañana || null,
-                toleranciaMinutos: toleranciaMinutos || 10,
-                flexibleSchedule: flexibleSchedule || false
+                ...data
             }
         });
 
@@ -144,5 +193,43 @@ exports.deleteSchedule = async (req, res) => {
     } catch (error) {
         console.error('Error deleting schedule:', error);
         res.status(500).json({ error: 'Error al eliminar horario' });
+    }
+};
+
+/**
+ * GET /api/department-schedules/:department/resolved
+ * Obtener horarios resueltos por día de la semana (vista admin)
+ */
+exports.getResolvedSchedule = async (req, res) => {
+    try {
+        const { department } = req.params;
+
+        const schedule = await prisma.departmentSchedule.findUnique({
+            where: { department }
+        });
+
+        if (!schedule) {
+            return res.json({
+                department,
+                default: {
+                    horaEntrada: '09:00',
+                    horaSalida: '18:00',
+                    toleranciaMinutos: 10,
+                    flexibleSchedule: false
+                },
+                days: {}
+            });
+        }
+
+        const resolvedDays = getAllDaySchedules(schedule);
+
+        res.json({
+            department,
+            schedule,
+            days: resolvedDays
+        });
+    } catch (error) {
+        console.error('Error getting resolved schedule:', error);
+        res.status(500).json({ error: 'Error al obtener horarios resueltos' });
     }
 };

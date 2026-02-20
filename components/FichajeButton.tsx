@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { LogIn, LogOut, Loader2, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { LogIn, LogOut, Loader2, Clock, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import { fichajeService } from '../services/api';
-import { FichajeTipo } from '../types';
+import { FichajeTipo, TurnoInfo, Fichaje } from '../types';
+import { AdjustFichajeModal } from './AdjustFichajeModal';
+import { toast } from 'react-hot-toast'; // Assuming hot-toast is used based on context or similar toast logic
 
 export const FichajeButton: React.FC = () => {
     const [loading, setLoading] = useState(false);
@@ -9,11 +11,16 @@ export const FichajeButton: React.FC = () => {
     const [checking, setChecking] = useState(true);
     const [todayFichajes, setTodayFichajes] = useState<any[]>([]);
     const [showHistory, setShowHistory] = useState(false);
+    const [currentTurno, setCurrentTurno] = useState<TurnoInfo | null>(null);
+    const [adjustingFichaje, setAdjustingFichaje] = useState<Fichaje | null>(null);
 
     const checkCurrentStatus = async () => {
         try {
             const status = await fichajeService.getCurrent();
             setHasActiveEntry(status.hasActiveEntry);
+            if (status.turno) {
+                setCurrentTurno(status.turno);
+            }
 
             // Cargar fichajes de hoy
             await loadTodayFichajes();
@@ -53,35 +60,28 @@ export const FichajeButton: React.FC = () => {
 
             setHasActiveEntry(result.status.hasActiveEntry);
 
+            // Save turno info for display
+            if (result.turno) {
+                setCurrentTurno(result.turno);
+            } else if (tipo === FichajeTipo.SALIDA) {
+                setCurrentTurno(null);
+            }
+
             // Recargar fichajes de hoy
             await loadTodayFichajes();
 
-            // Show success message
-            const message = tipo === FichajeTipo.ENTRADA
-                ? '✓ Entrada registrada correctamente'
-                : '✓ Salida registrada correctamente';
-
-            // Simple toast notification
-            const toast = document.createElement('div');
-            toast.className = 'fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
+            // Show success message with turno info
+            let message = '';
+            if (tipo === FichajeTipo.ENTRADA) {
+                const turnoStr = result.turno ? ` — ${result.turno.label} (${result.turno.expectedEntry} - ${result.turno.expectedExit})` : '';
+                message = `✓ Entrada registrada${turnoStr}`;
+                toast.success(message, { duration: 5000 });
+            } else {
+                toast.success('✓ Salida registrada correctamente');
+            }
         } catch (error: any) {
             console.error('Error creating fichaje:', error);
-
-            // Show error message
-            const toast = document.createElement('div');
-            toast.className = 'fixed top-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-            toast.textContent = error.response?.data?.error || 'Error al registrar fichaje';
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
+            toast.error(error.response?.data?.error || 'Error al registrar fichaje');
         } finally {
             setLoading(false);
         }
@@ -133,6 +133,21 @@ export const FichajeButton: React.FC = () => {
                 )}
             </button>
 
+            {/* Turno Info Badge */}
+            {currentTurno && hasActiveEntry && (
+                <div className="flex flex-col gap-1 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl text-blue-700 dark:text-blue-300">
+                    <div className="flex items-center gap-2 text-xs">
+                        <AlertCircle size={14} className="shrink-0" />
+                        <span className="font-bold uppercase tracking-wider">{currentTurno.label}</span>
+                    </div>
+                    {(currentTurno.expectedEntry && currentTurno.expectedExit) && (
+                        <p className="text-[10px] font-medium opacity-80 pl-5">
+                            Tu horario hoy: {currentTurno.expectedEntry} - {currentTurno.expectedExit}
+                        </p>
+                    )}
+                </div>
+            )}
+
             {/* Historial de hoy (Collapsible) */}
             {todayFichajes.length > 0 && (
                 <div className="w-full">
@@ -150,17 +165,37 @@ export const FichajeButton: React.FC = () => {
                     <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showHistory ? 'max-h-48 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
                         <div className="bg-white/50 rounded-lg p-3 border border-blue-100 shadow-sm space-y-1">
                             {todayFichajes.map((fichaje, index) => (
-                                <div key={index} className="flex items-center justify-between text-xs py-1 border-b border-dashed border-slate-200 last:border-0">
-                                    <span className={`font-medium ${fichaje.tipo === 'ENTRADA' ? 'text-blue-600' : 'text-green-600'}`}>
-                                        {fichaje.tipo === 'ENTRADA' ? '→ Entrada' : '← Salida'}
-                                    </span>
-                                    <span className="text-slate-600 font-mono">{formatTime(fichaje.timestamp)}</span>
+                                <div key={index} className="flex items-center justify-between text-xs py-1 border-b border-dashed border-slate-200 last:border-0 group">
+                                    <div className="flex flex-col">
+                                        <span className={`font-medium ${fichaje.tipo === 'ENTRADA' ? 'text-blue-600' : 'text-green-600'}`}>
+                                            {fichaje.tipo === 'ENTRADA' ? '→ Entrada' : '← Salida'}
+                                        </span>
+                                        <span className="text-slate-600 font-mono">{formatTime(fichaje.timestamp)}</span>
+                                    </div>
+                                    <button
+                                        onClick={() => setAdjustingFichaje(fichaje)}
+                                        className="opacity-0 group-hover:opacity-100 bg-blue-50 text-blue-600 px-2 py-1 rounded-lg font-bold hover:bg-blue-100 transition-all text-[10px]"
+                                    >
+                                        Ajustar
+                                    </button>
                                 </div>
                             ))}
                         </div>
                     </div>
                 </div>
             )}
+
+            {adjustingFichaje && (
+                <AdjustFichajeModal
+                    fichaje={adjustingFichaje}
+                    onClose={() => setAdjustingFichaje(null)}
+                    onSuccess={() => {
+                        toast.success('Solicitud de ajuste enviada');
+                        loadTodayFichajes();
+                    }}
+                />
+            )}
         </div>
+
     );
 };

@@ -30,6 +30,12 @@ enum NewsCategory {
   URGENT
 }
 
+enum FichajeAdjustmentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id          String   @id @default(uuid())
   email       String   @unique
@@ -57,6 +63,8 @@ model User {
   lateNotificationsReceived LateArrivalNotification[] @relation("UserLateNotifications")
   lateNotificationsSent     LateArrivalNotification[] @relation("ManagerNotifications")
   pushSubscriptions        PushSubscription[]
+  fichajeAdjustmentsRequested FichajeAdjustment[] @relation("UserAdjustments")
+  fichajeAdjustmentsManaged   FichajeAdjustment[] @relation("ManagerAdjustments")
 }
 
 
@@ -176,6 +184,7 @@ model Fichaje {
   accuracy    Float?
   
   lateNotifications LateArrivalNotification[]
+  adjustments       FichajeAdjustment[]
   
   @@index([userId, timestamp])
   @@index([department, timestamp])
@@ -196,6 +205,17 @@ model DepartmentSchedule {
   
   toleranciaMinutos   Int      @default(10)
   flexibleSchedule    Boolean  @default(false)
+  
+  // Horarios personalizados por día de la semana (JSON nullable)
+  // Formato: { "horaEntrada": "09:00", "horaSalida": "14:00", "horaEntradaTarde": null, "horaSalidaMañana": null }
+  // Si es null, se usa el horario general (horaEntrada/horaSalida)
+  scheduleLunes       Json?
+  scheduleMartes      Json?
+  scheduleMiercoles   Json?
+  scheduleJueves      Json?
+  scheduleViernes     Json?
+  scheduleSabado      Json?
+  scheduleDomingo     Json?
   
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
@@ -250,4 +270,28 @@ model PushSubscription {
   updatedAt       DateTime @updatedAt
 
   @@index([userId])
+}
+
+model FichajeAdjustment {
+  id                  String                    @id @default(uuid())
+  fichajeId           String
+  fichaje             Fichaje                   @relation(fields: [fichajeId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User                      @relation("UserAdjustments", fields: [userId], references: [id], onDelete: Cascade)
+  managerId           String?
+  manager             User?                     @relation("ManagerAdjustments", fields: [managerId], references: [id])
+  
+  originalTimestamp   DateTime
+  requestedTimestamp  DateTime
+  reason              String                    @db.Text
+  
+  status              FichajeAdjustmentStatus   @default(PENDING)
+  rejectionReason     String?
+  
+  resolvedAt          DateTime?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  
+  @@index([userId, status])
+  @@index([status])
 }

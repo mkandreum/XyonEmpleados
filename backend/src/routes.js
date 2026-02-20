@@ -14,10 +14,11 @@ const notificationController = require('./controllers/notificationController');
 const fichajeController = require('./controllers/fichajeController');
 const scheduleController = require('./controllers/scheduleController');
 const lateNotificationController = require('./controllers/lateNotificationController');
+const fichajeAdjustmentController = require('./controllers/fichajeAdjustmentController');
 const fileController = require('./controllers/fileController');
 const emailTemplateController = require('./controllers/emailTemplateController');
 const pushController = require('./controllers/pushController');
-const { isAdmin } = require('./middleware/auth');
+const { isAdmin, isManagerOrAdmin } = require('./middleware/auth');
 const { validate, loginSchema, registerSchema, changePasswordSchema, updateProfileSchema, vacationRequestSchema } = require('./middleware/validation');
 
 // Import auth rate limiter from server
@@ -206,8 +207,9 @@ router.get('/fichajes/month/:userId', fichajeController.getMonth);
 router.get('/fichajes/department/:dept/week', fichajeController.getDepartmentWeek);
 
 // Department Schedules Routes
-router.get('/department-schedules/:department', scheduleController.getSchedule);
 router.get('/department-schedules', isAdmin, scheduleController.getAllSchedules);
+router.get('/department-schedules/:department/resolved', scheduleController.getResolvedSchedule);
+router.get('/department-schedules/:department', scheduleController.getSchedule);
 router.post('/department-schedules', isAdmin, scheduleController.upsertSchedule);
 router.delete('/department-schedules/:department', isAdmin, scheduleController.deleteSchedule);
 
@@ -217,6 +219,14 @@ router.get('/late-notifications', lateNotificationController.getLateNotification
 router.get('/late-notifications/sent', lateNotificationController.getSentNotifications);
 router.post('/late-notifications/:id/justify', lateNotificationController.justifyLateArrival);
 router.put('/late-notifications/:id/read', lateNotificationController.markAsRead);
+
+// Fichaje Adjustment Routes
+router.post('/fichaje-adjustments', authenticateToken, fichajeAdjustmentController.create);
+router.get('/fichaje-adjustments', authenticateToken, fichajeAdjustmentController.getMyRequests);
+router.get('/fichaje-adjustments/pending', isManagerOrAdmin, fichajeAdjustmentController.getPending);
+router.get('/fichaje-adjustments/all', isManagerOrAdmin, fichajeAdjustmentController.getAll);
+router.patch('/fichaje-adjustments/:id/approve', isManagerOrAdmin, fichajeAdjustmentController.approve);
+router.patch('/fichaje-adjustments/:id/reject', isManagerOrAdmin, fichajeAdjustmentController.reject);
 
 module.exports = router;
 

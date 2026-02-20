@@ -10,6 +10,7 @@ const {
     getNextFichajeTipo,
     getTodayRange
 } = require('../utils/fichajeUtils');
+const { getScheduleForDay, detectTurno } = require('../services/smartScheduleService');
 
 // Custom error class for validation errors
 class ValidationError extends Error {
@@ -37,7 +38,7 @@ exports.createFichaje = async (req, res) => {
         const result = await prisma.$transaction(async (tx) => {
             // Capture timestamp at the start for consistency
             const now = new Date();
-            
+
             // Obtener usuario para department dentro de la transacción
             const user = await tx.user.findUnique({
                 where: { id: userId },
@@ -85,27 +86,44 @@ exports.createFichaje = async (req, res) => {
                 }
             });
 
-            return fichaje;
+            return { fichaje, department: user.department };
         });
 
         // Determinar estado actual
         const hasActiveEntry = tipo === FichajeTipo.ENTRADA;
 
+        // Smart turno detection
+        let turnoInfo = null;
+        try {
+            const schedule = await prisma.departmentSchedule.findUnique({
+                where: { department: result.department }
+            });
+            if (schedule) {
+                const daySchedule = getScheduleForDay(schedule, new Date(result.fichaje.timestamp));
+                if (daySchedule && tipo === FichajeTipo.ENTRADA) {
+                    turnoInfo = detectTurno(new Date(result.fichaje.timestamp), daySchedule);
+                }
+            }
+        } catch (e) {
+            console.error('Error detecting turno:', e);
+        }
+
         res.json({
-            fichaje: result,
+            fichaje: result.fichaje,
             status: {
                 hasActiveEntry,
-                currentFichaje: hasActiveEntry ? result : null
-            }
+                currentFichaje: hasActiveEntry ? result.fichaje : null
+            },
+            turno: turnoInfo
         });
     } catch (error) {
         console.error('Error creating fichaje:', error);
-        
+
         // Handle specific validation errors
         if (error instanceof ValidationError) {
             return res.status(error.statusCode).json({ error: error.message });
         }
-        
+
         res.status(500).json({ error: 'Error al crear fichaje. Por favor, inténtalo de nuevo.' });
     }
 };
@@ -135,9 +153,28 @@ exports.getCurrentFichaje = async (req, res) => {
         const lastFichaje = todayFichajes[0] || null;
         const hasActiveEntry = lastFichaje?.tipo === FichajeTipo.ENTRADA;
 
+        let turnoInfo = null;
+        if (hasActiveEntry) {
+            try {
+                const user = await prisma.user.findUnique({ where: { id: userId } });
+                const schedule = await prisma.departmentSchedule.findUnique({
+                    where: { department: user.department }
+                });
+                if (schedule) {
+                    const daySchedule = getScheduleForDay(schedule, new Date(lastFichaje.timestamp));
+                    if (daySchedule) {
+                        turnoInfo = detectTurno(new Date(lastFichaje.timestamp), daySchedule);
+                    }
+                }
+            } catch (e) {
+                console.error('Error detecting current turno:', e);
+            }
+        }
+
         res.json({
             hasActiveEntry,
-            currentFichaje: hasActiveEntry ? lastFichaje : null
+            currentFichaje: hasActiveEntry ? lastFichaje : null,
+            turno: turnoInfo
         });
     } catch (error) {
         console.error('Error getting current fichaje:', error);

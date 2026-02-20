@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { vacationService, eventsService, holidayService, benefitsService, payrollService, lateNotificationService } from '../services/api';
+import { vacationService, eventsService, holidayService, benefitsService, payrollService, lateNotificationService, fichajeAdjustmentService } from '../services/api';
 import { VacationRequest, Event, Holiday, UserBenefitsBalance, DepartmentBenefits, Payroll, LateArrivalNotification } from '../types';
 import { Calendar, Clock, Briefcase, FileText, Download, ChevronRight, Plane, AlertTriangle } from 'lucide-react';
 import { DigitalClock } from '../components/DigitalClock';
@@ -14,6 +14,7 @@ export const Dashboard: React.FC = () => {
   const [vacations, setVacations] = useState<VacationRequest[]>([]);
   const [pendingVacations, setPendingVacations] = useState<VacationRequest[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [pendingAdjustments, setPendingAdjustments] = useState<any[]>([]);
   const [nextHoliday, setNextHoliday] = useState<Holiday | null>(null);
   const [benefits, setBenefits] = useState<UserBenefitsBalance | null>(null);
   const [deptBenefits, setDeptBenefits] = useState<DepartmentBenefits | null>(null);
@@ -33,18 +34,23 @@ export const Dashboard: React.FC = () => {
           lateNotificationService.getAll()
         ];
 
+        if (user?.role === 'MANAGER' || user?.role === 'ADMIN') {
+          promises.push(fichajeAdjustmentService.getPending());
+        }
+
         if (user?.department) {
           promises.push(benefitsService.getDepartmentBenefits(user.department));
         }
 
         const results = await Promise.all(promises);
-        const [vacs, evts, holiday, benefitBalance, payrolls, warnings] = results;
+        const [vacs, evts, holiday, benefitBalance, payrolls, warnings, adjustments] = results;
 
         setVacations(vacs);
         setPendingVacations(vacs.filter((v: VacationRequest) => v.status === 'PENDING'));
         setEvents(evts);
         setNextHoliday(holiday);
         setBenefits(benefitBalance);
+        if (adjustments) setPendingAdjustments(adjustments);
 
         // Filter pending warnings (not justified)
         if (Array.isArray(warnings)) {
@@ -86,6 +92,31 @@ export const Dashboard: React.FC = () => {
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">¡Hola, {user?.name?.split(' ')[0]}! 👋</h1>
         <p className="text-slate-500 dark:text-slate-400 mt-1">{new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
+
+      {/* Adjustment Alert Widget for Managers */}
+      {pendingAdjustments.length > 0 && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/50 rounded-xl p-6 relative overflow-hidden animate-slide-up delay-75 order-3 md:order-2">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <Clock size={100} className="text-blue-500" />
+          </div>
+          <div className="relative z-10">
+            <h2 className="text-blue-700 dark:text-blue-300 font-bold text-lg flex items-center gap-2 mb-2">
+              <Clock className="text-blue-600 dark:text-blue-400" />
+              Solicitudes de Ajuste Pendientes
+            </h2>
+            <p className="text-sm text-blue-600 dark:text-blue-300 mt-2">
+              Hay {pendingAdjustments.length} {pendingAdjustments.length === 1 ? 'solicitud' : 'solicitudes'} de ajuste de fichaje esperando revisión.
+            </p>
+            <button
+              onClick={() => navigate('/manager/adjustments')}
+              className="mt-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2"
+            >
+              Gestionar Ajustes
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Warning Alert Widget */}
       {pendingWarnings.length > 0 && (

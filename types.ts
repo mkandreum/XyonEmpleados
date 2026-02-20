@@ -150,6 +150,31 @@ export interface DepartmentSchedule {
   horaSalidaMañana?: string;
   toleranciaMinutos: number;
   flexibleSchedule?: boolean;
+  // Per-day schedule overrides
+  scheduleLunes?: DayScheduleOverride | null;
+  scheduleMartes?: DayScheduleOverride | null;
+  scheduleMiercoles?: DayScheduleOverride | null;
+  scheduleJueves?: DayScheduleOverride | null;
+  scheduleViernes?: DayScheduleOverride | null;
+  scheduleSabado?: DayScheduleOverride | null;
+  scheduleDomingo?: DayScheduleOverride | null;
+}
+
+export interface DayScheduleOverride {
+  horaEntrada?: string;
+  horaSalida?: string;
+  horaEntradaTarde?: string | null;
+  horaSalidaMañana?: string | null;
+  toleranciaMinutos?: number;
+  flexibleSchedule?: boolean;
+  dayOff?: boolean;
+}
+
+export interface TurnoInfo {
+  turno: 'MAÑANA' | 'TARDE' | 'COMPLETA' | 'FLEXIBLE';
+  expectedEntry: string;
+  expectedExit: string;
+  label: string;
 }
 
 export interface LateArrivalNotification {
@@ -179,6 +204,15 @@ export interface FichajeDayStats {
   isComplete: boolean;
   isLate: boolean;
   isEarlyDeparture: boolean;
+  turno?: TurnoInfo | null;
+  daySchedule?: {
+    horaEntrada: string;
+    horaSalida: string;
+    horaEntradaTarde?: string | null;
+    horaSalidaMañana?: string | null;
+    isOverride: boolean;
+    flexibleSchedule: boolean;
+  } | null;
 }
 
 export interface InvitationCode {
@@ -188,3 +222,27 @@ export interface InvitationCode {
   usedBy?: string;
   createdAt: string;
 }
+
+export enum FichajeAdjustmentStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED'
+}
+
+export interface FichajeAdjustment {
+  id: string;
+  fichajeId: string;
+  fichaje?: Fichaje;
+  userId: string;
+  user?: User;
+  managerId?: string;
+  manager?: User;
+  originalTimestamp: string;
+  requestedTimestamp: string;
+  reason: string;
+  status: FichajeAdjustmentStatus;
+  rejectionReason?: string;
+  resolvedAt?: string;
+  createdAt: string;
+}
+

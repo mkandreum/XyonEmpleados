@@ -33,3 +33,10 @@ exports.isAdmin = (req, res, next) => {
     }
     next();
 };
+
+exports.isManagerOrAdmin = (req, res, next) => {
+    if (!req.user || (req.user.role !== 'MANAGER' && req.user.role !== 'ADMIN')) {
+        return res.status(403).json({ error: 'Access denied. Manager or Admin rights required.' });
+    }
+    next();
+};

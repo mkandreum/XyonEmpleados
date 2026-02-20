@@ -1,3 +1,5 @@
+const { getScheduleForDay, detectTurno, timeToMinutes } = require('../services/smartScheduleService');
+
 /**
  * Calcula las horas trabajadas en un día basándose en los fichajes
  * Soporta horarios partidos (4 fichajes) y jornada continua (2 fichajes)
@@ -30,69 +32,77 @@ function calculateWorkedHours(fichajes) {
 }
 
 /**
- * Determina si un fichaje de entrada es una llegada tarde
+ * Determina si un fichaje de entrada es una llegada tarde.
+ * Ahora usa getScheduleForDay para obtener el horario del día específico
+ * y detectTurno para calcular inteligentemente el turno.
+ * 
+ * @param {Object} fichaje - El fichaje a evaluar
+ * @param {Object} schedule - El DepartmentSchedule completo (con campos por día)
+ * @param {Object} [dayScheduleOverride] - Horario del día ya resuelto (optimización)
  */
-function isLateArrival(fichaje, schedule) {
+function isLateArrival(fichaje, schedule, dayScheduleOverride) {
     if (fichaje.tipo !== 'ENTRADA') return false;
 
-    // Si el horario es flexible, no hay llegadas tarde
-    if (schedule.flexibleSchedule) return false;
+    const fichajeDate = new Date(fichaje.timestamp);
 
-    const fichajeTime = new Date(fichaje.timestamp);
-    const fichajeHour = fichajeTime.getHours();
-    const fichajeMinute = fichajeTime.getMinutes();
+    // Resolve the day's schedule
+    const daySchedule = dayScheduleOverride || getScheduleForDay(schedule, fichajeDate);
+    if (!daySchedule) return false; // Day off, no late arrivals
+
+    // Si el horario es flexible, no hay llegadas tarde
+    if (daySchedule.flexibleSchedule) return false;
+
+    const fichajeHour = fichajeDate.getHours();
+    const fichajeMinute = fichajeDate.getMinutes();
     const fichajeTotalMinutes = fichajeHour * 60 + fichajeMinute;
 
-    // Determinar si es entrada de mañana o tarde
-    const [entradaHour, entradaMinute] = schedule.horaEntrada.split(':').map(Number);
-    const entradaTotalMinutes = entradaHour * 60 + entradaMinute;
+    // Use smart turno detection instead of hardcoded "if >= 12"
+    const turnoInfo = detectTurno(fichajeDate, daySchedule);
+    if (!turnoInfo || turnoInfo.turno === 'FLEXIBLE') return false;
 
-    let expectedEntrada = entradaTotalMinutes;
+    const expectedEntryMinutes = timeToMinutes(turnoInfo.expectedEntry);
+    if (expectedEntryMinutes === null) return false;
 
-    // Si hay horario partido y el fichaje es después de mediodía, comparar con entrada tarde
-    if (schedule.horaEntradaTarde && fichajeHour >= 12) {
-        const [entradaTardeHour, entradaTardeMinute] = schedule.horaEntradaTarde.split(':').map(Number);
-        expectedEntrada = entradaTardeHour * 60 + entradaTardeMinute;
-    }
-
-    const maxAllowedMinutes = expectedEntrada + schedule.toleranciaMinutos;
+    const maxAllowedMinutes = expectedEntryMinutes + daySchedule.toleranciaMinutos;
 
     return fichajeTotalMinutes > maxAllowedMinutes;
 }
 
 /**
- * Determina si un fichaje de salida es una salida temprana
+ * Determina si un fichaje de salida es una salida temprana.
+ * Ahora usa getScheduleForDay + detectTurno para lógica inteligente.
  */
-function isEarlyDeparture(fichaje, schedule) {
+function isEarlyDeparture(fichaje, schedule, dayScheduleOverride) {
     if (fichaje.tipo !== 'SALIDA') return false;
 
-    // Si el horario es flexible, no hay salidas tempranas
-    if (schedule.flexibleSchedule) return false;
+    const fichajeDate = new Date(fichaje.timestamp);
 
-    const fichajeTime = new Date(fichaje.timestamp);
-    const fichajeHour = fichajeTime.getHours();
-    const fichajeMinute = fichajeTime.getMinutes();
+    // Resolve the day's schedule
+    const daySchedule = dayScheduleOverride || getScheduleForDay(schedule, fichajeDate);
+    if (!daySchedule) return false;
+
+    // Si el horario es flexible, no hay salidas tempranas
+    if (daySchedule.flexibleSchedule) return false;
+
+    const fichajeHour = fichajeDate.getHours();
+    const fichajeMinute = fichajeDate.getMinutes();
     const fichajeTotalMinutes = fichajeHour * 60 + fichajeMinute;
 
-    // Determinar si es salida de mañana o tarde
-    const [salidaHour, salidaMinute] = schedule.horaSalida.split(':').map(Number);
-    const salidaTotalMinutes = salidaHour * 60 + salidaMinute;
+    // Use smart turno detection
+    const turnoInfo = detectTurno(fichajeDate, daySchedule);
+    if (!turnoInfo || turnoInfo.turno === 'FLEXIBLE') return false;
 
-    let expectedSalida = salidaTotalMinutes;
+    const expectedExitMinutes = timeToMinutes(turnoInfo.expectedExit);
+    if (expectedExitMinutes === null) return false;
 
-    // Si hay horario partido y el fichaje es antes de las 15:00, comparar con salida mañana
-    if (schedule.horaSalidaMañana && fichajeHour < 15) {
-        const [salidaMañanaHour, salidaMañanaMinute] = schedule.horaSalidaMañana.split(':').map(Number);
-        expectedSalida = salidaMañanaHour * 60 + salidaMañanaMinute;
-    }
-
-    const minAllowedMinutes = expectedSalida - schedule.toleranciaMinutos;
+    const minAllowedMinutes = expectedExitMinutes - daySchedule.toleranciaMinutos;
 
     return fichajeTotalMinutes < minAllowedMinutes;
 }
 
 /**
- * Agrupa fichajes por día
+ * Agrupa fichajes por día.
+ * Now resolves per-day schedules so each day is evaluated against its own schedule.
  */
 function groupFichajesByDay(fichajes, schedule) {
     const groups = new Map();
@@ -112,25 +122,30 @@ function groupFichajesByDay(fichajes, schedule) {
 
         const horasTrabajadas = calculateWorkedHours(sorted);
 
+        // Resolve the schedule for this specific day
+        const dateObj = new Date(date + 'T12:00:00'); // Use noon to avoid timezone issues
+        const daySchedule = getScheduleForDay(schedule, dateObj);
+
         // Determinar si el día está completo
         // Horario partido: 4 fichajes, Jornada continua: 2 fichajes
-        const expectedFichajes = schedule?.horaEntradaTarde ? 4 : 2;
+        const hasSplitSchedule = daySchedule?.horaEntradaTarde && daySchedule?.horaSalidaMañana;
+        const expectedFichajes = hasSplitSchedule ? 4 : 2;
         const isComplete = sorted.length >= expectedFichajes && sorted.length % 2 === 0;
 
-        // Verificar llegadas tarde y salidas tempranas
+        // Verificar llegadas tarde y salidas tempranas using per-day schedule
         let isLate = false;
         let hasEarlyDeparture = false;
+        let detectedTurno = null;
 
-        if (schedule) {
+        if (daySchedule) {
             const entradas = sorted.filter(f => f.tipo === 'ENTRADA');
             const salidas = sorted.filter(f => f.tipo === 'SALIDA');
 
-            isLate = entradas.some(f => isLateArrival(f, schedule));
+            isLate = entradas.some(f => isLateArrival(f, schedule, daySchedule));
 
             // Solo marcar salida anticipada si la duración del trabajo es razonable (> 10 mins)
-            // Esto evita marcar "Salida anticipada" en pruebas rápidas de entrada/salida
             hasEarlyDeparture = salidas.some((f, index) => {
-                if (!isEarlyDeparture(f, schedule)) return false;
+                if (!isEarlyDeparture(f, schedule, daySchedule)) return false;
 
                 // Buscar la entrada correspondiente
                 const entradaCodespot = entradas[index];
@@ -140,6 +155,11 @@ function groupFichajesByDay(fichajes, schedule) {
                 }
                 return true;
             });
+
+            // Detect turno from first entry
+            if (entradas.length > 0) {
+                detectedTurno = detectTurno(new Date(entradas[0].timestamp), daySchedule);
+            }
         }
 
         return {
@@ -148,14 +168,22 @@ function groupFichajesByDay(fichajes, schedule) {
             horasTrabajadas,
             isComplete,
             isLate,
-            isEarlyDeparture: hasEarlyDeparture
+            isEarlyDeparture: hasEarlyDeparture,
+            turno: detectedTurno,
+            daySchedule: daySchedule ? {
+                horaEntrada: daySchedule.horaEntrada,
+                horaSalida: daySchedule.horaSalida,
+                horaEntradaTarde: daySchedule.horaEntradaTarde,
+                horaSalidaMañana: daySchedule.horaSalidaMañana,
+                isOverride: daySchedule.isOverride,
+                flexibleSchedule: daySchedule.flexibleSchedule
+            } : null
         };
     }).sort((a, b) => b.date.localeCompare(a.date)); // Más reciente primero
 }
 
 /**
  * Valida que la secuencia de fichajes sea correcta
- * No debe haber dos entradas seguidas o dos salidas seguidas
  */
 function validateFichajeSequence(fichajes) {
     if (fichajes.length === 0) return { valid: true };
@@ -197,14 +225,13 @@ function getNextFichajeTipo(lastFichaje) {
 
 /**
  * Obtiene la medianoche local para una fecha dada
- * Esto evita problemas con timezones al usar setHours()
  */
 function getLocalMidnight(date = new Date()) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
 }
 
 /**
- * Obtiene el rango del día actual (desde medianoche hasta el día siguiente)
+ * Obtiene el rango del día actual
  */
 function getTodayRange(referenceDate = new Date()) {
     const today = getLocalMidnight(referenceDate);

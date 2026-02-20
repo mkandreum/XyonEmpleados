@@ -4,13 +4,13 @@ import {
     LayoutDashboard,
     FileText,
     CalendarDays,
-    CalendarRange,
+    Calendar,
     Newspaper,
     UserCircle,
     Users,
-    Calendar,
     Settings,
     Clock,
+    AlertCircle,
     MoreHorizontal
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -37,7 +37,7 @@ export const FloatingNavbar: React.FC = () => {
     const employeeItems: NavItem[] = [
         { path: '/', label: 'Inicio', icon: LayoutDashboard },
         { path: '/payroll', label: 'Nómina', icon: FileText },
-        { path: '/calendar', label: 'Calendario', icon: CalendarRange },
+        { path: '/calendar', label: 'Calendario', icon: Calendar },
         { path: '/vacations', label: 'Ausencias', icon: CalendarDays },
         { path: '/news', label: 'Comunicados', icon: Newspaper },
     ];
@@ -45,6 +45,7 @@ export const FloatingNavbar: React.FC = () => {
     const managerItems: NavItem[] = [
         { path: '/manager/team', label: 'Equipo', icon: UserCircle },
         { path: '/manager/fichajes', label: 'Fichajes', icon: Clock },
+        { path: '/manager/adjustments', label: 'Ajustes', icon: AlertCircle },
     ];
 
     const adminItems: NavItem[] = [
