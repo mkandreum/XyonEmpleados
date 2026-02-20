@@ -54,33 +54,6 @@ model User {
 
   shiftAssignments UserShiftAssignment[]
 }
-  password    String 
-  name        String
-  role        Role     @default(EMPLOYEE)
-  department  String
-  position    String
-  
-  resetToken       String?
-  resetTokenExpiry DateTime?
-  avatarUrl   String?
-  phone       String?
-  address     String?
-  emergencyContact String?
-  joinDate    DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  vacations   VacationRequest[]
-  payrolls    Payroll[]
-  notifications Notification[]
-  benefitsBalance UserBenefitsBalance?
-  fichajes    Fichaje[]
-  lateNotificationsReceived LateArrivalNotification[] @relation("UserLateNotifications")
-  lateNotificationsSent     LateArrivalNotification[] @relation("ManagerNotifications")
-  pushSubscriptions        PushSubscription[]
-  fichajeAdjustmentsRequested FichajeAdjustment[] @relation("UserAdjustments")
-  fichajeAdjustmentsManaged   FichajeAdjustment[] @relation("ManagerAdjustments")
-}
 
 
 model Payroll {
