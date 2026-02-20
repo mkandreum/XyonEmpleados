@@ -225,7 +225,8 @@ model DepartmentShift {
 // Legacy: solo para compatibilidad temporal
 model DepartmentSchedule {
   id                  String   @id @default(uuid())
-  department          String   @unique
+  department          String
+  name                String   // Nombre o tipo de horario (ej: "General", "Turno Mañana")
   horaEntrada         String
   horaSalida          String
   horaEntradaTarde    String?
@@ -241,6 +242,8 @@ model DepartmentSchedule {
   scheduleDomingo     Json?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+
+  @@unique([department, name])
 }
 
 model LateArrivalNotification {
