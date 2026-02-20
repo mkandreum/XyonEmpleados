@@ -1,6 +1,6 @@
 const { saveSubscription, deleteSubscription, getPublicKey } = require('../services/pushService');
 
-const respondMissingKeys = (res) => res.status(503).json({ error: 'Push service not configured' });
+const respondMissingKeys = (res) => res.json({ publicKey: null, error: 'Push service not configured' });
 
 exports.getVapidPublicKey = (req, res) => {
     const key = getPublicKey();

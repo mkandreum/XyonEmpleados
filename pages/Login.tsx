@@ -55,13 +55,13 @@ export const LoginPage: React.FC = () => {
   const loginLogoUrl = settings.loginLogoUrl || settings.logoUrl; // Fallback to logoUrl if loginLogoUrl not set
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center animate-slide-up">
+    <div className="min-h-screen bg-slate-100 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+      <div className="w-full sm:mx-auto sm:max-w-md text-center animate-slide-up">
         {loginLogoUrl && !logoError ? (
           <img
             src={loginLogoUrl}
             alt={companyName}
-            className="w-auto h-32 mx-auto mb-6"
+            className="w-auto h-auto max-h-24 sm:max-h-32 max-w-full object-contain mx-auto mb-6"
             onError={() => setLogoError(true)}
           />
         ) : null}
@@ -71,8 +71,8 @@ export const LoginPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md animate-slide-up delay-100">
-        <div className="bg-white py-8 px-4 shadow-xl rounded-xl sm:px-10 border border-slate-100 transition-colors">
+      <div className="mt-8 w-full sm:mx-auto sm:max-w-md animate-slide-up delay-100">
+        <div className="bg-white py-8 px-6 shadow-2xl rounded-2xl sm:px-10 border border-slate-100 transition-colors">
 
           {sessionExpired && (
             <div className="mb-4 flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">

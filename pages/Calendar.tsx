@@ -317,27 +317,39 @@ export const CalendarPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto">
-      {/* Selector de píldora */}
-      <div className="flex justify-center items-center gap-4 mt-2">
-        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
+      {/* Selector de píldora con diseño deslizable */}
+      <div className="flex justify-center items-center mt-2">
+        <div className="relative flex bg-slate-100 dark:bg-slate-800 p-1 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+          {/* Fondo deslizable (indicador) */}
+          <div
+            className="absolute top-1 bottom-1 left-1 rounded-full bg-white dark:bg-slate-900 shadow-sm transition-transform duration-300 ease-out z-0"
+            style={{
+              width: 'calc(50% - 4px)', // Asumiendo 2 botones iguales en tamaño
+              transform: `translateX(${view === 'calendario' ? '0%' : '100%'})` // 100% + gap si hubiera
+            }}
+          />
+
           <button
-            className={`px-5 py-1.5 rounded-full font-semibold text-sm transition-all focus:outline-none ${view === 'calendario' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+            className={`relative z-10 px-6 py-1.5 font-semibold text-sm transition-colors focus:outline-none flex-1 text-center w-[120px] ${view === 'calendario' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
             onClick={() => setView('calendario')}
           >
             Calendario
           </button>
+
           {/* Cuadrante only for employees */}
           {!isManagerOrAdmin && (
             <button
-              className={`px-5 py-1.5 rounded-full font-semibold text-sm transition-all focus:outline-none ${view === 'cuadrante' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+              className={`relative z-10 px-6 py-1.5 font-semibold text-sm transition-colors focus:outline-none flex-1 text-center w-[120px] ${view === 'cuadrante' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               onClick={() => setView('cuadrante')}
             >
               Cuadrante
             </button>
           )}
+
+          {/* Equipo solo para Managers/Admins */}
           {isManagerOrAdmin && (
             <button
-              className={`px-5 py-1.5 rounded-full font-semibold text-sm transition-all focus:outline-none ${view === 'equipo' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+              className={`relative z-10 px-6 py-1.5 font-semibold text-sm transition-colors focus:outline-none flex-1 text-center w-[120px] ${view === 'equipo' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               onClick={() => setView('equipo')}
             >
               C. Equipo
