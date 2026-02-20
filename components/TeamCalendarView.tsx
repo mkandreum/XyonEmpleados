@@ -405,23 +405,45 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
                                 const day = i + 1;
                                 const isSelected = selectedMobileDay === day;
 
-                                // Check if anyone has shifts or vacations this day
-                                const dayHasVacation = teamMembers.some(m => isVacationDay(m.id, day));
-                                const dayHasShift = userShiftAssignments.some(a => new Date(a.date).getDate() === day) || getDefaultShiftForDay(day) !== null;
+                                // Check coverage for the day
+                                let workingCount = 0;
+                                let vacationCount = 0;
+
+                                teamMembers.forEach(m => {
+                                    const isVac = isVacationDay(m.id, day);
+                                    if (isVac) {
+                                        vacationCount++;
+                                    } else {
+                                        const assignedShiftRecord = userShiftAssignments.find(a => a.userId === m.id && new Date(a.date).getDate() === day);
+                                        const hasShift = assignedShiftRecord || getDefaultShiftForDay(day);
+                                        if (hasShift) workingCount++;
+                                    }
+                                });
+
+                                const totalTeam = teamMembers.length || 1;
+                                const workingPct = (workingCount / totalTeam) * 100;
+                                const vacationPct = (vacationCount / totalTeam) * 100;
+
+                                // Warning if more than 30% are on vacation
+                                const isWarning = vacationPct > 30 && !isSelected;
 
                                 return (
                                     <button
                                         key={day}
                                         onClick={() => setSelectedMobileDay(day)}
-                                        className={`h-10 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all outline-none ${isSelected
+                                        className={`h-11 rounded-xl flex flex-col items-center justify-between py-1 transition-all outline-none ${isSelected
                                             ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-600/30 ring-offset-1 dark:ring-offset-slate-900'
-                                            : 'bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 hover:border-blue-300 dark:hover:border-blue-700'
+                                            : isWarning
+                                                ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-slate-900 dark:text-amber-100 hover:border-amber-400'
+                                                : 'bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 hover:border-blue-300 dark:hover:border-blue-700'
                                             }`}
                                     >
-                                        <span className={`text-xs font-bold ${isSelected ? 'text-white' : ''}`}>{day}</span>
-                                        <div className="flex gap-0.5 h-1">
-                                            {dayHasShift && <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-blue-500'}`} />}
-                                            {dayHasVacation && <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white/80' : 'bg-amber-400'}`} />}
+                                        <span className={`text-[13px] font-bold mt-0.5 ${isSelected ? 'text-white' : ''}`}>{day}</span>
+
+                                        {/* Coverage Indicator Bar */}
+                                        <div className={`w-3/4 h-1.5 rounded-full flex overflow-hidden ${isSelected ? 'bg-blue-400/30' : 'bg-slate-100 dark:bg-slate-700'} mb-0.5`}>
+                                            {workingPct > 0 && <div style={{ width: `${workingPct}%` }} className={`${isSelected ? 'bg-white' : 'bg-blue-500'}`} />}
+                                            {vacationPct > 0 && <div style={{ width: `${vacationPct}%` }} className={`${isSelected ? 'bg-white/80' : 'bg-amber-400'}`} />}
                                         </div>
                                     </button>
                                 );
