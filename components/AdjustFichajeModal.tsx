@@ -42,8 +42,11 @@ export const AdjustFichajeModal: React.FC<AdjustFichajeModalProps> = ({ fichaje,
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+            {/* Backdrop Blur Layer */}
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-md transition-all" style={{zIndex: 1001}} />
+            {/* Modal Content */}
+            <div className="relative z-[1002] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200">
                 <div className="p-6">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
