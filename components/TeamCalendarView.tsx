@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { managerService } from '../services/api';
-import { User, VacationRequest, DepartmentShift, UserShiftAssignment } from '../types';
+import { managerService, scheduleService } from '../services/api';
+import { User, VacationRequest, DepartmentShift, UserShiftAssignment, DepartmentSchedule } from '../types';
 import { ChevronLeft, ChevronRight, User as UserIcon, Calendar, X, Check, Loader2 } from 'lucide-react';
 import { shiftService } from '../services/shiftService';
 import { userShiftAssignmentService } from '../services/userShiftAssignmentService';
@@ -19,6 +19,8 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
     const [teamMembers, setTeamMembers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentDate, setCurrentDate] = useState(new Date());
+
+    const [defaultSchedule, setDefaultSchedule] = useState<DepartmentSchedule | null>(null);
 
     // Mobile view state
     const [selectedMobileDay, setSelectedMobileDay] = useState(new Date().getDate());
@@ -55,18 +57,50 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
         fetchData();
     }, []);
 
-    // Fetch department shifts
+    // Fetch department shifts & schedule
     useEffect(() => {
-        async function fetchShifts() {
+        async function fetchShiftsAndSchedule() {
             try {
-                const data = await shiftService.getAll(managerDepartment);
-                setShifts(data);
+                const [shiftsData, scheduleData] = await Promise.all([
+                    shiftService.getAll(managerDepartment),
+                    scheduleService.get(managerDepartment)
+                ]);
+                setShifts(shiftsData);
+
+                if (Array.isArray(scheduleData) && scheduleData.length > 0) {
+                    setDefaultSchedule(scheduleData[0] as unknown as DepartmentSchedule);
+                } else {
+                    setDefaultSchedule(null);
+                }
             } catch (e) {
                 setShifts([]);
+                setDefaultSchedule(null);
             }
         }
-        fetchShifts();
+        fetchShiftsAndSchedule();
     }, [managerDepartment]);
+
+    // Format default shift
+    const getDefaultShiftForDay = (dayOfMonth: number): { name: string, horaEntrada: string, horaSalida: string } | null => {
+        if (!defaultSchedule) return null;
+        const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), dayOfMonth);
+        const dayOfWeek = date.getDay(); // 0 is Sunday
+        const dayKeys = ['Domingo', 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+        const dayKeyStr = `schedule${dayKeys[dayOfWeek]}` as keyof DepartmentSchedule;
+
+        const override = defaultSchedule[dayKeyStr] as any;
+        if (override) {
+            if (override.dayOff) return null;
+            const entrada = override.horaEntrada || defaultSchedule.horaEntrada;
+            const salida = override.horaSalida || defaultSchedule.horaSalida;
+            return { name: 'General', horaEntrada: entrada, horaSalida: salida };
+        }
+
+        // Sábado y Domingo libres por defecto si no hay override
+        if (dayOfWeek === 0 || dayOfWeek === 6) return null;
+
+        return { name: 'General', horaEntrada: defaultSchedule.horaEntrada, horaSalida: defaultSchedule.horaSalida };
+    };
 
     // Fetch user shift assignments for current month
     useEffect(() => {
@@ -332,7 +366,10 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
                                         const showAbsences = mode === 'absences' || mode === 'both';
                                         const showShifts = mode === 'shifts' || mode === 'both';
                                         const vacation = showAbsences ? isVacationDay(member.id, day) : null;
-                                        const assignedShift = showShifts ? userShiftAssignments.find(a => a.userId === member.id && new Date(a.date).getDate() === day) : null;
+                                        const assignedShiftRecord = showShifts ? userShiftAssignments.find(a => a.userId === member.id && new Date(a.date).getDate() === day) : null;
+
+                                        // Usar el asignado o el por defecto del departamento
+                                        const displayShift = assignedShiftRecord?.shift || (showShifts && !vacation ? getDefaultShiftForDay(day) : null);
 
                                         return (
                                             <td key={i} className="p-0.5 h-12 relative border-b border-slate-100 dark:border-slate-800/50">
@@ -341,9 +378,9 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
                                                         <span className="text-[9px] font-bold text-white max-w-[28px] truncate">{vacation.type.charAt(0)}</span>
                                                     </div>
                                                 )}
-                                                {assignedShift && (
-                                                    <div className={`absolute inset-x-1 ${vacation ? 'bottom-1 h-3' : 'top-1 bottom-1'} bg-blue-600 rounded flex items-center justify-center shadow-sm overflow-hidden z-20`} title={assignedShift.shift?.name}>
-                                                        <span className="text-[8px] font-bold text-white truncate px-0.5">{assignedShift.shift?.name}</span>
+                                                {displayShift && !vacation && (
+                                                    <div className={`absolute inset-x-1 top-1 bottom-1 ${assignedShiftRecord ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'} rounded flex flex-col items-center justify-center shadow-sm overflow-hidden z-20`} title={`${displayShift.name} (${displayShift.horaEntrada}-${displayShift.horaSalida})`}>
+                                                        <span className={`text-[8px] font-bold ${assignedShiftRecord ? 'text-white' : 'text-slate-700 dark:text-slate-300'} truncate px-0.5`}>{displayShift.name}</span>
                                                     </div>
                                                 )}
                                             </td>
@@ -370,15 +407,15 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
 
                                 // Check if anyone has shifts or vacations this day
                                 const dayHasVacation = teamMembers.some(m => isVacationDay(m.id, day));
-                                const dayHasShift = userShiftAssignments.some(a => new Date(a.date).getDate() === day);
+                                const dayHasShift = userShiftAssignments.some(a => new Date(a.date).getDate() === day) || getDefaultShiftForDay(day) !== null;
 
                                 return (
                                     <button
                                         key={day}
                                         onClick={() => setSelectedMobileDay(day)}
                                         className={`h-10 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all outline-none ${isSelected
-                                                ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-600/30 ring-offset-1 dark:ring-offset-slate-900'
-                                                : 'bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 hover:border-blue-300 dark:hover:border-blue-700'
+                                            ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-600/30 ring-offset-1 dark:ring-offset-slate-900'
+                                            : 'bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 hover:border-blue-300 dark:hover:border-blue-700'
                                             }`}
                                     >
                                         <span className={`text-xs font-bold ${isSelected ? 'text-white' : ''}`}>{day}</span>
@@ -404,9 +441,11 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
                                 const showAbsences = mode === 'absences' || mode === 'both';
                                 const showShifts = mode === 'shifts' || mode === 'both';
                                 const vacation = showAbsences ? isVacationDay(member.id, selectedMobileDay) : null;
-                                const assignedShift = showShifts ? userShiftAssignments.find(a => a.userId === member.id && new Date(a.date).getDate() === selectedMobileDay) : null;
+                                const assignedShiftRecord = showShifts ? userShiftAssignments.find(a => a.userId === member.id && new Date(a.date).getDate() === selectedMobileDay) : null;
 
-                                if (!vacation && !assignedShift) {
+                                const displayShift = assignedShiftRecord?.shift || (showShifts && !vacation ? getDefaultShiftForDay(selectedMobileDay) : null);
+
+                                if (!vacation && !displayShift) {
                                     // Optional: hide members with nothing assigned? 
                                     // Let's show them but indicate "Libre / Sin asignar"
                                     return (
@@ -428,7 +467,7 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
                                 return (
                                     <div key={member.id} className={`flex items-center justify-between p-3 rounded-xl border shadow-sm ${vacation ? 'bg-amber-50/50 border-amber-200/50 dark:bg-amber-900/10 dark:border-amber-900/30' : 'bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700'}`}>
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${vacation ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'}`}>
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${vacation ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400' : (assignedShiftRecord ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-800/80 dark:text-slate-400')}`}>
                                                 {member.name?.charAt(0)}
                                             </div>
                                             <div className="min-w-0">
@@ -443,13 +482,13 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
                                                     {vacation.type}
                                                 </span>
                                             )}
-                                            {assignedShift && (
+                                            {displayShift && !vacation && (
                                                 <div className="text-right">
-                                                    <span className="inline-block px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded-lg shadow-sm">
-                                                        {assignedShift.shift?.name}
+                                                    <span className={`inline-block px-2 py-1 ${assignedShiftRecord ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'} text-xs font-bold rounded-lg`}>
+                                                        {displayShift.name}
                                                     </span>
                                                     <p className="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-1">
-                                                        {assignedShift.shift?.horaEntrada}-{assignedShift.shift?.horaSalida}
+                                                        {displayShift.horaEntrada}-{displayShift.horaSalida}
                                                     </p>
                                                 </div>
                                             )}
