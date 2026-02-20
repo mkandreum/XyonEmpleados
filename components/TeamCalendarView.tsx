@@ -241,6 +241,17 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
         });
     };
 
+    const translateVacationType = (type: string) => {
+        const translations: Record<string, string> = {
+            'VACATION': 'Vacaciones',
+            'SICK_LEAVE': 'Horas Médicas',
+            'MEDICAL_LEAVE': 'Baja Médica',
+            'PERSONAL_DAYS': 'Asuntos Propios',
+            'UNPAID_LEAVE': 'Permiso no Remunerado',
+        };
+        return translations[type] || type;
+    };
+
     if (loading) return <div className="p-8 text-center text-slate-500 transition-colors">Cargando datos de equipo...</div>;
 
     return (
@@ -374,8 +385,8 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
                                         return (
                                             <td key={i} className="p-0.5 h-12 relative border-b border-slate-100 dark:border-slate-800/50">
                                                 {vacation && (
-                                                    <div className={`h-full w-full rounded-sm ${vacation.status === 'APPROVED' ? 'bg-green-500' : 'bg-amber-400'} opacity-80 flex items-center justify-center`} title={vacation.type}>
-                                                        <span className="text-[9px] font-bold text-white max-w-[28px] truncate">{vacation.type.charAt(0)}</span>
+                                                    <div className={`h-full w-full rounded-sm ${vacation.status === 'APPROVED' ? 'bg-green-500' : 'bg-amber-400'} opacity-80 flex items-center justify-center`} title={translateVacationType(vacation.type)}>
+                                                        <span className="text-[9px] font-bold text-white max-w-[28px] truncate">{translateVacationType(vacation.type).charAt(0)}</span>
                                                     </div>
                                                 )}
                                                 {displayShift && !vacation && (
@@ -501,7 +512,7 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
                                         <div className="flex flex-col items-end gap-1">
                                             {vacation && (
                                                 <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${vacation.status === 'APPROVED' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
-                                                    {vacation.type}
+                                                    {translateVacationType(vacation.type)}
                                                 </span>
                                             )}
                                             {displayShift && !vacation && (

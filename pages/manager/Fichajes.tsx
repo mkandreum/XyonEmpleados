@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, AlertCircle, Users, Calendar, User, MessageSquare, Loader2, Check, X as XIcon } from 'lucide-react';
+import { Clock, AlertCircle, Users, Calendar, User, FileText, Loader2, Check, X as XIcon } from 'lucide-react';
 import { fichajeService, lateNotificationService } from '../../services/api';
 import { fichajeAdjustmentService } from '../../services/api';
 import { FichajeAdjustment, FichajeAdjustmentStatus } from '../../types';
@@ -7,63 +7,63 @@ import { useAuth } from '../../context/AuthContext';
 import { ConfirmModal } from '../../components/ConfirmModal';
 
 export const ManagerFichajes: React.FC = () => {
-        // Ajustes de Fichaje
-        const [pendingRequests, setPendingRequests] = useState<FichajeAdjustment[]>([]);
-        const [history, setHistory] = useState<FichajeAdjustment[]>([]);
-        const [loadingAdjustments, setLoadingAdjustments] = useState(true);
-        const [processingId, setProcessingId] = useState<string | null>(null);
-        const [rejectionReasonId, setRejectionReasonId] = useState<string | null>(null);
-        const [rejectionReason, setRejectionReason] = useState('');
+    // Ajustes de Fichaje
+    const [pendingRequests, setPendingRequests] = useState<FichajeAdjustment[]>([]);
+    const [history, setHistory] = useState<FichajeAdjustment[]>([]);
+    const [loadingAdjustments, setLoadingAdjustments] = useState(true);
+    const [processingId, setProcessingId] = useState<string | null>(null);
+    const [rejectionReasonId, setRejectionReasonId] = useState<string | null>(null);
+    const [rejectionReason, setRejectionReason] = useState('');
 
-        useEffect(() => {
-            loadRequests();
-        }, []);
+    useEffect(() => {
+        loadRequests();
+    }, []);
 
-        const loadRequests = async () => {
-            try {
-                setLoadingAdjustments(true);
-                const [pending, all] = await Promise.all([
-                    fichajeAdjustmentService.getPending(),
-                    fichajeAdjustmentService.getAll()
-                ]);
-                setPendingRequests(pending);
-                setHistory(all.filter(r => r.status !== FichajeAdjustmentStatus.PENDING));
-            } catch (error) {
-                console.error('Error loading adjustments:', error);
-            } finally {
-                setLoadingAdjustments(false);
-            }
-        };
+    const loadRequests = async () => {
+        try {
+            setLoadingAdjustments(true);
+            const [pending, all] = await Promise.all([
+                fichajeAdjustmentService.getPending(),
+                fichajeAdjustmentService.getAll()
+            ]);
+            setPendingRequests(pending);
+            setHistory(all.filter(r => r.status !== FichajeAdjustmentStatus.PENDING));
+        } catch (error) {
+            console.error('Error loading adjustments:', error);
+        } finally {
+            setLoadingAdjustments(false);
+        }
+    };
 
-        const handleApprove = async (id: string) => {
-            try {
-                setProcessingId(id);
-                await fichajeAdjustmentService.approve(id);
-                await loadRequests();
-            } catch (error) {
-                alert('Error al aprobar la solicitud');
-            } finally {
-                setProcessingId(null);
-            }
-        };
+    const handleApprove = async (id: string) => {
+        try {
+            setProcessingId(id);
+            await fichajeAdjustmentService.approve(id);
+            await loadRequests();
+        } catch (error) {
+            alert('Error al aprobar la solicitud');
+        } finally {
+            setProcessingId(null);
+        }
+    };
 
-        const handleReject = async (id: string) => {
-            if (!rejectionReason) {
-                alert('Por favor, indica un motivo para el rechazo');
-                return;
-            }
-            try {
-                setProcessingId(id);
-                await fichajeAdjustmentService.reject(id, rejectionReason);
-                setRejectionReasonId(null);
-                setRejectionReason('');
-                await loadRequests();
-            } catch (error) {
-                alert('Error al rechazar la solicitud');
-            } finally {
-                setProcessingId(null);
-            }
-        };
+    const handleReject = async (id: string) => {
+        if (!rejectionReason) {
+            alert('Por favor, indica un motivo para el rechazo');
+            return;
+        }
+        try {
+            setProcessingId(id);
+            await fichajeAdjustmentService.reject(id, rejectionReason);
+            setRejectionReasonId(null);
+            setRejectionReason('');
+            await loadRequests();
+        } catch (error) {
+            alert('Error al rechazar la solicitud');
+        } finally {
+            setProcessingId(null);
+        }
+    };
     const { user } = useAuth() as any;
     const [weekData, setWeekData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -240,7 +240,7 @@ export const ManagerFichajes: React.FC = () => {
                                             </div>
                                         </div>
                                         <div className="mt-4 flex gap-3">
-                                            <MessageSquare size={16} className="text-slate-400 shrink-0 mt-0.5" />
+                                            <FileText size={16} className="text-slate-400 shrink-0 mt-0.5" />
                                             <p className="text-sm text-slate-600 dark:text-slate-400 italic">
                                                 "{request.reason}"
                                             </p>
@@ -302,7 +302,9 @@ export const ManagerFichajes: React.FC = () => {
                 {/* Historial */}
                 <section>
                     <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4 mt-8">Historial Reciente</h3>
-                    <div className="overflow-x-auto">
+
+                    {/* Vista Desktop (Tabla) */}
+                    <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                         <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
                             <thead className="bg-slate-50 dark:bg-slate-800">
                                 <tr>
@@ -316,30 +318,30 @@ export const ManagerFichajes: React.FC = () => {
                             <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800">
                                 {history.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-5 py-4 text-center text-slate-400">No hay historial reciente.</td>
+                                        <td colSpan={5} className="px-5 py-8 text-center text-slate-400 font-medium">No hay historial reciente.</td>
                                     </tr>
                                 ) : (
                                     history.map(request => (
-                                        <tr key={request.id}>
+                                        <tr key={request.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                             <td className="px-5 py-4 font-semibold text-slate-900 dark:text-white">
                                                 {request.user?.name}
-                                                <div className="text-xs text-slate-400 font-normal">{request.user?.department}</div>
+                                                <div className="text-xs text-slate-400 font-normal mt-0.5">{request.user?.department}</div>
                                             </td>
-                                            <td className="px-5 py-4">
+                                            <td className="px-5 py-4 text-sm text-slate-600 dark:text-slate-400">
                                                 {new Date(request.originalTimestamp).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}
                                             </td>
-                                            <td className="px-5 py-4 font-bold text-slate-900 dark:text-white">
+                                            <td className="px-5 py-4 text-sm font-bold text-slate-900 dark:text-white">
                                                 {new Date(request.requestedTimestamp).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}
                                             </td>
-                                            <td className="px-5 py-4">
-                                                {request.resolvedBy?.name}
-                                                <div className="text-xs text-slate-400 font-normal">{request.resolvedAt ? new Date(request.resolvedAt).toLocaleDateString() : ''}</div>
+                                            <td className="px-5 py-4 text-sm text-slate-600 dark:text-slate-400">
+                                                {request.manager?.name}
+                                                <div className="text-xs text-slate-400 font-normal mt-0.5">{request.resolvedAt ? new Date(request.resolvedAt).toLocaleDateString() : ''}</div>
                                             </td>
-                                            <td className="px-5 py-4 text-right">
-                                                <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${request.status === FichajeAdjustmentStatus.APPROVED
+                                            <td className="px-5 py-4">
+                                                <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${request.status === FichajeAdjustmentStatus.APPROVED
                                                     ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                                                     : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                                                }`}>
+                                                    }`}>
                                                     {request.status === FichajeAdjustmentStatus.APPROVED ? 'Aprobado' : 'Rechazado'}
                                                 </span>
                                             </td>
@@ -348,6 +350,60 @@ export const ManagerFichajes: React.FC = () => {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Vista Móvil (Tarjetas) */}
+                    <div className="md:hidden space-y-4">
+                        {history.length === 0 ? (
+                            <div className="bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-8 text-center text-slate-400 font-medium">
+                                No hay historial reciente.
+                            </div>
+                        ) : (
+                            history.map(request => (
+                                <div key={request.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 hover:shadow-md transition-all">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-600 dark:text-slate-400 font-bold shrink-0">
+                                                {request.user?.name?.charAt(0) || <User size={18} />}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-slate-900 dark:text-white text-sm">{request.user?.name}</h4>
+                                                <p className="text-[10px] text-slate-500 uppercase tracking-widest">{request.user?.department}</p>
+                                            </div>
+                                        </div>
+                                        <span className={`inline-flex px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${request.status === FichajeAdjustmentStatus.APPROVED
+                                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                            : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                                            }`}>
+                                            {request.status === FichajeAdjustmentStatus.APPROVED ? 'Aprobado' : 'Rechazado'}
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                                        <div>
+                                            <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Original</p>
+                                            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                                                {new Date(request.originalTimestamp).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-blue-500 dark:text-blue-400 uppercase tracking-wider mb-1">Ajustado</p>
+                                            <p className="text-xs font-bold text-slate-900 dark:text-white">
+                                                {new Date(request.requestedTimestamp).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/50 flex items-center gap-2">
+                                        <Check size={14} className={request.status === FichajeAdjustmentStatus.APPROVED ? "text-green-500" : "text-red-500 flex-shrink-0"} />
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                                            Resuelto por <span className="font-semibold text-slate-700 dark:text-slate-300">{request.manager?.name}</span>
+                                            {request.resolvedAt && ` el ${new Date(request.resolvedAt).toLocaleDateString()}`}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
                 </section>
             </div>

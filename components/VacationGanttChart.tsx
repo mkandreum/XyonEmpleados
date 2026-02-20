@@ -195,6 +195,10 @@ export const VacationGanttChart: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                         <div className={`w-8 h-4 rounded ${getTypeColor('SICK_LEAVE')}`}></div>
+                        <span className="text-xs text-slate-600 dark:text-slate-400">Horas Médicas</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className={`w-8 h-4 rounded ${getTypeColor('MEDICAL_LEAVE')}`}></div>
                         <span className="text-xs text-slate-600 dark:text-slate-400">Baja Médica</span>
                     </div>
                     <div className="flex items-center gap-2">

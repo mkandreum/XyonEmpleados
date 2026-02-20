@@ -248,14 +248,16 @@ export const CalendarPage: React.FC = () => {
       const v = approvedVacations[0];
       const colorMap = {
         VACATION: 'bg-blue-500',
-        SICK_LEAVE: 'bg-emerald-500',
-        PERSONAL: 'bg-amber-400',
+        SICK_LEAVE: 'bg-orange-500',
+        MEDICAL_LEAVE: 'bg-red-500',
+        PERSONAL: 'bg-amber-500',
         OVERTIME: 'bg-indigo-500',
         OTHER: 'bg-slate-400'
       };
       const labelMap = {
         VACATION: 'Vacaciones',
-        SICK_LEAVE: 'Baja Médica',
+        SICK_LEAVE: 'Horas Médicas',
+        MEDICAL_LEAVE: 'Baja Médica',
         PERSONAL: 'Asuntos Propios/Permiso',
         OVERTIME: 'Compensación Horas',
         OTHER: 'Ausencia'
@@ -770,7 +772,7 @@ const EmployeeCuadranteView: React.FC<EmployeeCuadranteProps> = ({
               <div className={`flex items-center gap-3 p-3 rounded-xl ${selectedVac.type === 'VACATION' ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'}`}>
                 <span className={`w-4 h-4 rounded-full ${selectedVac.type === 'VACATION' ? 'bg-green-500' : 'bg-amber-500'} shadow-sm shrink-0`} />
                 <span className={`text-sm font-bold ${selectedVac.type === 'VACATION' ? 'text-green-700 dark:text-green-300' : 'text-amber-700 dark:text-amber-300'}`}>
-                  {selectedVac.type === 'VACATION' ? 'Vacaciones' : selectedVac.type === 'SICK_LEAVE' ? 'Baja Médica' : selectedVac.type === 'PERSONAL' ? 'Asuntos Propios' : 'Ausencia'}
+                  {selectedVac.type === 'VACATION' ? 'Vacaciones' : selectedVac.type === 'SICK_LEAVE' ? 'Horas Médicas' : selectedVac.type === 'MEDICAL_LEAVE' ? 'Baja Médica' : selectedVac.type === 'PERSONAL' ? 'Asuntos Propios' : 'Ausencia'}
                 </span>
               </div>
             )}

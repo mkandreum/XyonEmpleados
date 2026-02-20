@@ -532,7 +532,7 @@ export const TeamCalendar: React.FC = () => {
                                                 if (!isSameVacationPrev) {
                                                     cellContent = (
                                                         <span className="text-[10px] font-bold text-white pl-1 drop-shadow-sm">
-                                                            {vacation.type === 'VACATION' ? 'V' : vacation.type === 'SICK_LEAVE' ? 'B' : 'A'}
+                                                            {vacation.type === 'VACATION' ? 'V' : vacation.type === 'SICK_LEAVE' ? 'H' : vacation.type === 'MEDICAL_LEAVE' ? 'B' : 'A'}
                                                         </span>
                                                     );
                                                 }
@@ -652,7 +652,7 @@ export const TeamCalendar: React.FC = () => {
                                         <div className="flex justify-between items-center">
                                             <div>
                                                 <p className="text-sm font-medium text-slate-800 dark:text-slate-200 transition-colors">
-                                                    {vac.type === 'VACATION' ? 'Vacaciones' : vac.type === 'SICK_LEAVE' ? 'Baja Médica' : 'Ausencia'}
+                                                    {vac.type === 'VACATION' ? 'Vacaciones' : vac.type === 'SICK_LEAVE' ? 'Horas Médicas' : vac.type === 'MEDICAL_LEAVE' ? 'Baja Médica' : 'Ausencia'}
                                                 </p>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400 transition-colors">
                                                     {new Date(vac.startDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - {new Date(vac.endDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}

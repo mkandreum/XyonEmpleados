@@ -472,6 +472,7 @@ exports.getAttendanceReport = async (req, res) => {
                     'VACATION': 'Vacaciones',
                     'PERSONAL': 'Permiso personal',
                     'SICK_LEAVE': 'Horas médicas',
+                    'MEDICAL_LEAVE': 'Baja médica',
                     'OVERTIME': 'Compensación horas',
                     'OTHER': 'Otro permiso'
                 };

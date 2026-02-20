@@ -67,7 +67,7 @@ export interface VacationRequest {
   days: number;
   hours?: number;
   status: VacationStatus;
-  type: 'VACATION' | 'PERSONAL' | 'SICK_LEAVE' | 'OVERTIME' | 'OTHER';
+  type: 'VACATION' | 'PERSONAL' | 'SICK_LEAVE' | 'MEDICAL_LEAVE' | 'OVERTIME' | 'OTHER';
   subtype?: string;
   justificationUrl?: string;
   user?: User;

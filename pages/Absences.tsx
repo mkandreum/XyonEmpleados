@@ -248,7 +248,9 @@ export const AbsencesPage: React.FC = () => {
                                     >
                                         <option value="VACATION">Vacaciones</option>
                                         <option value="PERSONAL">Ausencia Justificada</option>
-                                        <option value="SICK_LEAVE">Baja Médica</option>
+                                        <option value="SICK_LEAVE">Horas Médicas</option>
+                                        <option value="MEDICAL_LEAVE">Baja Médica</option>
+                                        <option value="OTHER">Otro (Especificar)</option>
                                     </select>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 transition-colors">
                                         {requiresJustification ? '⚠️ Requiere justificante' : 'No requiere justificante'}
@@ -364,6 +366,10 @@ export const AbsencesPage: React.FC = () => {
                                                         <FileText size={14} />
                                                         Ver
                                                     </a>
+                                                ) : vacation.type === 'MEDICAL_LEAVE' ? (
+                                                    <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-1 rounded-full border border-red-200">
+                                                        Baja Médica
+                                                    </span>
                                                 ) : (vacation.type === 'SICK_LEAVE' || vacation.type === 'OTHER') ? (
                                                     <label className="inline-flex items-center gap-2 text-xs font-medium text-blue-600 dark:text-blue-400 cursor-pointer">
                                                         <input

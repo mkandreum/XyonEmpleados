@@ -284,6 +284,7 @@ exports.managerRejectVacation = async (req, res) => {
             switch (t) {
                 case 'VACATION': return 'Vacaciones';
                 case 'SICK_LEAVE': return 'Horas médicas';
+                case 'MEDICAL_LEAVE': return 'Baja médica';
                 case 'PERSONAL': return 'Asuntos Propios';
                 case 'OVERTIME': return 'Horas Exceso';
                 case 'OTHER': return st || 'Otros Permisos';

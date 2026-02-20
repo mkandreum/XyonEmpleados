@@ -138,7 +138,8 @@ export const VacationsPage: React.FC = () => {
 
         // Validate justification only for certain types (SICK_LEAVE and medical hours are optional)
         const requiresJustification = (formData.type === 'OTHER' && !isMedicalHoursSubtype)
-            || formData.type === 'PERSONAL';
+            || formData.type === 'PERSONAL'
+            || formData.type === 'MEDICAL_LEAVE'; // MEDICAL_LEAVE now requires justification
         if (requiresJustification && !formData.justificationUrl) {
             showAlert('El justificante es obligatorio para este tipo de solicitud', 'warning');
             return;
@@ -201,7 +202,8 @@ export const VacationsPage: React.FC = () => {
     const isMedicalHoursSubtype = isMedicalHoursSubtypeValue(formData.subtype);
 
     const requiresJustification = (formData.type === 'OTHER' && !isMedicalHoursSubtype)
-        || formData.type === 'PERSONAL';
+        || formData.type === 'PERSONAL'
+        || formData.type === 'MEDICAL_LEAVE';
     const showSubtypeDropdown = formData.type === 'OTHER';
 
     // Subtypes list
@@ -289,6 +291,7 @@ export const VacationsPage: React.FC = () => {
                                         <option value="VACATION">Vacaciones</option>
                                         <option value="PERSONAL">Ausencias Retribuídas</option>
                                         <option value="SICK_LEAVE">Horas Médicas</option>
+                                        <option value="MEDICAL_LEAVE">Baja Médica</option>
                                         <option value="OVERTIME">Horas Exceso de Jornada</option>
                                         <option value="OTHER">Otros Permisos</option>
                                     </select>
@@ -505,6 +508,10 @@ export const VacationsPage: React.FC = () => {
                                                         <FileText size={14} />
                                                         Ver
                                                     </a>
+                                                ) : vac.type === 'MEDICAL_LEAVE' ? (
+                                                    <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-1 rounded inline-flex items-center">
+                                                        🩺 Baja Médica
+                                                    </span>
                                                 ) : (vac.type === 'SICK_LEAVE' || (vac.type === 'OTHER' && isMedicalHoursSubtypeValue(vac.subtype))) ? (
                                                     <label className="inline-flex items-center gap-2 text-xs font-medium text-blue-600 dark:text-blue-400 cursor-pointer">
                                                         <input
@@ -587,6 +594,10 @@ export const VacationsPage: React.FC = () => {
                                                     <FileText size={14} />
                                                     Ver justificante
                                                 </a>
+                                            ) : vac.type === 'MEDICAL_LEAVE' ? (
+                                                <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-1 rounded-full border border-red-200">
+                                                    Baja Médica
+                                                </span>
                                             ) : (vac.type === 'SICK_LEAVE' || (vac.type === 'OTHER' && isMedicalHoursSubtypeValue(vac.subtype))) ? (
                                                 <label className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium cursor-pointer">
                                                     <input
