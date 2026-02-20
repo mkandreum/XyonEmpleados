@@ -204,40 +204,15 @@ export const ScheduleSettings: React.FC = () => {
                                         placeholder="Ej: General, Turno Mañana, etc."
                                     />
                                 </div>
-    };
-
-    if (isLoading) return <div className="p-8 text-center text-slate-500">Cargando horarios...</div>;
-
-    return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center flex-wrap gap-4">
-                <div>
-                    <h3 className="text-lg font-medium text-slate-900 dark:text-white">Horarios por Departamento</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Configura horarios generales y personalizados por día de la semana.</p>
-                </div>
-                {!isCreating && !editingId && (
-                    <button
-                        onClick={handleCreate}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                    >
-                        <Plus size={18} /> Nuevo Horario
-                    </button>
+                            </div>
+                        </div>
+                        {/* ...existing code... */}
+                    </div>
                 )}
             </div>
-
-            <div className="grid gap-6">
-                {/* Edit/Create Form */}
-                {(isCreating || editingId) && (
-                    <div className="col-span-full bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl border border-blue-200 dark:border-blue-900/50 shadow-sm animate-slide-up">
-                        <h4 className="font-semibold text-slate-900 dark:text-white mb-4">
-                            {isCreating ? 'Nuevo Horario' : `Editar Horario - ${formData.department}`}
-                        </h4>
-
-                        {/* General Settings */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                                    Departamento
+        </div>
+    );
+};
                                 </label>
                                 {isCreating ? (
                                     availableDepartments.length > 0 ? (
