@@ -28,10 +28,7 @@ export const ScheduleSettings: React.FC = () => {
 
     // ─── Turnos Asignables State ───
     const [shifts, setShifts] = useState<DepartmentShift[]>([]);
-    const [shiftEditingId, setShiftEditingId] = useState<string | null>(null);
-    const [shiftFormData, setShiftFormData] = useState<Partial<DepartmentShift>>({});
-    const [isCreatingShift, setIsCreatingShift] = useState(false);
-    const [deleteShiftConfirm, setDeleteShiftConfirm] = useState<string | null>(null);
+    const [editingShifts, setEditingShifts] = useState<Partial<DepartmentShift>[]>([]);
 
     const ALL_DAYS = [
         { key: 'LUNES', label: 'L' },
@@ -96,13 +93,14 @@ export const ScheduleSettings: React.FC = () => {
         setEditingId(schedule.id);
         setFormData({ ...schedule });
         setIsCreating(false);
+        setEditingShifts(shifts.filter(s => s.department === schedule.department));
     };
 
     const handleCreate = () => {
         setEditingId('new');
         setFormData({
             department: '',
-            name: '',
+            name: 'General',
             horaEntrada: '09:00',
             horaSalida: '18:00',
             toleranciaMinutos: 10,
@@ -116,12 +114,14 @@ export const ScheduleSettings: React.FC = () => {
             scheduleDomingo: null
         });
         setIsCreating(true);
+        setEditingShifts([]);
     };
 
     const handleCancel = () => {
         setEditingId(null);
         setFormData({});
         setIsCreating(false);
+        setEditingShifts([]);
     };
 
     const handleSave = async () => {
@@ -148,9 +148,38 @@ export const ScheduleSettings: React.FC = () => {
                 scheduleSabado: formData.scheduleSabado,
                 scheduleDomingo: formData.scheduleDomingo,
             });
-            await loadSchedules();
+
+            // Sync editingShifts for this department
+            // Get current ones from DB to compare what was deleted
+            const originalShifts = shifts.filter(s => s.department === formData.department);
+
+            // Delete removed
+            for (const orig of originalShifts) {
+                if (!editingShifts.find(es => es.id === orig.id)) {
+                    await shiftService.delete(orig.id).catch(() => { });
+                }
+            }
+
+            // Create or update
+            for (const shift of editingShifts) {
+                if (shift.id && !shift.id.startsWith('temp-')) {
+                    await shiftService.update(shift.id, shift);
+                } else {
+                    await shiftService.create({
+                        ...shift,
+                        department: formData.department,
+                        name: shift.name || 'Nuevo Turno',
+                        horaEntrada: shift.horaEntrada || '09:00',
+                        horaSalida: shift.horaSalida || '18:00',
+                        activeDays: shift.activeDays || 'LUNES,MARTES,MIERCOLES,JUEVES,VIERNES'
+                    } as any);
+                }
+            }
+
+            await loadData();
             setEditingId(null);
             setIsCreating(false);
+            setEditingShifts([]);
         } catch (error) {
             console.error('Error saving schedule:', error);
             alert('Error al guardar horario');
@@ -342,6 +371,106 @@ export const ScheduleSettings: React.FC = () => {
                                     onChange={e => setFormData({ ...formData, toleranciaMinutos: parseInt(e.target.value) || 0 })}
                                 />
                             </div>
+                        </div>
+
+                        {/* Turnos Adicionales */}
+                        <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                            <div className="flex justify-between items-center mb-4">
+                                <div>
+                                    <h5 className="font-semibold text-slate-900 dark:text-white">Turnos Asignables</h5>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                        Crea turnos (Mañana, Tarde, Noche...) que los managers podrán asignar.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingShifts([...editingShifts, {
+                                        id: 'temp-' + Date.now(),
+                                        name: 'Nuevo Turno',
+                                        horaEntrada: '09:00',
+                                        horaSalida: '18:00',
+                                        toleranciaMinutos: 10,
+                                        flexibleSchedule: false,
+                                        activeDays: 'LUNES,MARTES,MIERCOLES,JUEVES,VIERNES'
+                                    }])}
+                                    className="px-3 py-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-medium text-sm rounded-lg flex items-center gap-1.5 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                                >
+                                    <Plus size={16} /> Añadir Turno
+                                </button>
+                            </div>
+
+                            {editingShifts.length > 0 && (
+                                <div className="space-y-3">
+                                    {editingShifts.map((shift, idx) => (
+                                        <div key={shift.id || idx} className="grid grid-cols-[1fr_1fr_1fr_100px_40px] gap-3 items-end bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative group">
+                                            <div>
+                                                <label className="block text-[11px] font-medium text-slate-500 mb-1">Nombre</label>
+                                                <input
+                                                    className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 text-slate-900 dark:text-white"
+                                                    value={shift.name || ''}
+                                                    onChange={(e) => {
+                                                        const copy = [...editingShifts];
+                                                        copy[idx] = { ...copy[idx], name: e.target.value };
+                                                        setEditingShifts(copy);
+                                                    }}
+                                                    placeholder="Ej: Tarde"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[11px] font-medium text-slate-500 mb-1">Entrada</label>
+                                                <input
+                                                    type="time"
+                                                    className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 text-slate-900 dark:text-white"
+                                                    value={shift.horaEntrada || ''}
+                                                    onChange={(e) => {
+                                                        const copy = [...editingShifts];
+                                                        copy[idx] = { ...copy[idx], horaEntrada: e.target.value };
+                                                        setEditingShifts(copy);
+                                                    }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[11px] font-medium text-slate-500 mb-1">Salida</label>
+                                                <input
+                                                    type="time"
+                                                    className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 text-slate-900 dark:text-white"
+                                                    value={shift.horaSalida || ''}
+                                                    onChange={(e) => {
+                                                        const copy = [...editingShifts];
+                                                        copy[idx] = { ...copy[idx], horaSalida: e.target.value };
+                                                        setEditingShifts(copy);
+                                                    }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[11px] font-medium text-slate-500 mb-1">Tol (m)</label>
+                                                <input
+                                                    type="number"
+                                                    className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 text-slate-900 dark:text-white"
+                                                    value={shift.toleranciaMinutos || 0}
+                                                    onChange={(e) => {
+                                                        const copy = [...editingShifts];
+                                                        copy[idx] = { ...copy[idx], toleranciaMinutos: parseInt(e.target.value) || 0 };
+                                                        setEditingShifts(copy);
+                                                    }}
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const copy = [...editingShifts];
+                                                    copy.splice(idx, 1);
+                                                    setEditingShifts(copy);
+                                                }}
+                                                className="h-8 w-8 flex items-center justify-center text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                title="Eliminar turno"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Per-Day Schedule Grid */}
@@ -660,254 +789,6 @@ export const ScheduleSettings: React.FC = () => {
                 </div>
             </div>
 
-            {/* ═══════════════════════════════════════════ */}
-            {/* Turnos Asignables Section                   */}
-            {/* ═══════════════════════════════════════════ */}
-            <div className="mt-10 pt-8 border-t-2 border-slate-200 dark:border-slate-700">
-                <div className="flex justify-between items-center flex-wrap gap-4 mb-6">
-                    <div>
-                        <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
-                            <Calendar size={20} className="text-violet-600" />
-                            Turnos Asignables
-                        </h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Crea turnos (Mañana, Tarde, Noche...) que los managers podrán asignar a empleados desde el Calendario de Equipo.</p>
-                    </div>
-                    {!isCreatingShift && !shiftEditingId && (
-                        <button
-                            onClick={() => {
-                                setIsCreatingShift(true);
-                                setShiftEditingId('new');
-                                setShiftFormData({
-                                    department: '',
-                                    name: '',
-                                    activeDays: 'LUNES,MARTES,MIERCOLES,JUEVES,VIERNES',
-                                    horaEntrada: '07:00',
-                                    horaSalida: '15:00',
-                                    toleranciaMinutos: 10,
-                                    flexibleSchedule: false,
-                                });
-                            }}
-                            className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors flex items-center gap-2"
-                        >
-                            <Plus size={18} /> Nuevo Turno
-                        </button>
-                    )}
-                </div>
-
-                {/* Shift Edit/Create Form */}
-                {shiftEditingId && (
-                    <div className="bg-violet-50 dark:bg-violet-900/10 p-6 rounded-xl border border-violet-200 dark:border-violet-900/50 shadow-sm mb-6 animate-slide-up">
-                        <h4 className="font-semibold text-slate-900 dark:text-white mb-4">
-                            {isCreatingShift ? 'Nuevo Turno' : `Editar Turno - ${shiftFormData.name}`}
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Departamento</label>
-                                {isCreatingShift ? (
-                                    <select
-                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg text-slate-900 dark:text-white"
-                                        value={shiftFormData.department || ''}
-                                        onChange={e => setShiftFormData({ ...shiftFormData, department: e.target.value })}
-                                    >
-                                        <option value="">Selecciona...</option>
-                                        {departments.map(d => <option key={d} value={d}>{d}</option>)}
-                                    </select>
-                                ) : (
-                                    <input className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg text-slate-900 dark:text-white disabled:opacity-50" value={shiftFormData.department || ''} disabled />
-                                )}
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nombre del turno</label>
-                                <input
-                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg text-slate-900 dark:text-white"
-                                    value={shiftFormData.name || ''}
-                                    onChange={e => setShiftFormData({ ...shiftFormData, name: e.target.value })}
-                                    placeholder="Ej: Mañana, Tarde, Noche"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tolerancia (min)</label>
-                                <input
-                                    type="number"
-                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg text-slate-900 dark:text-white"
-                                    value={shiftFormData.toleranciaMinutos ?? 10}
-                                    onChange={e => setShiftFormData({ ...shiftFormData, toleranciaMinutos: parseInt(e.target.value) || 0 })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Hora Entrada</label>
-                                <input
-                                    type="time"
-                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg text-slate-900 dark:text-white"
-                                    value={shiftFormData.horaEntrada || '07:00'}
-                                    onChange={e => setShiftFormData({ ...shiftFormData, horaEntrada: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Hora Salida</label>
-                                <input
-                                    type="time"
-                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg text-slate-900 dark:text-white"
-                                    value={shiftFormData.horaSalida || '15:00'}
-                                    onChange={e => setShiftFormData({ ...shiftFormData, horaSalida: e.target.value })}
-                                />
-                            </div>
-                            <div className="flex items-end">
-                                <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border w-full transition-all ${shiftFormData.flexibleSchedule
-                                    ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-900'
-                                    : 'bg-white border-slate-200 dark:bg-slate-700 dark:border-slate-600'
-                                    }`}>
-                                    <input
-                                        type="checkbox"
-                                        checked={shiftFormData.flexibleSchedule || false}
-                                        onChange={e => setShiftFormData({ ...shiftFormData, flexibleSchedule: e.target.checked })}
-                                        className="w-5 h-5 text-green-600 rounded"
-                                    />
-                                    <span className="text-sm font-medium text-slate-900 dark:text-white">Flexible</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        {/* Active Days Selector */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Días activos</label>
-                            <div className="flex gap-2">
-                                {ALL_DAYS.map(({ key, label }) => {
-                                    const currentDays = (shiftFormData.activeDays || '').split(',').filter(Boolean);
-                                    const isActive = currentDays.includes(key);
-                                    return (
-                                        <button
-                                            key={key}
-                                            type="button"
-                                            onClick={() => {
-                                                const newDays = isActive
-                                                    ? currentDays.filter(d => d !== key)
-                                                    : [...currentDays, key];
-                                                setShiftFormData({ ...shiftFormData, activeDays: newDays.join(',') });
-                                            }}
-                                            className={`w-10 h-10 rounded-full font-bold text-sm transition-all ${isActive
-                                                ? 'bg-violet-600 text-white shadow-sm'
-                                                : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 hover:bg-slate-200'
-                                                }`}
-                                        >
-                                            {label}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                            <button
-                                onClick={() => { setShiftEditingId(null); setIsCreatingShift(false); setShiftFormData({}); }}
-                                className="px-4 py-2 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2"
-                            >
-                                <X size={16} /> Cancelar
-                            </button>
-                            <button
-                                onClick={async () => {
-                                    if (!shiftFormData.department || !shiftFormData.name || !shiftFormData.horaEntrada || !shiftFormData.horaSalida) {
-                                        alert('Campos requeridos faltantes'); return;
-                                    }
-                                    try {
-                                        if (isCreatingShift) {
-                                            await shiftService.create(shiftFormData as any);
-                                        } else {
-                                            await shiftService.update(shiftEditingId!, shiftFormData);
-                                        }
-                                        setShiftEditingId(null);
-                                        setIsCreatingShift(false);
-                                        setShiftFormData({});
-                                        await loadData();
-                                    } catch (error) {
-                                        console.error('Error saving shift:', error);
-                                        alert('Error al guardar turno');
-                                    }
-                                }}
-                                className="px-4 py-2 text-white bg-violet-600 rounded-lg hover:bg-violet-700 shadow-sm transition-colors flex items-center gap-2"
-                            >
-                                <Save size={16} /> Guardar Turno
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* Shift Cards */}
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {shifts.map(shift => {
-                        const activeDaysList = (shift.activeDays || '').split(',').filter(Boolean);
-                        return (
-                            <div key={shift.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
-                                <div className="p-5">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div>
-                                            <span className="text-xs font-medium text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20 px-2 py-0.5 rounded-full">{shift.department}</span>
-                                            <h4 className="font-bold text-lg text-slate-800 dark:text-white mt-1">{shift.name}</h4>
-                                        </div>
-                                        <div className="flex gap-1">
-                                            <button
-                                                onClick={() => {
-                                                    setShiftEditingId(shift.id);
-                                                    setIsCreatingShift(false);
-                                                    setShiftFormData({ ...shift });
-                                                }}
-                                                className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-900/30 rounded-lg transition-all"
-                                                title="Editar"
-                                            >
-                                                <Edit2 size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => setDeleteShiftConfirm(shift.id)}
-                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all"
-                                                title="Eliminar"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2 text-sm">
-                                        <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700/50">
-                                            <span className="text-slate-500">Horario</span>
-                                            <span className="font-mono font-medium text-slate-700 dark:text-slate-200">{shift.horaEntrada} - {shift.horaSalida}</span>
-                                        </div>
-                                        <div className="flex justify-between py-1">
-                                            <span className="text-slate-500">Tolerancia</span>
-                                            <span className="font-medium text-slate-700 dark:text-slate-200">{shift.toleranciaMinutos} min</span>
-                                        </div>
-                                        {shift.flexibleSchedule && (
-                                            <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1">
-                                                <CheckCircle size={12} /> Flexible
-                                            </div>
-                                        )}
-                                    </div>
-                                    {/* Active days dots */}
-                                    <div className="flex gap-1.5 mt-3">
-                                        {ALL_DAYS.map(({ key, label }) => (
-                                            <div
-                                                key={key}
-                                                className={`flex-1 text-center py-1 rounded text-[10px] font-bold ${activeDaysList.includes(key)
-                                                    ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'
-                                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500'
-                                                    }`}
-                                            >
-                                                {label}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                    {shifts.length === 0 && !isCreatingShift && (
-                        <div className="col-span-full py-12 text-center text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
-                            <Calendar size={32} className="mx-auto mb-2 opacity-30" />
-                            <p>No hay turnos asignables configurados.</p>
-                            <p className="text-xs mt-1">Crea turnos para que los managers puedan asignarlos a sus empleados.</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-
             {deleteConfirm && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
                     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-sm w-full p-6 border border-slate-100 dark:border-slate-800">
@@ -924,41 +805,6 @@ export const ScheduleSettings: React.FC = () => {
                             </button>
                             <button
                                 onClick={() => handleDelete(deleteConfirm.department, deleteConfirm.name)}
-                                className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
-                            >
-                                Eliminar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Delete Shift Confirmation Modal */}
-            {deleteShiftConfirm && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-sm w-full p-6 border border-slate-100 dark:border-slate-800">
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Eliminar turno</h3>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-                            ¿Estás seguro de que deseas eliminar este turno? Se eliminarán también las asignaciones existentes.
-                        </p>
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={() => setDeleteShiftConfirm(null)}
-                                className="px-4 py-2 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={async () => {
-                                    try {
-                                        await shiftService.delete(deleteShiftConfirm);
-                                        setDeleteShiftConfirm(null);
-                                        await loadData();
-                                    } catch (error) {
-                                        console.error('Error deleting shift:', error);
-                                        alert('Error al eliminar turno');
-                                    }
-                                }}
                                 className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
                             >
                                 Eliminar

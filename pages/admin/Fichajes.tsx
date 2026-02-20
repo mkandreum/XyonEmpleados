@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Users, Calendar, Download, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
-import { fichajeService } from '../../services/api';
+import { fichajeService, adminService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 export const AdminFichajes: React.FC = () => {
@@ -10,8 +10,31 @@ export const AdminFichajes: React.FC = () => {
     const [fichajes, setFichajes] = useState<any[]>([]);
 
     const [loading, setLoading] = useState(false);
+    const [departments, setDepartments] = useState<string[]>([]);
 
-    const departments = ['IT', 'RRHH', 'Ventas', 'Marketing', 'Operaciones'];
+    useEffect(() => {
+        loadDepartments();
+    }, []);
+
+    const loadDepartments = async () => {
+        try {
+            const settings = await adminService.getSettings();
+            if (settings.DEPARTMENTS) {
+                try {
+                    const parsed = JSON.parse(settings.DEPARTMENTS);
+                    if (Array.isArray(parsed)) {
+                        setDepartments(parsed);
+                        return;
+                    }
+                } catch { /* fallback */ }
+            }
+            // Fallback just in case
+            setDepartments(['IT', 'RRHH', 'Ventas', 'Marketing', 'Operaciones']);
+        } catch (error) {
+            console.error('Error loading departments:', error);
+            setDepartments(['IT', 'RRHH', 'Ventas', 'Marketing', 'Operaciones']);
+        }
+    };
 
     useEffect(() => {
         if (selectedDepartment) {

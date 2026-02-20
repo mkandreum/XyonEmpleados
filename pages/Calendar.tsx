@@ -318,7 +318,7 @@ export const CalendarPage: React.FC = () => {
   return (
     <div className="flex flex-col gap-6 max-w-5xl mx-auto">
       {/* Selector de píldora */}
-      <div className="flex justify-center items-center gap-4 mt-6">
+      <div className="flex justify-center items-center gap-4 mt-2">
         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
           <button
             className={`px-5 py-1.5 rounded-full font-semibold text-sm transition-all focus:outline-none ${view === 'calendario' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
