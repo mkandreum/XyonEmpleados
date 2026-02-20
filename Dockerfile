@@ -44,4 +44,4 @@ VOLUME ["/app/uploads"]
 EXPOSE 3000
 
 # Command to run migrations, seed (idempotent), and start server
-CMD npx prisma db push && npx prisma db seed && node src/server.js
+CMD npx prisma db push --accept-data-loss && npx prisma db seed && node src/server.js
