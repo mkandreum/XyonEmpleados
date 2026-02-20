@@ -29,7 +29,7 @@ const AdminFichajes = lazy(() => import('./pages/admin/Fichajes').then(m => ({ d
 const TeamRequests = lazy(() => import('./pages/manager/TeamRequests').then(m => ({ default: m.TeamRequests })));
 const TeamCalendar = lazy(() => import('./pages/manager/TeamCalendar').then(m => ({ default: m.TeamCalendar })));
 const ManagerFichajes = lazy(() => import('./pages/manager/Fichajes').then(m => ({ default: m.ManagerFichajes })));
-const ManagerFichajeAdjustments = lazy(() => import('./pages/manager/FichajeAdjustments').then(m => ({ default: m.ManagerFichajeAdjustments })));
+
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated } = useAuth();
@@ -166,7 +166,7 @@ const AppRoutes = () => {
             } />
             <Route path="/manager/adjustments" element={
                 <ProtectedRoute>
-                    <ManagerFichajeAdjustments />
+
                 </ProtectedRoute>
             } />
 
