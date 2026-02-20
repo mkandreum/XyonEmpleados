@@ -23,35 +23,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  EMPLOYEE
-  MANAGER
-  ADMIN
-}
-
-enum VacationStatus {
-  PENDING          // Legacy status, will be deprecated
-  PENDING_MANAGER  // Employee submitted, awaiting Manager approval
-  PENDING_ADMIN    // Manager approved, awaiting Admin approval
-  APPROVED         // Final approval
-  REJECTED         // Rejected by Manager or Admin
-}
-
-enum NewsCategory {
-  CORPORATE
-  EVENT
-  URGENT
-}
-
-enum FichajeAdjustmentStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
 model User {
   id          String   @id @default(uuid())
   email       String   @unique
+  password    String 
+  name        String
+  role        Role     @default(EMPLOYEE)
+  department  String
+  position    String
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  avatarUrl   String?
+  phone       String?
+  address     String?
+  emergencyContact String?
+  joinDate    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  vacations   VacationRequest[]
+  payrolls    Payroll[]
+  notifications Notification[]
+  benefitsBalance UserBenefitsBalance?
+  fichajes    Fichaje[]
+  lateNotificationsReceived LateArrivalNotification[] @relation("UserLateNotifications")
+  lateNotificationsSent     LateArrivalNotification[] @relation("ManagerNotifications")
+  pushSubscriptions        PushSubscription[]
+  fichajeAdjustmentsRequested FichajeAdjustment[] @relation("UserAdjustments")
+  fichajeAdjustmentsManaged   FichajeAdjustment[] @relation("ManagerAdjustments")
+
+  shiftAssignments UserShiftAssignment[]
+}
   password    String 
   name        String
   role        Role     @default(EMPLOYEE)
@@ -219,6 +221,8 @@ model DepartmentShift {
   scheduleOverrides   Json?    // Per-day overrides opcional
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+
+  shiftAssignments UserShiftAssignment[]
 }
 
 // Legacy: solo para compatibilidad temporal
