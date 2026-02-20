@@ -425,6 +425,10 @@ export const managerService = {
         const res = await api.get('/manager/team-vacations');
         return res.data;
     },
+    getTeamMembers: async (): Promise<User[]> => {
+        const res = await api.get('/manager/team-members');
+        return res.data;
+    },
     approveVacation: async (id: string): Promise<VacationRequest> => {
         const res = await api.patch(`/manager/vacations/${id}/approve`);
         return res.data;

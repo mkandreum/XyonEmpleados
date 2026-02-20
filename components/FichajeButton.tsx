@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LogIn, LogOut, Loader2, Clock, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import { LogIn, LogOut, Loader2, Clock, ChevronDown, AlertCircle } from 'lucide-react';
 import { fichajeService } from '../services/api';
 import { FichajeTipo, TurnoInfo, Fichaje } from '../types';
 import { AdjustFichajeModal } from './AdjustFichajeModal';
@@ -153,33 +153,96 @@ export const FichajeButton: React.FC = () => {
                 <div className="w-full">
                     <button
                         onClick={() => setShowHistory(!showHistory)}
-                        className="w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors border border-transparent hover:border-slate-200"
+                        className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-xl transition-all ${showHistory
+                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent hover:border-slate-200 dark:hover:border-slate-700'
+                            }`}
                     >
                         <span className="flex items-center gap-2">
-                            <Clock size={16} />
-                            Fichajes de hoy ({todayFichajes.length})
+                            <Clock size={15} />
+                            Fichajes de hoy
                         </span>
-                        {showHistory ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        <span className="flex items-center gap-2">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${showHistory
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                                }`}>
+                                {todayFichajes.length}
+                            </span>
+                            <ChevronDown size={16} className={`transition-transform duration-300 ${showHistory ? 'rotate-180' : ''}`} />
+                        </span>
                     </button>
 
-                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showHistory ? 'max-h-48 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
-                        <div className="bg-white/50 rounded-lg p-3 border border-blue-100 shadow-sm space-y-1">
-                            {todayFichajes.map((fichaje, index) => (
-                                <div key={index} className="flex items-center justify-between text-xs py-1 border-b border-dashed border-slate-200 last:border-0 group">
-                                    <div className="flex flex-col">
-                                        <span className={`font-medium ${fichaje.tipo === 'ENTRADA' ? 'text-blue-600' : 'text-green-600'}`}>
-                                            {fichaje.tipo === 'ENTRADA' ? '→ Entrada' : '← Salida'}
-                                        </span>
-                                        <span className="text-slate-600 font-mono">{formatTime(fichaje.timestamp)}</span>
-                                    </div>
-                                    <button
-                                        onClick={() => setAdjustingFichaje(fichaje)}
-                                        className="opacity-0 group-hover:opacity-100 bg-blue-50 text-blue-600 px-2 py-1 rounded-lg font-bold hover:bg-blue-100 transition-all text-[10px]"
-                                    >
-                                        Ajustar
-                                    </button>
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showHistory ? 'max-h-[400px] opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-lg shadow-slate-200/50 dark:shadow-black/20 overflow-hidden">
+                            {/* Header */}
+                            <div className="px-4 py-2.5 bg-gradient-to-r from-slate-50 to-slate-100/80 dark:from-slate-800 dark:to-slate-800/80 border-b border-slate-200 dark:border-slate-700">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                    Registro del día
+                                </p>
+                            </div>
+
+                            {/* Timeline list */}
+                            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                {todayFichajes.map((fichaje, index) => {
+                                    const isEntrada = fichaje.tipo === 'ENTRADA';
+                                    return (
+                                        <div
+                                            key={fichaje.id || index}
+                                            className="flex items-center gap-3 px-4 py-3 group hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
+                                        >
+                                            {/* Timeline dot */}
+                                            <div className="relative flex flex-col items-center">
+                                                <div className={`w-3 h-3 rounded-full ring-4 shrink-0 ${isEntrada
+                                                    ? 'bg-blue-500 ring-blue-100 dark:ring-blue-900/50'
+                                                    : 'bg-emerald-500 ring-emerald-100 dark:ring-emerald-900/50'
+                                                    }`} />
+                                                {index < todayFichajes.length - 1 && (
+                                                    <div className="absolute top-5 w-px h-6 bg-slate-200 dark:bg-slate-700" />
+                                                )}
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-baseline gap-2">
+                                                    <span className={`text-sm font-semibold ${isEntrada
+                                                        ? 'text-blue-700 dark:text-blue-400'
+                                                        : 'text-emerald-700 dark:text-emerald-400'
+                                                        }`}>
+                                                        {isEntrada ? '→ Entrada' : '← Salida'}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Time */}
+                                            <span className="text-sm font-mono font-bold text-slate-700 dark:text-slate-300 tabular-nums">
+                                                {formatTime(fichaje.timestamp)}
+                                            </span>
+
+                                            {/* Adjust button - visible on mobile, reveal on hover desktop */}
+                                            <button
+                                                onClick={() => setAdjustingFichaje(fichaje)}
+                                                title="Solicitar ajuste"
+                                                className="sm:opacity-0 sm:group-hover:opacity-100 shrink-0 p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/40 dark:hover:text-blue-400 transition-all"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Footer summary */}
+                            <div className="px-4 py-2.5 bg-gradient-to-r from-slate-50 to-slate-100/80 dark:from-slate-800 dark:to-slate-800/80 border-t border-slate-200 dark:border-slate-700">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                        {todayFichajes.filter(f => f.tipo === 'ENTRADA').length} entradas · {todayFichajes.filter(f => f.tipo === 'SALIDA').length} salidas
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                        Toca ✏️ para solicitar ajuste
+                                    </span>
                                 </div>
-                            ))}
+                            </div>
                         </div>
                     </div>
                 </div>

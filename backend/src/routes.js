@@ -1,7 +1,3 @@
-const userShiftAssignmentController = require('./controllers/userShiftAssignmentController');
-// User Shift Assignment Routes
-router.post('/user-shift-assignments', authenticateToken, userShiftAssignmentController.assignShift);
-router.get('/user-shift-assignments', authenticateToken, userShiftAssignmentController.getUserShifts);
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('./middleware/auth');
@@ -22,6 +18,7 @@ const fichajeAdjustmentController = require('./controllers/fichajeAdjustmentCont
 const fileController = require('./controllers/fileController');
 const emailTemplateController = require('./controllers/emailTemplateController');
 const pushController = require('./controllers/pushController');
+const userShiftAssignmentController = require('./controllers/userShiftAssignmentController');
 const { isAdmin, isManagerOrAdmin } = require('./middleware/auth');
 const { validate, loginSchema, registerSchema, changePasswordSchema, updateProfileSchema, vacationRequestSchema } = require('./middleware/validation');
 
@@ -188,6 +185,21 @@ router.patch('/vacations/:id/justification', vacationController.updateJustificat
 
 // Manager routes (protected - requires MANAGER role)
 router.get('/manager/team-vacations', vacationController.getTeamVacations);
+router.get('/manager/team-members', isManagerOrAdmin, async (req, res) => {
+    try {
+        const { PrismaClient } = require('@prisma/client');
+        const prisma = new PrismaClient();
+        const department = req.user.department;
+        const members = await prisma.user.findMany({
+            where: { department, role: { not: 'ADMIN' } },
+            select: { id: true, name: true, email: true, department: true, position: true, avatarUrl: true }
+        });
+        res.json(members);
+    } catch (e) {
+        console.error('Error getting team members:', e);
+        res.status(500).json({ error: 'Error al obtener miembros del equipo' });
+    }
+});
 router.patch('/manager/vacations/:id/approve', vacationController.managerApproveVacation);
 router.patch('/manager/vacations/:id/reject', vacationController.managerRejectVacation);
 
@@ -231,6 +243,20 @@ router.get('/fichaje-adjustments/pending', isManagerOrAdmin, fichajeAdjustmentCo
 router.get('/fichaje-adjustments/all', isManagerOrAdmin, fichajeAdjustmentController.getAll);
 router.patch('/fichaje-adjustments/:id/approve', isManagerOrAdmin, fichajeAdjustmentController.approve);
 router.patch('/fichaje-adjustments/:id/reject', isManagerOrAdmin, fichajeAdjustmentController.reject);
+
+// User Shift Assignment Routes
+router.post('/user-shift-assignments', isManagerOrAdmin, userShiftAssignmentController.assignShift);
+router.get('/user-shift-assignments', authenticateToken, userShiftAssignmentController.getUserShifts);
+
+// DepartmentShift routes (admin manages shifts, managers/employees can read)
+router.get('/department-shifts/:department', authenticateToken, async (req, res) => {
+    try {
+        const { PrismaClient } = require('@prisma/client');
+        const prisma = new PrismaClient();
+        const shifts = await prisma.departmentShift.findMany({ where: { department: req.params.department } });
+        res.json(shifts);
+    } catch (e) { res.status(500).json({ error: 'Error fetching shifts' }); }
+});
 
 module.exports = router;
 

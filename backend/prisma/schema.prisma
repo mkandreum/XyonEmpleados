@@ -1,16 +1,3 @@
-model UserShiftAssignment {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shiftId   String
-  shift     DepartmentShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
-  date      DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, date])
-  @@index([shiftId])
-}
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -23,10 +10,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  EMPLOYEE
+  MANAGER
+  ADMIN
+}
+
+enum VacationStatus {
+  PENDING
+  PENDING_MANAGER
+  PENDING_ADMIN
+  APPROVED
+  REJECTED
+}
+
+enum NewsCategory {
+  CORPORATE
+  EVENT
+  URGENT
+}
+
+enum FichajeTipo {
+  ENTRADA
+  SALIDA
+}
+
+enum FichajeAdjustmentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id          String   @id @default(uuid())
   email       String   @unique
-  password    String 
+  password    String
   name        String
   role        Role     @default(EMPLOYEE)
   department  String
@@ -40,7 +58,7 @@ model User {
   joinDate    DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   vacations   VacationRequest[]
   payrolls    Payroll[]
   notifications Notification[]
@@ -51,10 +69,22 @@ model User {
   pushSubscriptions        PushSubscription[]
   fichajeAdjustmentsRequested FichajeAdjustment[] @relation("UserAdjustments")
   fichajeAdjustmentsManaged   FichajeAdjustment[] @relation("ManagerAdjustments")
-
   shiftAssignments UserShiftAssignment[]
 }
 
+model UserShiftAssignment {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shiftId   String
+  shift     DepartmentShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  date      DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([shiftId])
+}
 
 model Payroll {
   id           String   @id @default(uuid())
@@ -152,11 +182,6 @@ model UserBenefitsBalance {
   updatedAt             DateTime @updatedAt
 }
 
-enum FichajeTipo {
-  ENTRADA
-  SALIDA
-}
-
 model Fichaje {
   id          String   @id @default(uuid())
   userId      String
@@ -165,20 +190,19 @@ model Fichaje {
   timestamp   DateTime @default(now())
   department  String
   createdAt   DateTime @default(now())
-  
+
   // Geolocation
   latitude    Float?
   longitude   Float?
   accuracy    Float?
-  
+
   lateNotifications LateArrivalNotification[]
   adjustments       FichajeAdjustment[]
-  
+
   @@index([userId, timestamp])
   @@index([department, timestamp])
   @@index([userId, tipo, timestamp])
 }
-
 
 model DepartmentShift {
   id                  String   @id @default(uuid())
@@ -232,7 +256,7 @@ model LateArrivalNotification {
   justificacionTexto  String?  @db.Text
   leido               Boolean  @default(false)
   createdAt           DateTime @default(now())
-  
+
   @@index([userId, leido])
 }
 
@@ -278,18 +302,18 @@ model FichajeAdjustment {
   user                User                      @relation("UserAdjustments", fields: [userId], references: [id], onDelete: Cascade)
   managerId           String?
   manager             User?                     @relation("ManagerAdjustments", fields: [managerId], references: [id])
-  
+
   originalTimestamp   DateTime
   requestedTimestamp  DateTime
   reason              String                    @db.Text
-  
+
   status              FichajeAdjustmentStatus   @default(PENDING)
   rejectionReason     String?
-  
+
   resolvedAt          DateTime?
   createdAt           DateTime                  @default(now())
   updatedAt           DateTime                  @updatedAt
-  
+
   @@index([userId, status])
   @@index([status])
 }
