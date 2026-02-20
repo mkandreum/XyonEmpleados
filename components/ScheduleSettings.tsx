@@ -22,7 +22,7 @@ export const ScheduleSettings: React.FC = () => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [formData, setFormData] = useState<Partial<DepartmentSchedule>>({});
     const [isCreating, setIsCreating] = useState(false);
-    const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+    const [deleteConfirm, setDeleteConfirm] = useState<{ department: string, name: string } | null>(null);
     const [expandedSchedule, setExpandedSchedule] = useState<string | null>(null);
 
     useEffect(() => {
@@ -336,10 +336,10 @@ export const ScheduleSettings: React.FC = () => {
                                             <div
                                                 key={key}
                                                 className={`rounded-xl border p-3 transition-all ${isDayOff
-                                                        ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 opacity-60'
-                                                        : isCustom
-                                                            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-                                                            : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'
+                                                    ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 opacity-60'
+                                                    : isCustom
+                                                        ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                                                        : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'
                                                     }`}
                                             >
                                                 <div className="text-center mb-2">
@@ -386,8 +386,8 @@ export const ScheduleSettings: React.FC = () => {
                                                     <button
                                                         onClick={() => toggleDayOverride(key as DayKey)}
                                                         className={`flex-1 flex items-center justify-center gap-1 text-[10px] py-1 rounded font-medium transition-colors ${isCustom
-                                                                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                                                : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500'
+                                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                                            : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500'
                                                             }`}
                                                         title={isCustom ? 'Usar general' : 'Personalizar'}
                                                     >
@@ -396,8 +396,8 @@ export const ScheduleSettings: React.FC = () => {
                                                     <button
                                                         onClick={() => toggleDayOff(key as DayKey)}
                                                         className={`flex-1 flex items-center justify-center gap-1 text-[10px] py-1 rounded font-medium transition-colors ${isDayOff
-                                                                ? 'bg-slate-600 dark:bg-slate-500 text-white'
-                                                                : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500'
+                                                            ? 'bg-slate-600 dark:bg-slate-500 text-white'
+                                                            : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500'
                                                             }`}
                                                         title={isDayOff ? 'Habilitar' : 'Día libre'}
                                                     >
@@ -420,10 +420,10 @@ export const ScheduleSettings: React.FC = () => {
                                             <div
                                                 key={key}
                                                 className={`rounded-xl border p-4 transition-all ${isDayOff
-                                                        ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 opacity-60'
-                                                        : isCustom
-                                                            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-                                                            : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'
+                                                    ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 opacity-60'
+                                                    : isCustom
+                                                        ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                                                        : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'
                                                     }`}
                                             >
                                                 <div className="flex items-center justify-between">
@@ -432,8 +432,8 @@ export const ScheduleSettings: React.FC = () => {
                                                         <button
                                                             onClick={() => toggleDayOverride(key as DayKey)}
                                                             className={`px-3 py-1 text-xs rounded-full font-medium transition-colors ${isCustom
-                                                                    ? 'bg-blue-600 text-white'
-                                                                    : 'bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300'
+                                                                ? 'bg-blue-600 text-white'
+                                                                : 'bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300'
                                                                 }`}
                                                         >
                                                             {isCustom ? <Pencil size={14} className="inline-block mr-1" /> : <Settings2 size={14} className="inline-block mr-1" />} {isCustom ? 'Personalizado' : 'General'}
@@ -441,8 +441,8 @@ export const ScheduleSettings: React.FC = () => {
                                                         <button
                                                             onClick={() => toggleDayOff(key as DayKey)}
                                                             className={`px-3 py-1 text-xs rounded-full font-medium transition-colors ${isDayOff
-                                                                    ? 'bg-slate-600 text-white'
-                                                                    : 'bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300'
+                                                                ? 'bg-slate-600 text-white'
+                                                                : 'bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300'
                                                                 }`}
                                                         >
                                                             {isDayOff ? <CheckCircle size={14} className="inline-block mr-1" /> : <Sun size={14} className="inline-block mr-1" />} {isDayOff ? 'Libre' : 'Día libre'}
@@ -524,7 +524,7 @@ export const ScheduleSettings: React.FC = () => {
                                                 <Edit2 size={16} />
                                             </button>
                                             <button
-                                                onClick={() => setDeleteConfirm(schedule.department)}
+                                                onClick={() => setDeleteConfirm({ department: schedule.department, name: schedule.name })}
                                                 className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all"
                                                 title="Eliminar"
                                             >
@@ -578,10 +578,10 @@ export const ScheduleSettings: React.FC = () => {
                                                             <div
                                                                 key={key}
                                                                 className={`flex-1 text-center py-1 rounded text-[10px] font-bold ${eff.isDayOff
-                                                                        ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500'
-                                                                        : eff.isOverride
-                                                                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                                                                            : 'bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400'
+                                                                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500'
+                                                                    : eff.isOverride
+                                                                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                                                        : 'bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400'
                                                                     }`}
                                                                 title={eff.isDayOff ? 'Libre' : `${eff.entry} - ${eff.exit}${eff.isOverride ? ' (personalizado)' : ''}`}
                                                             >
@@ -636,7 +636,7 @@ export const ScheduleSettings: React.FC = () => {
                     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-sm w-full p-6 border border-slate-100 dark:border-slate-800">
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Eliminar horario</h3>
                         <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
-                            ¿Estás seguro de que deseas eliminar el horario de <strong>{deleteConfirm}</strong>? Los empleados de este departamento no tendrán horario asignado.
+                            ¿Estás seguro de que deseas eliminar el horario <strong>{deleteConfirm.name}</strong> de <strong>{deleteConfirm.department}</strong>? Los empleados de este departamento no tendrán horario asignado.
                         </p>
                         <div className="flex justify-end gap-3">
                             <button
@@ -646,7 +646,7 @@ export const ScheduleSettings: React.FC = () => {
                                 Cancelar
                             </button>
                             <button
-                                onClick={() => handleDelete(deleteConfirm)}
+                                onClick={() => handleDelete(deleteConfirm.department, deleteConfirm.name)}
                                 className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
                             >
                                 Eliminar

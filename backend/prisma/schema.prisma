@@ -226,7 +226,7 @@ model DepartmentShift {
 model DepartmentSchedule {
   id                  String   @id @default(uuid())
   department          String
-  name                String   // Nombre o tipo de horario (ej: "General", "Turno Mañana")
+  name                String   @default("General") // Nombre o tipo de horario (ej: "General", "Turno Mañana")
   horaEntrada         String
   horaSalida          String
   horaEntradaTarde    String?
