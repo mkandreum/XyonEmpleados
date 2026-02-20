@@ -20,6 +20,9 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
     const [loading, setLoading] = useState(true);
     const [currentDate, setCurrentDate] = useState(new Date());
 
+    // Mobile view state
+    const [selectedMobileDay, setSelectedMobileDay] = useState(new Date().getDate());
+
     // Shift assignment modal state
     const [showShiftModal, setShowShiftModal] = useState(false);
     const [shifts, setShifts] = useState<DepartmentShift[]>([]);
@@ -83,9 +86,27 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
 
     const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
     const monthName = currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    const firstDayOfWeek = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+    const startOffset = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
 
-    const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-    const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    const prevMonth = () => {
+        const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+        setCurrentDate(d);
+        setSelectedMobileDay(1);
+    };
+    const nextMonth = () => {
+        const d = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+        setCurrentDate(d);
+        setSelectedMobileDay(1);
+    };
+
+    // Auto-select today if we go back to current month
+    useEffect(() => {
+        const now = new Date();
+        if (currentDate.getMonth() === now.getMonth() && currentDate.getFullYear() === now.getFullYear()) {
+            setSelectedMobileDay(now.getDate());
+        }
+    }, [currentDate]);
 
     // Get active shift for selected shift in modal
     const activeShift = useMemo(() => shifts.find(s => s.id === selectedShiftId), [shifts, selectedShiftId]);
@@ -281,7 +302,8 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-                <div className="overflow-x-auto pb-4">
+                {/* ─── DESKTOP VIEW ─── */}
+                <div className="hidden md:block overflow-x-auto pb-4">
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-slate-50 dark:bg-slate-800/60">
@@ -296,7 +318,7 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
                                 <tr key={member.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
                                     <td className="p-3 border-r border-slate-200 dark:border-slate-700 sticky left-0 z-20 bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-800 transition-colors">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center font-bold text-xs ring-2 ring-white dark:ring-slate-800">
+                                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center font-bold text-xs ring-2 ring-white dark:ring-slate-800 shrink-0">
                                                 {member.name?.charAt(0)}
                                             </div>
                                             <div className="min-w-0">
@@ -316,7 +338,7 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
                                             <td key={i} className="p-0.5 h-12 relative border-b border-slate-100 dark:border-slate-800/50">
                                                 {vacation && (
                                                     <div className={`h-full w-full rounded-sm ${vacation.status === 'APPROVED' ? 'bg-green-500' : 'bg-amber-400'} opacity-80 flex items-center justify-center`} title={vacation.type}>
-                                                        <span className="text-[9px] font-bold text-white">{vacation.type.charAt(0)}</span>
+                                                        <span className="text-[9px] font-bold text-white max-w-[28px] truncate">{vacation.type.charAt(0)}</span>
                                                     </div>
                                                 )}
                                                 {assignedShift && (
@@ -331,6 +353,112 @@ export const TeamCalendarView: React.FC<TeamCalendarViewProps> = ({ mode = 'both
                             ))}
                         </tbody>
                     </table>
+                </div>
+
+                {/* ─── MOBILE VIEW ─── */}
+                <div className="block md:hidden">
+                    {/* Month Grid */}
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/30 border-b border-slate-200 dark:border-slate-800">
+                        <div className="grid grid-cols-7 gap-1">
+                            {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => (
+                                <div key={d} className="text-center text-[10px] font-bold text-slate-500 py-1">{d}</div>
+                            ))}
+                            {Array.from({ length: startOffset }).map((_, i) => <div key={`empty-${i}`} />)}
+                            {Array.from({ length: daysInMonth }).map((_, i) => {
+                                const day = i + 1;
+                                const isSelected = selectedMobileDay === day;
+
+                                // Check if anyone has shifts or vacations this day
+                                const dayHasVacation = teamMembers.some(m => isVacationDay(m.id, day));
+                                const dayHasShift = userShiftAssignments.some(a => new Date(a.date).getDate() === day);
+
+                                return (
+                                    <button
+                                        key={day}
+                                        onClick={() => setSelectedMobileDay(day)}
+                                        className={`h-10 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all outline-none ${isSelected
+                                                ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-600/30 ring-offset-1 dark:ring-offset-slate-900'
+                                                : 'bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 hover:border-blue-300 dark:hover:border-blue-700'
+                                            }`}
+                                    >
+                                        <span className={`text-xs font-bold ${isSelected ? 'text-white' : ''}`}>{day}</span>
+                                        <div className="flex gap-0.5 h-1">
+                                            {dayHasShift && <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-blue-500'}`} />}
+                                            {dayHasVacation && <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white/80' : 'bg-amber-400'}`} />}
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Selected Day Details List */}
+                    <div className="p-4">
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-4 flex items-center justify-between">
+                            <span>{new Date(currentDate.getFullYear(), currentDate.getMonth(), selectedMobileDay).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                            <span className="text-xs font-normal text-slate-500 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg">{teamMembers.length} Miembros</span>
+                        </h3>
+
+                        <div className="space-y-3">
+                            {teamMembers.map(member => {
+                                const showAbsences = mode === 'absences' || mode === 'both';
+                                const showShifts = mode === 'shifts' || mode === 'both';
+                                const vacation = showAbsences ? isVacationDay(member.id, selectedMobileDay) : null;
+                                const assignedShift = showShifts ? userShiftAssignments.find(a => a.userId === member.id && new Date(a.date).getDate() === selectedMobileDay) : null;
+
+                                if (!vacation && !assignedShift) {
+                                    // Optional: hide members with nothing assigned? 
+                                    // Let's show them but indicate "Libre / Sin asignar"
+                                    return (
+                                        <div key={member.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 flex items-center justify-center font-bold text-xs shrink-0">
+                                                    {member.name?.charAt(0)}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300 truncate opacity-70">{member.name}</p>
+                                                    <p className="text-[10px] text-slate-400 truncate">{member.position || 'Empleado'}</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs text-slate-400 font-medium bg-white dark:bg-slate-800 px-2 py-1 rounded border border-slate-100 dark:border-slate-700">Libre / Sin turno</span>
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div key={member.id} className={`flex items-center justify-between p-3 rounded-xl border shadow-sm ${vacation ? 'bg-amber-50/50 border-amber-200/50 dark:bg-amber-900/10 dark:border-amber-900/30' : 'bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700'}`}>
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${vacation ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'}`}>
+                                                {member.name?.charAt(0)}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{member.name}</p>
+                                                <p className="text-[10px] text-slate-500 truncate">{member.position || 'Empleado'}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col items-end gap-1">
+                                            {vacation && (
+                                                <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-md ${vacation.status === 'APPROVED' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
+                                                    {vacation.type}
+                                                </span>
+                                            )}
+                                            {assignedShift && (
+                                                <div className="text-right">
+                                                    <span className="inline-block px-2 py-1 bg-blue-600 text-white text-xs font-bold rounded-lg shadow-sm">
+                                                        {assignedShift.shift?.name}
+                                                    </span>
+                                                    <p className="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-1">
+                                                        {assignedShift.shift?.horaEntrada}-{assignedShift.shift?.horaSalida}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
