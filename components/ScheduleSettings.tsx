@@ -59,9 +59,8 @@ export const ScheduleSettings: React.FC = () => {
         }
     };
 
-    const availableDepartments = departments.filter(
-        d => !schedules.some(s => s.department === d)
-    );
+    // Ahora se puede tener varios horarios por departamento, así que no filtramos por existencia
+    const availableDepartments = departments;
 
     const handleEdit = (schedule: DepartmentSchedule) => {
         setEditingId(schedule.id);
@@ -73,6 +72,7 @@ export const ScheduleSettings: React.FC = () => {
         setEditingId('new');
         setFormData({
             department: '',
+            name: '',
             horaEntrada: '09:00',
             horaSalida: '18:00',
             toleranciaMinutos: 10,
@@ -95,7 +95,7 @@ export const ScheduleSettings: React.FC = () => {
     };
 
     const handleSave = async () => {
-        if (!formData.department || !formData.horaEntrada || !formData.horaSalida) {
+        if (!formData.department || !formData.name || !formData.horaEntrada || !formData.horaSalida) {
             alert('Campos requeridos faltantes');
             return;
         }
@@ -103,6 +103,7 @@ export const ScheduleSettings: React.FC = () => {
         try {
             await scheduleService.update({
                 department: formData.department,
+                name: formData.name,
                 horaEntrada: formData.horaEntrada,
                 horaSalida: formData.horaSalida,
                 horaEntradaTarde: formData.horaEntradaTarde,
@@ -126,9 +127,9 @@ export const ScheduleSettings: React.FC = () => {
         }
     };
 
-    const handleDelete = async (department: string) => {
+    const handleDelete = async (department: string, name: string) => {
         try {
-            await scheduleService.delete(department);
+            await scheduleService.delete(department, name);
             setDeleteConfirm(null);
             await loadSchedules();
         } catch (error) {
@@ -141,63 +142,68 @@ export const ScheduleSettings: React.FC = () => {
     const getDayOverride = (dayKey: DayKey): DayScheduleOverride | null => {
         const val = formData[dayKey];
         if (val && typeof val === 'object') return val as DayScheduleOverride;
-        return null;
-    };
+        // ...existing code...
+        return (
+            <div className="space-y-6">
+                <div className="flex justify-between items-center flex-wrap gap-4">
+                    <div>
+                        <h3 className="text-lg font-medium text-slate-900 dark:text-white">Horarios por Departamento</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Configura horarios generales y personalizados por día de la semana.</p>
+                    </div>
+                    {!isCreating && !editingId && (
+                        <button
+                            onClick={handleCreate}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                        >
+                            <Plus size={18} /> Nuevo Horario
+                        </button>
+                    )}
+                </div>
 
-    const setDayOverride = (dayKey: DayKey, override: DayScheduleOverride | null) => {
-        setFormData({ ...formData, [dayKey]: override });
-    };
+                <div className="grid gap-6">
+                    {/* Edit/Create Form */}
+                    {(isCreating || editingId) && (
+                        <div className="col-span-full bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl border border-blue-200 dark:border-blue-900/50 shadow-sm animate-slide-up">
+                            <h4 className="font-semibold text-slate-900 dark:text-white mb-4">
+                                {isCreating ? 'Nuevo Horario' : `Editar Horario - ${formData.department} (${formData.name})`}
+                            </h4>
 
-    const toggleDayOverride = (dayKey: DayKey) => {
-        const current = getDayOverride(dayKey);
-        if (current) {
-            // Remove override
-            setDayOverride(dayKey, null);
-        } else {
-            // Create override with default values
-            setDayOverride(dayKey, {
-                horaEntrada: formData.horaEntrada || '09:00',
-                horaSalida: formData.horaSalida || '18:00',
-                horaEntradaTarde: formData.horaEntradaTarde || null,
-                horaSalidaMañana: formData.horaSalidaMañana || null,
-            });
-        }
-    };
-
-    const toggleDayOff = (dayKey: DayKey) => {
-        const current = getDayOverride(dayKey);
-        if (current?.dayOff) {
-            setDayOverride(dayKey, null);
-        } else {
-            setDayOverride(dayKey, { dayOff: true });
-        }
-    };
-
-    const updateDayField = (dayKey: DayKey, field: keyof DayScheduleOverride, value: any) => {
-        const current = getDayOverride(dayKey) || {};
-        setDayOverride(dayKey, { ...current, [field]: value });
-    };
-
-    // Get effective schedule for a day (for display in cards)
-    const getEffectiveScheduleForDay = (schedule: DepartmentSchedule, dayKey: DayKey): { entry: string; exit: string; isOverride: boolean; isDayOff: boolean; isFlexible: boolean } => {
-        const override = schedule[dayKey] as DayScheduleOverride | null;
-        if (override && typeof override === 'object') {
-            if (override.dayOff) return { entry: '--', exit: '--', isOverride: true, isDayOff: true, isFlexible: false };
-            return {
-                entry: override.horaEntrada || schedule.horaEntrada,
-                exit: override.horaSalida || schedule.horaSalida,
-                isOverride: true,
-                isDayOff: false,
-                isFlexible: override.flexibleSchedule ?? schedule.flexibleSchedule ?? false
-            };
-        }
-        return {
-            entry: schedule.horaEntrada,
-            exit: schedule.horaSalida,
-            isOverride: false,
-            isDayOff: false,
-            isFlexible: schedule.flexibleSchedule ?? false
-        };
+                            {/* General Settings */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                        Departamento
+                                    </label>
+                                    {isCreating ? (
+                                        <select
+                                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
+                                            value={formData.department}
+                                            onChange={e => setFormData({ ...formData, department: e.target.value })}
+                                        >
+                                            <option value="">Selecciona un departamento</option>
+                                            {availableDepartments.map(dept => (
+                                                <option key={dept} value={dept}>{dept}</option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <input
+                                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg text-slate-900 dark:text-white disabled:opacity-50"
+                                            value={formData.department}
+                                            disabled
+                                        />
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                        Nombre del horario
+                                    </label>
+                                    <input
+                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg text-slate-900 dark:text-white"
+                                        value={formData.name || ''}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        placeholder="Ej: General, Turno Mañana, etc."
+                                    />
+                                </div>
     };
 
     if (isLoading) return <div className="p-8 text-center text-slate-500">Cargando horarios...</div>;

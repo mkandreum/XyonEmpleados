@@ -168,6 +168,7 @@ export interface Fichaje {
 export interface DepartmentSchedule {
   id: string;
   department: string;
+  name: string; // Nombre o tipo de horario
   horaEntrada: string;
   horaSalida: string;
   horaEntradaTarde?: string;

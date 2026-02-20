@@ -34,7 +34,7 @@ exports.getSchedule = async (req, res) => {
             });
         }
 
-        res.json(schedule);
+            res.json([schedule]);
     } catch (error) {
         console.error('Error getting schedule:', error);
         res.status(500).json({ error: 'Error al obtener horario' });
@@ -185,9 +185,10 @@ exports.deleteSchedule = async (req, res) => {
             return res.status(404).json({ error: 'Horario no encontrado' });
         }
 
-        await prisma.departmentSchedule.delete({
-            where: { department }
-        });
+            const { name } = req.params;
+            await prisma.departmentSchedule.delete({
+                where: { department_name: { department, name } }
+            });
 
         res.json({ success: true, message: 'Horario eliminado' });
     } catch (error) {

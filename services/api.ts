@@ -475,23 +475,25 @@ export const fichajeService = {
 
 export const scheduleService = {
     get: async (department: string) => {
-        const response = await api.get<DepartmentSchedule>(`/department-schedules/${department}`);
+        const response = await api.get<DepartmentSchedule[]>(`/department-schedules/${department}`);
         return response.data;
     },
     getAll: async () => {
         const response = await api.get<DepartmentSchedule[]>('/department-schedules');
         return response.data;
     },
-    getResolved: async (department: string) => {
-        const response = await api.get(`/department-schedules/${department}/resolved`);
+    getResolved: async (department: string, name?: string) => {
+        // Si se provee name, buscar horario específico
+        const url = name ? `/department-schedules/${department}/${name}/resolved` : `/department-schedules/${department}/resolved`;
+        const response = await api.get(url);
         return response.data;
     },
-    update: async (schedule: Partial<DepartmentSchedule> & { department: string }) => {
+    update: async (schedule: Partial<DepartmentSchedule> & { department: string; name: string }) => {
         const response = await api.post<DepartmentSchedule>('/department-schedules', schedule);
         return response.data;
     },
-    delete: async (department: string) => {
-        const response = await api.delete(`/department-schedules/${department}`);
+    delete: async (department: string, name: string) => {
+        const response = await api.delete(`/department-schedules/${department}/${name}`);
         return response.data;
     },
 };
