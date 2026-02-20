@@ -213,11 +213,6 @@ export const ScheduleSettings: React.FC = () => {
         </div>
     );
 };
-                                </label>
-                                {isCreating ? (
-                                    availableDepartments.length > 0 ? (
-                                        <select
-                                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
                                             value={formData.department}
                                             onChange={e => setFormData({ ...formData, department: e.target.value })}
                                         >
