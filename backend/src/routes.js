@@ -1,3 +1,7 @@
+const userShiftAssignmentController = require('./controllers/userShiftAssignmentController');
+// User Shift Assignment Routes
+router.post('/user-shift-assignments', authenticateToken, userShiftAssignmentController.assignShift);
+router.get('/user-shift-assignments', authenticateToken, userShiftAssignmentController.getUserShifts);
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('./middleware/auth');

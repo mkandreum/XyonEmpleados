@@ -1,10 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, AlertCircle, Users, Calendar } from 'lucide-react';
+import { Clock, AlertCircle, Users, Calendar, User, MessageSquare, Loader2, Check, X as XIcon } from 'lucide-react';
 import { fichajeService, lateNotificationService } from '../../services/api';
+import { fichajeAdjustmentService } from '../../services/api';
+import { FichajeAdjustment, FichajeAdjustmentStatus } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { ConfirmModal } from '../../components/ConfirmModal';
 
 export const ManagerFichajes: React.FC = () => {
+        // Ajustes de Fichaje
+        const [pendingRequests, setPendingRequests] = useState<FichajeAdjustment[]>([]);
+        const [history, setHistory] = useState<FichajeAdjustment[]>([]);
+        const [loadingAdjustments, setLoadingAdjustments] = useState(true);
+        const [processingId, setProcessingId] = useState<string | null>(null);
+        const [rejectionReasonId, setRejectionReasonId] = useState<string | null>(null);
+        const [rejectionReason, setRejectionReason] = useState('');
+
+        useEffect(() => {
+            loadRequests();
+        }, []);
+
+        const loadRequests = async () => {
+            try {
+                setLoadingAdjustments(true);
+                const [pending, all] = await Promise.all([
+                    fichajeAdjustmentService.getPending(),
+                    fichajeAdjustmentService.getAll()
+                ]);
+                setPendingRequests(pending);
+                setHistory(all.filter(r => r.status !== FichajeAdjustmentStatus.PENDING));
+            } catch (error) {
+                console.error('Error loading adjustments:', error);
+            } finally {
+                setLoadingAdjustments(false);
+            }
+        };
+
+        const handleApprove = async (id: string) => {
+            try {
+                setProcessingId(id);
+                await fichajeAdjustmentService.approve(id);
+                await loadRequests();
+            } catch (error) {
+                alert('Error al aprobar la solicitud');
+            } finally {
+                setProcessingId(null);
+            }
+        };
+
+        const handleReject = async (id: string) => {
+            if (!rejectionReason) {
+                alert('Por favor, indica un motivo para el rechazo');
+                return;
+            }
+            try {
+                setProcessingId(id);
+                await fichajeAdjustmentService.reject(id, rejectionReason);
+                setRejectionReasonId(null);
+                setRejectionReason('');
+                await loadRequests();
+            } catch (error) {
+                alert('Error al rechazar la solicitud');
+            } finally {
+                setProcessingId(null);
+            }
+        };
     const { user } = useAuth() as any;
     const [weekData, setWeekData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -114,7 +173,185 @@ export const ManagerFichajes: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
+            {/* Gestión de Ajustes de Fichaje */}
+            <div className="space-y-8 animate-in fade-in duration-500">
+                <header>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                        <Clock className="text-blue-600" size={28} />
+                        Gestión de Ajustes de Fichaje
+                    </h2>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">
+                        Revisa y aprueba las correcciones de fichajes solicitadas por el equipo.
+                    </p>
+                </header>
+                {/* Pending Requests */}
+                <section>
+                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
+                        Pendientes
+                        <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2.5 py-0.5 rounded-full text-xs font-bold">
+                            {pendingRequests.length}
+                        </span>
+                    </h3>
+                    <div className="grid gap-4">
+                        {loadingAdjustments ? (
+                            <div className="flex flex-col items-center justify-center min-h-[100px]">
+                                <Loader2 className="animate-spin text-blue-600 mb-4" size={32} />
+                                <p className="text-slate-500 font-medium">Cargando solicitudes...</p>
+                            </div>
+                        ) : pendingRequests.length === 0 ? (
+                            <div className="bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-8 text-center text-slate-400">
+                                No hay solicitudes pendientes.
+                            </div>
+                        ) : (
+                            pendingRequests.map(request => (
+                                <div key={request.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                                    <div className="p-5">
+                                        <div className="flex flex-wrap items-start justify-between gap-4">
+                                            <div className="flex gap-4">
+                                                <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                                                    <User size={24} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-slate-900 dark:text-white leading-tight">{request.user?.name}</h4>
+                                                    <p className="text-sm text-slate-500 dark:text-slate-400">{request.user?.department}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-xs font-medium text-slate-400 dark:text-slate-500 mb-1">Solicitado el {new Date(request.createdAt).toLocaleDateString()}</span>
+                                                <div className="bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                                                    Pendiente
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="mt-6 grid md:grid-cols-2 gap-6 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Fichaje Original</p>
+                                                <p className="text-sm font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                                                    <Clock size={14} className="text-slate-400" />
+                                                    {new Date(request.originalTimestamp).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}
+                                                </p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-widest">Ajuste Solicitado</p>
+                                                <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                                    <Calendar size={14} className="text-blue-500" />
+                                                    {new Date(request.requestedTimestamp).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 flex gap-3">
+                                            <MessageSquare size={16} className="text-slate-400 shrink-0 mt-0.5" />
+                                            <p className="text-sm text-slate-600 dark:text-slate-400 italic">
+                                                "{request.reason}"
+                                            </p>
+                                        </div>
+                                        <div className="mt-6 flex flex-wrap gap-3">
+                                            {rejectionReasonId === request.id ? (
+                                                <div className="w-full flex flex-col gap-2 animate-in slide-in-from-top-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Motivo del rechazo..."
+                                                        value={rejectionReason}
+                                                        onChange={e => setRejectionReason(e.target.value)}
+                                                        className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-red-500"
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            className="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-semibold hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+                                                            onClick={() => setRejectionReasonId(null)}
+                                                            type="button"
+                                                        >
+                                                            Cancelar
+                                                        </button>
+                                                        <button
+                                                            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
+                                                            onClick={() => handleReject(request.id)}
+                                                            disabled={processingId === request.id}
+                                                            type="button"
+                                                        >
+                                                            {processingId === request.id ? 'Rechazando...' : 'Rechazar'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
+                                                        onClick={() => handleApprove(request.id)}
+                                                        disabled={processingId === request.id}
+                                                        type="button"
+                                                    >
+                                                        {processingId === request.id ? 'Aprobando...' : 'Aprobar'}
+                                                    </button>
+                                                    <button
+                                                        className="px-4 py-2 bg-red-100 text-red-700 rounded-lg font-semibold hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 dark:text-red-300 transition-colors"
+                                                        onClick={() => { setRejectionReasonId(request.id); setRejectionReason(''); }}
+                                                        type="button"
+                                                    >
+                                                        Rechazar
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </section>
+                {/* Historial */}
+                <section>
+                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4 mt-8">Historial Reciente</h3>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+                            <thead className="bg-slate-50 dark:bg-slate-800">
+                                <tr>
+                                    <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Empleado</th>
+                                    <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Fecha Original</th>
+                                    <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Fecha Ajustada</th>
+                                    <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Resuelto por</th>
+                                    <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800">
+                                {history.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-5 py-4 text-center text-slate-400">No hay historial reciente.</td>
+                                    </tr>
+                                ) : (
+                                    history.map(request => (
+                                        <tr key={request.id}>
+                                            <td className="px-5 py-4 font-semibold text-slate-900 dark:text-white">
+                                                {request.user?.name}
+                                                <div className="text-xs text-slate-400 font-normal">{request.user?.department}</div>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                {new Date(request.originalTimestamp).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}
+                                            </td>
+                                            <td className="px-5 py-4 font-bold text-slate-900 dark:text-white">
+                                                {new Date(request.requestedTimestamp).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                {request.resolvedBy?.name}
+                                                <div className="text-xs text-slate-400 font-normal">{request.resolvedAt ? new Date(request.resolvedAt).toLocaleDateString() : ''}</div>
+                                            </td>
+                                            <td className="px-5 py-4 text-right">
+                                                <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${request.status === FichajeAdjustmentStatus.APPROVED
+                                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                                    : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                                                }`}>
+                                                    {request.status === FichajeAdjustmentStatus.APPROVED ? 'Aprobado' : 'Rechazado'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+            {/* Header Fichajes del Equipo */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-slide-up">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Fichajes del Equipo</h1>

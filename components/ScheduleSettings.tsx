@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { scheduleService, adminService } from '../services/api';
 import { DepartmentSchedule, DayScheduleOverride } from '../types';
-import { Clock, Plus, Edit2, CheckCircle, Trash2, Save, X, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { Clock, Plus, Edit2, CheckCircle, Trash2, Save, X, Calendar, ChevronDown, ChevronUp, CalendarX2, Pencil, Settings2, Sun } from 'lucide-react';
 
 const DAY_KEYS = [
     { key: 'scheduleLunes', label: 'Lunes', short: 'L' },
@@ -367,7 +367,9 @@ export const ScheduleSettings: React.FC = () => {
                                                     </div>
                                                 ) : (
                                                     <div className="text-center py-3">
-                                                        <div className="text-xs text-slate-500 dark:text-slate-400">= General</div>
+                                                        <div className="flex justify-center items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                                                            <Settings2 size={14} className="inline-block mr-1" /> General
+                                                        </div>
                                                         <div className="text-sm font-mono font-medium text-slate-600 dark:text-slate-300 mt-1">
                                                             {formData.horaEntrada} - {formData.horaSalida}
                                                         </div>
@@ -377,23 +379,23 @@ export const ScheduleSettings: React.FC = () => {
                                                 <div className="flex gap-1 mt-2">
                                                     <button
                                                         onClick={() => toggleDayOverride(key as DayKey)}
-                                                        className={`flex-1 text-[10px] py-1 rounded font-medium transition-colors ${isCustom
+                                                        className={`flex-1 flex items-center justify-center gap-1 text-[10px] py-1 rounded font-medium transition-colors ${isCustom
                                                                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                                                                 : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500'
                                                             }`}
                                                         title={isCustom ? 'Usar general' : 'Personalizar'}
                                                     >
-                                                        {isCustom ? '✎' : '='}
+                                                        {isCustom ? <Pencil size={14} /> : <Settings2 size={14} />}<span>{isCustom ? 'Editar' : 'Personalizar'}</span>
                                                     </button>
                                                     <button
                                                         onClick={() => toggleDayOff(key as DayKey)}
-                                                        className={`flex-1 text-[10px] py-1 rounded font-medium transition-colors ${isDayOff
+                                                        className={`flex-1 flex items-center justify-center gap-1 text-[10px] py-1 rounded font-medium transition-colors ${isDayOff
                                                                 ? 'bg-slate-600 dark:bg-slate-500 text-white'
                                                                 : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500'
                                                             }`}
                                                         title={isDayOff ? 'Habilitar' : 'Día libre'}
                                                     >
-                                                        {isDayOff ? '✓' : '—'}
+                                                        {isDayOff ? <CheckCircle size={14} /> : <Sun size={14} />}<span>{isDayOff ? 'Libre' : 'Día libre'}</span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -428,7 +430,7 @@ export const ScheduleSettings: React.FC = () => {
                                                                     : 'bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300'
                                                                 }`}
                                                         >
-                                                            {isCustom ? 'Personalizado' : 'General'}
+                                                            {isCustom ? <Pencil size={14} className="inline-block mr-1" /> : <Settings2 size={14} className="inline-block mr-1" />} {isCustom ? 'Personalizado' : 'General'}
                                                         </button>
                                                         <button
                                                             onClick={() => toggleDayOff(key as DayKey)}
@@ -437,7 +439,7 @@ export const ScheduleSettings: React.FC = () => {
                                                                     : 'bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300'
                                                                 }`}
                                                         >
-                                                            {isDayOff ? 'Libre' : 'Día libre'}
+                                                            {isDayOff ? <CheckCircle size={14} className="inline-block mr-1" /> : <Sun size={14} className="inline-block mr-1" />} {isDayOff ? 'Libre' : 'Día libre'}
                                                         </button>
                                                     </div>
                                                 </div>

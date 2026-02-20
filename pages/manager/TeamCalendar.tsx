@@ -1,12 +1,78 @@
 import React, { useState, useEffect } from 'react';
 import { managerService } from '../../services/api';
-import { VacationRequest } from '../../types';
+import { VacationRequest, DepartmentShift, UserShiftAssignment } from '../../types';
 import { ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { shiftService } from '../../services/shiftService';
+import { userShiftAssignmentService } from '../../services/userShiftAssignmentService';
+
+// --- Shift Assignment Modal State ---
+// For now, we assume manager's department is available via context or props (to be improved)
+const managerDepartment = 'General'; // TODO: Replace with real department
 
 export const TeamCalendar: React.FC = () => {
     const [teamVacations, setTeamVacations] = useState<VacationRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentDate, setCurrentDate] = useState(new Date());
+    // Shift assignment modal state
+    const [showShiftModal, setShowShiftModal] = useState(false);
+    const [shifts, setShifts] = useState<DepartmentShift[]>([]);
+    const [selectedUser, setSelectedUser] = useState<any>(null);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
+    const [assigning, setAssigning] = useState(false);
+    // Assigned shifts state
+    const [userShiftAssignments, setUserShiftAssignments] = useState<UserShiftAssignment[]>([]);
+    // Fetch assigned shifts for all users in current month
+    const fetchUserShifts = async () => {
+        if (!uniqueUsers.length) return;
+        // For demo, only fetch for first user (optimize: fetch for all team)
+        const allAssignments: UserShiftAssignment[] = [];
+        for (const user of uniqueUsers) {
+            try {
+                const data = await userShiftAssignmentService.getUserShifts(user.id, currentDate.getMonth() + 1, currentDate.getFullYear());
+                allAssignments.push(...data);
+            } catch {}
+        }
+        setUserShiftAssignments(allAssignments);
+    };
+
+    useEffect(() => {
+        fetchUserShifts();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [uniqueUsers, currentDate]);
+
+    // Handler for assigning shift (integrated with backend)
+    const handleAssignShift = async () => {
+        if (!selectedUser || !selectedDate || !selectedShiftId) return;
+        setAssigning(true);
+        try {
+            await userShiftAssignmentService.assign(selectedUser.id, selectedShiftId, selectedDate.toISOString());
+            setShowShiftModal(false);
+            setSelectedUser(null);
+            setSelectedDate(null);
+            setSelectedShiftId(null);
+            await fetchUserShifts();
+        } catch (e) {
+            // TODO: Show error
+        } finally {
+            setAssigning(false);
+        }
+    };
+
+    // Fetch department shifts on mount
+    useEffect(() => {
+        async function fetchShifts() {
+            try {
+                const data = await shiftService.getAll(managerDepartment);
+                setShifts(data);
+            } catch (e) {
+                setShifts([]);
+            }
+        }
+        fetchShifts();
+    }, []);
+    // Selector state: 'team' (Calendario Equipo) or 'personal' (Calendario)
+    const [calendarView, setCalendarView] = useState<'team' | 'personal'>('team');
 
     useEffect(() => {
         const fetchTeamVacations = async () => {
@@ -53,10 +119,76 @@ export const TeamCalendar: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            {/* Shift Assignment Modal */}
+            {showShiftModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg p-6 w-full max-w-md relative">
+                        <button className="absolute top-2 right-2 text-slate-400 hover:text-slate-600 dark:hover:text-white" onClick={() => setShowShiftModal(false)}>
+                            <span aria-hidden>×</span>
+                        </button>
+                        <h2 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">Asignar Turno</h2>
+                        <div className="mb-4">
+                            <div className="mb-2 text-slate-700 dark:text-slate-300">
+                                <span className="font-semibold">Empleado:</span> {selectedUser?.name || '-'}
+                            </div>
+                            <div className="mb-2 text-slate-700 dark:text-slate-300">
+                                <span className="font-semibold">Fecha:</span> {selectedDate ? selectedDate.toLocaleDateString('es-ES') : '-'}
+                            </div>
+                        </div>
+                        <div className="mb-4">
+                            <label className="block mb-1 text-slate-700 dark:text-slate-300 font-semibold">Turno</label>
+                            <select
+                                className="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
+                                value={selectedShiftId || ''}
+                                onChange={e => setSelectedShiftId(e.target.value)}
+                            >
+                                <option value="">Selecciona un turno</option>
+                                {shifts.map(shift => (
+                                    <option key={shift.id} value={shift.id}>
+                                        {shift.name} ({shift.horaEntrada} - {shift.horaSalida})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <button className="px-4 py-2 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200" onClick={() => setShowShiftModal(false)} disabled={assigning}>Cancelar</button>
+                            <button
+                                className="px-4 py-2 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50"
+                                disabled={!selectedShiftId || assigning}
+                                onClick={handleAssignShift}
+                            >
+                                {assigning ? 'Asignando...' : 'Asignar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Selector pills */}
+            <div className="flex justify-center items-center gap-4 animate-slide-up">
+                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <button
+                        className={`px-4 py-1 rounded-full font-semibold text-sm transition-colors focus:outline-none ${calendarView === 'personal' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow' : 'text-slate-500 dark:text-slate-400'}`}
+                        onClick={() => setCalendarView('personal')}
+                    >
+                        Calendario
+                    </button>
+                    <button
+                        className={`px-4 py-1 rounded-full font-semibold text-sm transition-colors focus:outline-none ${calendarView === 'team' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow' : 'text-slate-500 dark:text-slate-400'}`}
+                        onClick={() => setCalendarView('team')}
+                    >
+                        Calendario Equipo
+                    </button>
+                </div>
+            </div>
+
             <div className="flex justify-between items-center animate-slide-up">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white transition-colors">Calendario de Equipo</h1>
-                    <p className="text-slate-500 dark:text-slate-400 transition-colors">Visualiza las ausencias y vacaciones de tu equipo.</p>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white transition-colors">
+                        {calendarView === 'team' ? 'Calendario de Equipo' : 'Calendario'}
+                    </h1>
+                    <p className="text-slate-500 dark:text-slate-400 transition-colors">
+                        {calendarView === 'team' ? 'Visualiza las ausencias y vacaciones de tu equipo.' : 'Visualiza tus ausencias y vacaciones.'}
+                    </p>
                 </div>
                 <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
                     <button onClick={prevMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-400 transition-colors">
@@ -126,16 +258,14 @@ export const TeamCalendar: React.FC = () => {
                                                     ? 'bg-green-500'
                                                     : 'bg-amber-400'; // Amber for pending
 
-                                                barClass = `${baseColor} h-6 relative top-0`; // h-6 for thinner Gantt bar
+                                                barClass = `${baseColor} h-6 relative top-0`;
 
-                                                // Borders radius logic
                                                 if (!isSameVacationPrev) barClass += " rounded-l-md ml-1";
                                                 if (!isSameVacationNext) barClass += " rounded-r-md mr-1";
-                                                if (isSameVacationPrev && !isSameVacationNext) barClass += " pr-1"; // End of bar
-                                                if (!isSameVacationPrev && isSameVacationNext) barClass += " pl-1"; // Start of bar
-                                                if (isSameVacationPrev && isSameVacationNext) barClass += ""; // Middle
+                                                if (isSameVacationPrev && !isSameVacationNext) barClass += " pr-1";
+                                                if (!isSameVacationPrev && isSameVacationNext) barClass += " pl-1";
+                                                if (isSameVacationPrev && isSameVacationNext) barClass += "";
 
-                                                // Only show icon/text if it's the start of the bar or a single day
                                                 if (!isSameVacationPrev) {
                                                     cellContent = (
                                                         <span className="text-[10px] font-bold text-white pl-1 drop-shadow-sm">
@@ -146,9 +276,13 @@ export const TeamCalendar: React.FC = () => {
                                                 }
                                             }
 
+                                            // Find assigned shift for this user and day
+                                            const assignedShift = userShiftAssignments.find(
+                                                a => a.userId === user.id && new Date(a.date).getDate() === day
+                                            );
+
                                             return (
-                                                <td key={i} className="border-b border-slate-100 dark:border-slate-800 p-0 h-12 relative min-w-[36px]">
-                                                    {/* Grid line helper - optional */}
+                                                <td key={i} className="border-b border-slate-100 dark:border-slate-800 p-0 h-12 relative min-w-[36px] group">
                                                     <div className="absolute inset-y-0 right-0 border-r border-slate-50 dark:border-slate-800/50 pointer-events-none"></div>
 
                                                     {vacation && (
@@ -159,6 +293,25 @@ export const TeamCalendar: React.FC = () => {
                                                             {cellContent}
                                                         </div>
                                                     )}
+                                                    {/* Show assigned shift info */}
+                                                    {assignedShift && (
+                                                        <div className="absolute top-1 left-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded px-1 text-[10px] font-bold z-10">
+                                                            {assignedShift.shift?.name || 'Turno'}
+                                                        </div>
+                                                    )}
+                                                    {/* Shift assign button (shows on hover) */}
+                                                    <button
+                                                        className="absolute bottom-1 right-1 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-1 shadow transition-opacity opacity-0 group-hover:opacity-100"
+                                                        style={{ fontSize: 10 }}
+                                                        title="Asignar turno"
+                                                        onClick={() => {
+                                                            setSelectedUser(user);
+                                                            setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
+                                                            setShowShiftModal(true);
+                                                        }}
+                                                    >
+                                                        <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" d="M12 5v14m7-7H5"/></svg>
+                                                    </button>
                                                 </td>
                                             );
                                         })}

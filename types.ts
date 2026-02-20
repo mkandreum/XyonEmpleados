@@ -1,3 +1,27 @@
+export interface UserShiftAssignment {
+  id: string;
+  userId: string;
+  shiftId: string;
+  date: string;
+  shift: DepartmentShift;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface DepartmentShift {
+  id: string;
+  department: string;
+  name: string; // Ej: "Mañana", "Tarde", "Noche"
+  activeDays: string; // Ej: "LUNES,MARTES,MIERCOLES,JUEVES,VIERNES"
+  horaEntrada: string;
+  horaSalida: string;
+  horaEntradaTarde?: string | null;
+  horaSalidaMañana?: string | null;
+  toleranciaMinutos: number;
+  flexibleSchedule: boolean;
+  scheduleOverrides?: any; // JSON overrides per day (optional)
+  createdAt: string;
+  updatedAt: string;
+}
 export enum UserRole {
   EMPLOYEE = 'EMPLOYEE',
   MANAGER = 'MANAGER',

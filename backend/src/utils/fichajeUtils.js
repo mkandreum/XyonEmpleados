@@ -132,31 +132,68 @@ function groupFichajesByDay(fichajes, schedule) {
         const expectedFichajes = hasSplitSchedule ? 4 : 2;
         const isComplete = sorted.length >= expectedFichajes && sorted.length % 2 === 0;
 
-        // Verificar llegadas tarde y salidas tempranas using per-day schedule
+
+        // Usar la tolerancia máxima configurada en el horario
         let isLate = false;
         let hasEarlyDeparture = false;
         let detectedTurno = null;
+        let cumpleHorario = false;
 
+
+        let validationMessage = '';
         if (daySchedule) {
             const entradas = sorted.filter(f => f.tipo === 'ENTRADA');
             const salidas = sorted.filter(f => f.tipo === 'SALIDA');
+            const tolerancia = Number(daySchedule.toleranciaMinutos) || 0;
+            const FLEX_PAUSA = 5; // margen extra solo para la pausa de comida
 
-            isLate = entradas.some(f => isLateArrival(f, schedule, daySchedule));
+            if (hasSplitSchedule && entradas.length === 2 && salidas.length === 2) {
+                const entradaManana = new Date(entradas[0].timestamp);
+                const salidaManana = new Date(salidas[0].timestamp);
+                const entradaTarde = new Date(entradas[1].timestamp);
+                const salidaTarde = new Date(salidas[1].timestamp);
 
-            // Solo marcar salida anticipada si la duración del trabajo es razonable (> 10 mins)
-            hasEarlyDeparture = salidas.some((f, index) => {
-                if (!isEarlyDeparture(f, schedule, daySchedule)) return false;
+                const entradaMananaMin = timeToMinutes(daySchedule.horaEntrada) - tolerancia;
+                const salidaMananaMax = timeToMinutes(daySchedule.horaSalidaMañana) + tolerancia;
+                const entradaTardeMin = timeToMinutes(daySchedule.horaEntradaTarde) - tolerancia;
+                const salidaTardeMax = timeToMinutes(daySchedule.horaSalida) + tolerancia;
 
-                // Buscar la entrada correspondiente
-                const entradaCodespot = entradas[index];
-                if (entradaCodespot) {
-                    const diff = (new Date(f.timestamp) - new Date(entradaCodespot.timestamp)) / (1000 * 60);
-                    if (diff < 10) return false; // Ignorar si trabajó menos de 10 minutos
-                }
-                return true;
-            });
+                const entradaMananaOK = (entradaManana.getHours() * 60 + entradaManana.getMinutes()) >= entradaMananaMin;
+                const salidaMananaOK = (salidaManana.getHours() * 60 + salidaManana.getMinutes()) <= salidaMananaMax;
+                const entradaTardeOK = (entradaTarde.getHours() * 60 + entradaTarde.getMinutes()) >= entradaTardeMin;
+                const salidaTardeOK = (salidaTarde.getHours() * 60 + salidaTarde.getMinutes()) <= salidaTardeMax;
 
-            // Detect turno from first entry
+                const pausaMin = 30;
+                const pausaMax = 120;
+                const pausaComida = (entradaTarde - salidaManana) / (1000 * 60);
+                const pausaOK = pausaComida >= (pausaMin - FLEX_PAUSA) && pausaComida <= (pausaMax + FLEX_PAUSA);
+
+                cumpleHorario = entradaMananaOK && salidaMananaOK && entradaTardeOK && salidaTardeOK && pausaOK;
+                isLate = !cumpleHorario;
+                hasEarlyDeparture = !cumpleHorario;
+
+                if (!entradaMananaOK) validationMessage = 'Entrada de mañana fuera de tolerancia';
+                else if (!salidaMananaOK) validationMessage = 'Salida de mañana fuera de tolerancia';
+                else if (!entradaTardeOK) validationMessage = 'Entrada de tarde fuera de tolerancia';
+                else if (!salidaTardeOK) validationMessage = 'Salida de tarde fuera de tolerancia';
+                else if (!pausaOK) validationMessage = 'Pausa de comida fuera de rango (30min-2h)';
+            } else if (!hasSplitSchedule && entradas.length === 1 && salidas.length === 1) {
+                const entrada = new Date(entradas[0].timestamp);
+                const salida = new Date(salidas[0].timestamp);
+                const entradaMin = timeToMinutes(daySchedule.horaEntrada) - tolerancia;
+                const salidaMax = timeToMinutes(daySchedule.horaSalida) + tolerancia;
+                cumpleHorario = (entrada.getHours() * 60 + entrada.getMinutes()) >= entradaMin &&
+                                (salida.getHours() * 60 + salida.getMinutes()) <= salidaMax;
+                isLate = !cumpleHorario;
+                hasEarlyDeparture = !cumpleHorario;
+                if (!cumpleHorario) validationMessage = 'Fichaje fuera de tolerancia';
+            } else {
+                isLate = true;
+                hasEarlyDeparture = true;
+                cumpleHorario = false;
+                validationMessage = 'Faltan fichajes para completar el día';
+            }
+
             if (entradas.length > 0) {
                 detectedTurno = detectTurno(new Date(entradas[0].timestamp), daySchedule);
             }
@@ -169,7 +206,9 @@ function groupFichajesByDay(fichajes, schedule) {
             isComplete,
             isLate,
             isEarlyDeparture: hasEarlyDeparture,
+            cumpleHorario,
             turno: detectedTurno,
+            validationMessage,
             daySchedule: daySchedule ? {
                 horaEntrada: daySchedule.horaEntrada,
                 horaSalida: daySchedule.horaSalida,

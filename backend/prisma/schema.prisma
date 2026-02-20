@@ -1,3 +1,16 @@
+model UserShiftAssignment {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shiftId   String
+  shift     DepartmentShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  date      DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([shiftId])
+}
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -191,24 +204,33 @@ model Fichaje {
   @@index([userId, tipo, timestamp])
 }
 
+
+model DepartmentShift {
+  id                  String   @id @default(uuid())
+  department          String
+  name                String   // Ej: "Mañana", "Tarde", "Noche"
+  activeDays          String   // Ej: "LUNES,MARTES,MIERCOLES,JUEVES,VIERNES" (CSV)
+  horaEntrada         String   // "07:00"
+  horaSalida          String   // "15:00"
+  horaEntradaTarde    String?  // Para partido
+  horaSalidaMañana    String?  // Para partido
+  toleranciaMinutos   Int      @default(10)
+  flexibleSchedule    Boolean  @default(false)
+  scheduleOverrides   Json?    // Per-day overrides opcional
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// Legacy: solo para compatibilidad temporal
 model DepartmentSchedule {
   id                  String   @id @default(uuid())
   department          String   @unique
-  
-  // Horario principal (mañana completa o jornada continua)
-  horaEntrada         String   // Formato "HH:mm" ej: "09:00"
-  horaSalida          String   // Formato "HH:mm" ej: "18:00"
-  
-  // Horario partido (opcional - para jornada partida)
-  horaEntradaTarde    String?  // Formato "HH:mm" ej: "15:00"
-  horaSalidaMañana    String?  // Formato "HH:mm" ej: "14:00"
-  
+  horaEntrada         String
+  horaSalida          String
+  horaEntradaTarde    String?
+  horaSalidaMañana    String?
   toleranciaMinutos   Int      @default(10)
   flexibleSchedule    Boolean  @default(false)
-  
-  // Horarios personalizados por día de la semana (JSON nullable)
-  // Formato: { "horaEntrada": "09:00", "horaSalida": "14:00", "horaEntradaTarde": null, "horaSalidaMañana": null }
-  // Si es null, se usa el horario general (horaEntrada/horaSalida)
   scheduleLunes       Json?
   scheduleMartes      Json?
   scheduleMiercoles   Json?
@@ -216,7 +238,6 @@ model DepartmentSchedule {
   scheduleViernes     Json?
   scheduleSabado      Json?
   scheduleDomingo     Json?
-  
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }

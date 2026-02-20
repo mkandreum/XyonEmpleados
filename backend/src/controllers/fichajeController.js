@@ -11,6 +11,7 @@ const {
     getTodayRange
 } = require('../utils/fichajeUtils');
 const { getScheduleForDay, detectTurno } = require('../services/smartScheduleService');
+const { selectClosestShift } = require('../services/shiftAssignmentService');
 
 // Custom error class for validation errors
 class ValidationError extends Error {
@@ -92,20 +93,27 @@ exports.createFichaje = async (req, res) => {
         // Determinar estado actual
         const hasActiveEntry = tipo === FichajeTipo.ENTRADA;
 
-        // Smart turno detection
+        // Buscar todos los horarios del departamento y asignar el más cercano
+        let assignedShift = null;
         let turnoInfo = null;
         try {
-            const schedule = await prisma.departmentSchedule.findUnique({
+            const shifts = await prisma.departmentShift.findMany({
                 where: { department: result.department }
             });
-            if (schedule) {
-                const daySchedule = getScheduleForDay(schedule, new Date(result.fichaje.timestamp));
-                if (daySchedule && tipo === FichajeTipo.ENTRADA) {
-                    turnoInfo = detectTurno(new Date(result.fichaje.timestamp), daySchedule);
+            if (shifts && shifts.length > 0) {
+                assignedShift = selectClosestShift(shifts, new Date(result.fichaje.timestamp));
+                if (assignedShift && tipo === FichajeTipo.ENTRADA) {
+                    // Usar detectTurno si es necesario, adaptando a la estructura de shift
+                    turnoInfo = {
+                        turno: assignedShift.name,
+                        expectedEntry: assignedShift.horaEntrada,
+                        expectedExit: assignedShift.horaSalida,
+                        tolerancia: assignedShift.toleranciaMinutos
+                    };
                 }
             }
         } catch (e) {
-            console.error('Error detecting turno:', e);
+            console.error('Error asignando turno:', e);
         }
 
         res.json({
@@ -114,7 +122,8 @@ exports.createFichaje = async (req, res) => {
                 hasActiveEntry,
                 currentFichaje: hasActiveEntry ? result.fichaje : null
             },
-            turno: turnoInfo
+            turno: turnoInfo,
+            assignedShift
         });
     } catch (error) {
         console.error('Error creating fichaje:', error);
