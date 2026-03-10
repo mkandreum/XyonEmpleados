@@ -4,11 +4,14 @@
   "description": "Backend API for XyonEmpleados Portal",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "npm run prisma:migrate && node src/server.js",
     "dev": "nodemon src/server.js",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "seed": "node prisma/seed.js"
+    "prisma:migrate": "prisma migrate deploy",
+    "seed": "node prisma/seed.js",
+    "build": "npm run prisma:generate && npm run prisma:migrate && echo 'Build complete'",
+    "postinstall": "npm run prisma:generate"
   },
   "dependencies": {
     "@prisma/client": "^6.4.0",

@@ -39,6 +39,7 @@ export interface User {
   phone?: string;
   address?: string;
   emergencyContact?: string;
+  shiftReminderEmail?: boolean; // Email reminder 30 min before shift
   joinDate: string;
 }
 
@@ -120,7 +121,7 @@ export interface DepartmentBenefits {
   department: string;
   vacationDays: number;
   overtimeHoursBank: number;
-  sickLeaveDays: number;
+  sickLeaveHours: number;
   paidAbsenceHours: number;
 }
 
@@ -129,7 +130,7 @@ export interface UserBenefitsBalance {
   userId: string;
   vacationDaysUsed: number;
   overtimeHoursUsed: number;
-  sickLeaveDaysUsed: number;
+  sickLeaveHoursUsed: number;
   paidAbsenceHoursUsed: number;
   year: number;
 }

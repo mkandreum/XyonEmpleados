@@ -26,7 +26,7 @@ exports.getBenefitsByDepartment = async (req, res) => {
                 department,
                 vacationDays: 22,
                 overtimeHoursBank: 40,
-                sickLeaveDays: 15,
+                sickLeaveHours: 15,
                 paidAbsenceHours: 20
             });
         }
@@ -41,12 +41,12 @@ exports.getBenefitsByDepartment = async (req, res) => {
 // Create or update department benefits
 exports.upsertDepartmentBenefits = async (req, res) => {
     try {
-        const { department, vacationDays, overtimeHoursBank, sickLeaveDays, paidAbsenceHours } = req.body;
+        const { department, vacationDays, overtimeHoursBank, sickLeaveHours, paidAbsenceHours } = req.body;
 
         const benefits = await prisma.departmentBenefits.upsert({
             where: { department },
-            update: { vacationDays, overtimeHoursBank, sickLeaveDays, paidAbsenceHours },
-            create: { department, vacationDays, overtimeHoursBank, sickLeaveDays, paidAbsenceHours }
+            update: { vacationDays, overtimeHoursBank, sickLeaveHours, paidAbsenceHours },
+            create: { department, vacationDays, overtimeHoursBank, sickLeaveHours, paidAbsenceHours }
         });
 
         res.json(benefits);
@@ -74,7 +74,7 @@ exports.getUserBenefitsBalance = async (req, res) => {
                 update: {
                     vacationDaysUsed: 0,
                     overtimeHoursUsed: 0,
-                    sickLeaveDaysUsed: 0,
+                    sickLeaveHoursUsed: 0,
                     paidAbsenceHoursUsed: 0,
                     year: currentYear
                 },
@@ -82,7 +82,7 @@ exports.getUserBenefitsBalance = async (req, res) => {
                     userId,
                     vacationDaysUsed: 0,
                     overtimeHoursUsed: 0,
-                    sickLeaveDaysUsed: 0,
+                    sickLeaveHoursUsed: 0,
                     paidAbsenceHoursUsed: 0,
                     year: currentYear
                 }
@@ -95,43 +95,11 @@ exports.getUserBenefitsBalance = async (req, res) => {
             where: { department: user.department }
         });
 
-        // --- DYNAMIC CALCULATION FIX ---
-        // Calculate true usage from approved requests to ensure consistency
-        const startOfYear = new Date(currentYear, 0, 1);
-        const endOfYear = new Date(currentYear, 11, 31);
-
-        const approvedVacations = await prisma.vacationRequest.findMany({
-            where: {
-                userId,
-                status: 'APPROVED',
-                type: 'VACATION',
-                startDate: {
-                    gte: startOfYear,
-                    lte: endOfYear
-                }
-            }
-        });
-
-        const calculatedVacationDaysUsed = approvedVacations.reduce((acc, curr) => acc + (curr.days || 0), 0);
-
-        // Calculate others dynamically too if possible, but focusing on Vacations first
-        // For Overtime/Medical/etc, we can stick to stored or calculate similarly.
-        // Let's stick to stored for others for now to minimize risk, but Vacations is the critical bug.
-
-        // Update the stored balance to be correct for next time (self-healing)
-        if (balance.vacationDaysUsed !== calculatedVacationDaysUsed) {
-            await prisma.userBenefitsBalance.update({
-                where: { userId },
-                data: { vacationDaysUsed: calculatedVacationDaysUsed }
-            });
-            balance.vacationDaysUsed = calculatedVacationDaysUsed;
-        }
-
         // Calculate remaining
         const defaultBenefits = {
             vacationDays: 22,
             overtimeHoursBank: 40,
-            sickLeaveDays: 15,
+            sickLeaveHours: 15,
             paidAbsenceHours: 20
         };
 
@@ -143,16 +111,29 @@ exports.getUserBenefitsBalance = async (req, res) => {
         if (user.joinDate) {
             const joinDate = new Date(user.joinDate);
             const joinYear = joinDate.getFullYear();
+            const startOfYear = new Date(currentYear, 0, 1);
+            const endOfYear = new Date(currentYear, 11, 31);
 
             if (joinYear === currentYear) {
-                const totalDaysInYear = (endOfYear - startOfYear) / (1000 * 60 * 60 * 24) + 1;
-
-                // Days active in the year (from join date to end of year)
-                let daysActive = (endOfYear - joinDate) / (1000 * 60 * 60 * 24) + 1;
-                if (daysActive < 0) daysActive = 0;
-
-                const ratio = Math.min(1, Math.max(0, daysActive / totalDaysInYear));
-                vacationEntitlement = Math.round(deptBenefitsData.vacationDays * ratio);
+                // Cálculo de meses trabajados (más preciso que días)
+                const today = new Date();
+                const endDate = today > endOfYear ? endOfYear : today;
+                
+                const monthsWorked = (endDate.getFullYear() - joinDate.getFullYear()) * 12 
+                                    + (endDate.getMonth() - joinDate.getMonth());
+                
+                // Días trabajados en el mes parcial actual
+                const daysInCurrentMonth = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate();
+                const daysWorkedInPartialMonth = Math.max(0, endDate.getDate() - joinDate.getDate() + 1);
+                const partialMonthRatio = daysWorkedInPartialMonth / daysInCurrentMonth;
+                
+                const totalMonthsEquivalent = monthsWorked + partialMonthRatio;
+                
+                // Mínimo legal España: 2.5 días por mes
+                vacationEntitlement = Math.max(
+                    1, // Al menos 1 día si trabajó cualquier tiempo
+                    Math.round((deptBenefitsData.vacationDays / 12) * totalMonthsEquivalent)
+                );
             }
         }
 
@@ -162,12 +143,14 @@ exports.getUserBenefitsBalance = async (req, res) => {
             originalVacationDays: deptBenefitsData.vacationDays // Keep original for reference if needed
         };
 
+        // ✅ SOLO LEER - No recalcular ni actualizar
+        // El balance se actualiza cuando se aprueba una solicitud (en updateVacationStatus)
         res.json({
             ...balance,
-            vacationDaysRemaining: benefits.vacationDays - calculatedVacationDaysUsed,
-            overtimeHoursRemaining: benefits.overtimeHoursBank - balance.overtimeHoursUsed,
-            sickLeaveDaysRemaining: benefits.sickLeaveDays - balance.sickLeaveDaysUsed,
-            paidAbsenceHoursRemaining: benefits.paidAbsenceHours - balance.paidAbsenceHoursUsed,
+            vacationDaysRemaining: Math.max(0, vacationEntitlement - balance.vacationDaysUsed),
+            overtimeHoursRemaining: Math.max(0, benefits.overtimeHoursBank - balance.overtimeHoursUsed),
+            sickLeaveHoursRemaining: Math.max(0, benefits.sickLeaveHours - balance.sickLeaveHoursUsed),
+            paidAbsenceHoursRemaining: Math.max(0, benefits.paidAbsenceHours - balance.paidAbsenceHoursUsed),
             totalBenefits: benefits
         });
     } catch (error) {
@@ -196,8 +179,8 @@ const updateUserBalanceLogic = async (userId, type, days, hours, subtype = null)
         if (type === 'PERSONAL') {
             updateData.paidAbsenceHoursUsed = balance.paidAbsenceHoursUsed + hours;
         } else if (type === 'SICK_LEAVE') {
-            // "Bajas Médicas" / "Horas Médicas" now tracks HOURS in the sickLeaveDaysUsed field
-            updateData.sickLeaveDaysUsed = balance.sickLeaveDaysUsed + hours;
+            // "Bajas Médicas" / "Horas Médicas" now tracks HOURS in the sickLeaveHoursUsed field
+            updateData.sickLeaveHoursUsed = balance.sickLeaveHoursUsed + hours;
         } else if (type === 'OVERTIME') {
             updateData.overtimeHoursUsed = balance.overtimeHoursUsed + hours;
         } else if (type === 'OTHER') {
@@ -212,7 +195,7 @@ const updateUserBalanceLogic = async (userId, type, days, hours, subtype = null)
         if (type === 'VACATION') {
             updateData.vacationDaysUsed = balance.vacationDaysUsed + days;
         } else if (type === 'SICK_LEAVE') {
-            updateData.sickLeaveDaysUsed = balance.sickLeaveDaysUsed + days;
+            updateData.sickLeaveHoursUsed = balance.sickLeaveHoursUsed + days;
         } else if (type === 'PERSONAL') {
             updateData.paidAbsenceHoursUsed = balance.paidAbsenceHoursUsed + (days * 8); // Convert days to hours
         } else if (type === 'OTHER') {

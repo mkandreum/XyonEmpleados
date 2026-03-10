@@ -107,14 +107,19 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ templa
                 <div className="flex items-start gap-2">
                     <AlertCircle className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" size={18} />
                     <div className="flex-1">
-                        <p className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">Variables disponibles:</p>
+                        <p className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-1">
+                            Variables disponibles <span className="text-red-600 dark:text-red-400">(requeridas)</span>:
+                        </p>
+                        <p className="text-xs text-blue-700 dark:text-blue-400 mb-2">
+                            Estas variables son obligatorias para este tipo de email. Click para insertar.
+                        </p>
                         <div className="flex flex-wrap gap-2">
                             {availableVariables.map((variable: string) => (
                                 <button
                                     key={variable}
                                     onClick={() => insertVariable(variable)}
                                     className="px-2 py-1 bg-white dark:bg-slate-800 border border-blue-300 dark:border-blue-700 rounded text-xs font-mono text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
-                                    title="Click para insertar"
+                                    title={`Insertar variable ${variable} (requerida)`}
                                 >
                                     {`{{${variable}}}`}
                                 </button>

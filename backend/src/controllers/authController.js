@@ -39,13 +39,20 @@ exports.getProfile = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
     try {
-        const { phone, address, emergencyContact, avatarUrl } = req.body;
+        const { phone, address, emergencyContact, avatarUrl, shiftReminderEmail } = req.body;
         const user = await prisma.user.update({
             where: { id: req.user.userId },
-            data: { phone, address, emergencyContact, ...(avatarUrl && { avatarUrl }) }
+            data: { 
+                phone, 
+                address, 
+                emergencyContact, 
+                ...(avatarUrl && { avatarUrl }),
+                ...(shiftReminderEmail !== undefined && { shiftReminderEmail })
+            }
         });
 
         const { password: _, ...userWithoutPassword } = user;
+        localStorage.setItem('user', JSON.stringify(userWithoutPassword));
         res.json(userWithoutPassword);
     } catch (error) {
         console.error("Update profile error:", error);
@@ -102,6 +109,13 @@ exports.register = async (req, res) => {
 
         if (invite.isUsed) {
             return res.status(400).json({ error: 'Este código de invitación ya ha sido usado' });
+        }
+        
+        // Validar expiración
+        if (invite.expiresAt && new Date() > new Date(invite.expiresAt)) {
+            return res.status(400).json({ 
+                error: 'Código de invitación expirado. Solicita uno nuevo al administrador.' 
+            });
         }
 
         const existingUser = await prisma.user.findUnique({ where: { email } });

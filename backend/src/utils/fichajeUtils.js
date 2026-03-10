@@ -253,6 +253,9 @@ function groupFichajesByDay(fichajes, schedule) {
 
 /**
  * Valida que la secuencia de fichajes sea correcta
+ * - El primer fichaje del día debe ser ENTRADA
+ * - Debe haber número par de fichajes (cerrar el día con SALIDA)
+ * - No puede haber dos fichajes del mismo tipo consecutivos
  */
 function validateFichajeSequence(fichajes) {
     if (fichajes.length === 0) return { valid: true };
@@ -261,6 +264,23 @@ function validateFichajeSequence(fichajes) {
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
 
+    // Validar que el primer fichaje sea ENTRADA
+    if (sorted[0].tipo !== 'ENTRADA') {
+        return {
+            valid: false,
+            error: 'El primer fichaje del día debe ser una ENTRADA'
+        };
+    }
+
+    // Validar número par de fichajes (día cerrado con SALIDA)
+    if (sorted.length % 2 !== 0) {
+        return {
+            valid: false,
+            error: 'Debes cerrar el día con una SALIDA. Fichajes incompletos.'
+        };
+    }
+
+    // Validar que no haya dos fichajes del mismo tipo consecutivos
     for (let i = 0; i < sorted.length - 1; i++) {
         if (sorted[i].tipo === sorted[i + 1].tipo) {
             return {

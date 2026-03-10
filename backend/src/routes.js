@@ -19,7 +19,7 @@ const fileController = require('./controllers/fileController');
 const emailTemplateController = require('./controllers/emailTemplateController');
 const pushController = require('./controllers/pushController');
 const userShiftAssignmentController = require('./controllers/userShiftAssignmentController');
-const { isAdmin, isManagerOrAdmin } = require('./middleware/auth');
+const { isAdmin, isManagerOrAdmin, validateManagerDepartment } = require('./middleware/auth');
 const { validate, loginSchema, registerSchema, changePasswordSchema, updateProfileSchema, vacationRequestSchema } = require('./middleware/validation');
 
 // Import auth rate limiter from server
@@ -151,6 +151,11 @@ router.get('/admin/invites', isAdmin, adminController.getInviteCodes);
 router.post('/admin/invites', isAdmin, adminController.generateInviteCode);
 router.delete('/admin/invites/:id', isAdmin, adminController.revokeInviteCode);
 
+// Admin - Office Locations (GPS Validation)
+router.get('/admin/office-locations', isAdmin, adminController.getOfficeLocations);
+router.post('/admin/office-locations/:department', isAdmin, adminController.setOfficeLocation);
+router.delete('/admin/office-locations/:department', isAdmin, adminController.deleteOfficeLocation);
+
 // Admin - Email Templates
 router.get('/admin/email-templates', isAdmin, emailTemplateController.getAll);
 router.get('/admin/email-templates/:id', isAdmin, emailTemplateController.getById);
@@ -184,7 +189,7 @@ router.post('/vacations', validate(vacationRequestSchema), vacationController.cr
 router.patch('/vacations/:id/justification', vacationController.updateJustification);
 
 // Manager routes (protected - requires MANAGER role)
-router.get('/manager/team-vacations', vacationController.getTeamVacations);
+router.get('/manager/team-vacations', isManagerOrAdmin, vacationController.getTeamVacations);
 router.get('/manager/team-members', isManagerOrAdmin, async (req, res) => {
     try {
         const { PrismaClient } = require('@prisma/client');
@@ -200,8 +205,8 @@ router.get('/manager/team-members', isManagerOrAdmin, async (req, res) => {
         res.status(500).json({ error: 'Error al obtener miembros del equipo' });
     }
 });
-router.patch('/manager/vacations/:id/approve', vacationController.managerApproveVacation);
-router.patch('/manager/vacations/:id/reject', vacationController.managerRejectVacation);
+router.patch('/manager/vacations/:id/approve', isManagerOrAdmin, vacationController.managerApproveVacation);
+router.patch('/manager/vacations/:id/reject', isManagerOrAdmin, vacationController.managerRejectVacation);
 
 // News
 router.get('/news', commonController.getAllNews);
@@ -220,7 +225,7 @@ router.get('/fichajes/history', fichajeController.getHistory);
 router.get('/fichajes/report', fichajeController.getAttendanceReport);
 router.get('/fichajes/week/:userId', fichajeController.getWeek);
 router.get('/fichajes/month/:userId', fichajeController.getMonth);
-router.get('/fichajes/department/:dept/week', fichajeController.getDepartmentWeek);
+router.get('/fichajes/department/:dept/week', isManagerOrAdmin, validateManagerDepartment, fichajeController.getDepartmentWeek);
 
 // Department Schedules Routes
 router.get('/department-schedules', isAdmin, scheduleController.getAllSchedules);

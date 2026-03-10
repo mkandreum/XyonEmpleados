@@ -13,7 +13,7 @@ export const AdminBenefits: React.FC = () => {
         department: '',
         vacationDays: 22,
         overtimeHoursBank: 40,
-        sickLeaveDays: 24,
+        sickLeaveHours: 24,
         paidAbsenceHours: 20
     });
 
@@ -43,7 +43,7 @@ export const AdminBenefits: React.FC = () => {
                 department: dept,
                 vacationDays: 22,
                 overtimeHoursBank: 40,
-                sickLeaveDays: 24,
+                sickLeaveHours: 24,
                 paidAbsenceHours: 20
             });
         }
@@ -66,7 +66,7 @@ export const AdminBenefits: React.FC = () => {
             department: dept,
             vacationDays: 22,
             overtimeHoursBank: 40,
-            sickLeaveDays: 24,
+            sickLeaveHours: 24,
             paidAbsenceHours: 20
         };
     };
@@ -129,12 +129,12 @@ export const AdminBenefits: React.FC = () => {
                                         {isEditing ? (
                                             <input
                                                 type="number"
-                                                value={formData.sickLeaveDays}
-                                                onChange={(e) => setFormData({ ...formData, sickLeaveDays: parseInt(e.target.value) })}
+                                                value={formData.sickLeaveHours}
+                                                onChange={(e) => setFormData({ ...formData, sickLeaveHours: parseInt(e.target.value) })}
                                                 className="w-20 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded px-2 py-1 text-sm text-slate-900 dark:text-white"
                                             />
                                         ) : (
-                                            <span className="text-sm text-slate-900 dark:text-slate-300">{deptBenefits.sickLeaveDays} horas</span>
+                                            <span className="text-sm text-slate-900 dark:text-slate-300">{deptBenefits.sickLeaveHours} horas</span>
                                         )}
                                     </td>
                                     <td className="px-6 py-4">
@@ -214,8 +214,8 @@ export const AdminBenefits: React.FC = () => {
                                     <div>
                                         <label className="text-xs text-blue-800 dark:text-blue-300 block mb-1">H. Médicas</label>
                                         <input type="number" className="w-full text-sm p-1 rounded border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                                            value={formData.sickLeaveDays}
-                                            onChange={(e) => setFormData({ ...formData, sickLeaveDays: parseInt(e.target.value) })}
+                                            value={formData.sickLeaveHours}
+                                            onChange={(e) => setFormData({ ...formData, sickLeaveHours: parseInt(e.target.value) })}
                                         />
                                     </div>
                                     <div>
@@ -253,7 +253,7 @@ export const AdminBenefits: React.FC = () => {
                                 </div>
                                 <div>
                                     <span className="block text-xs text-slate-400 dark:text-slate-500">H. Médicas</span>
-                                    <span className="font-medium text-slate-700 dark:text-slate-300">{deptBenefits.sickLeaveDays} h</span>
+                                    <span className="font-medium text-slate-700 dark:text-slate-300">{deptBenefits.sickLeaveHours} h</span>
                                 </div>
                                 <div>
                                     <span className="block text-xs text-slate-400 dark:text-slate-500">H. Retribuidas</span>

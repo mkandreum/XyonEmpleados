@@ -40,3 +40,39 @@ exports.isManagerOrAdmin = (req, res, next) => {
     }
     next();
 };
+
+/**
+ * Valida que un manager solo pueda acceder a su departamento
+ * Los admins tienen acceso a todos los departamentos
+ * El departamento puede venir de: params.department, query.department, o body.department
+ */
+exports.validateManagerDepartment = async (req, res, next) => {
+    try {
+        // Los admins pueden acceder a cualquier departamento
+        if (req.user.role === 'ADMIN') {
+            return next();
+        }
+
+        // Obtener departamento solicitado
+        const requestedDept = req.params.department || req.params.dept || 
+                             req.query.department || req.body.department;
+
+        // Si no se especifica departamento, se asume que usa el del token
+        if (!requestedDept) {
+            return next();
+        }
+
+        // Validar que el manager solo acceda a su departamento
+        if (req.user.department !== requestedDept) {
+            return res.status(403).json({ 
+                error: 'No autorizado para acceder a datos de este departamento',
+                code: 'DEPARTMENT_FORBIDDEN'
+            });
+        }
+
+        next();
+    } catch (error) {
+        console.error('Error in validateManagerDepartment middleware:', error);
+        res.status(500).json({ error: 'Error validando permisos de departamento' });
+    }
+};

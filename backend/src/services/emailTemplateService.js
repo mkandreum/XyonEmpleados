@@ -33,7 +33,58 @@ const replaceVariables = (text, variables) => {
 };
 
 /**
+ * Validar que todas las variables requeridas estén presentes
+ * @param {string} templateType - Tipo de plantilla
+ * @param {Array<string>} requiredVars - Variables requeridas
+ * @param {Object} providedVars - Variables proporcionadas
+ * @returns {Object} { valid: boolean, missing: Array<string> }
+ */
+const validateTemplateVariables = (templateType, requiredVars, providedVars) => {
+    if (!requiredVars || requiredVars.length === 0) {
+        return { valid: true, missing: [] };
+    }
+
+    const providedKeys = Object.keys(providedVars || {});
+    const missing = requiredVars.filter(varName => !providedKeys.includes(varName));
+
+    if (missing.length > 0) {
+        console.warn(`⚠️ Template ${templateType} missing variables:`, missing);
+        return { valid: false, missing };
+    }
+
+    return { valid: true, missing: [] };
+};
+
+/**
+ * Schema de variables por tipo de template
+ * Define qué variables son requeridas para cada tipo
+ */
+const TEMPLATE_VARIABLE_SCHEMAS = {
+    'LATE_ARRIVAL': {
+        required: ['employeeName', 'managerName', 'date', 'time'],
+        optional: [],
+        description: 'Notificación de llegada tarde enviada al empleado'
+    },
+    'CLOCKING_WARNING': {
+        required: ['employeeName', 'date', 'details'],
+        optional: [],
+        description: 'Aviso de problema con fichaje'
+    },
+    'REQUEST_APPROVED': {
+        required: ['employeeName', 'requestType', 'startDate', 'endDate', 'days'],
+        optional: ['reason'],
+        description: 'Confirmación de aprobación de solicitud (vacaciones, permisos, etc.)'
+    },
+    'REQUEST_REJECTED': {
+        required: ['employeeName', 'requestType', 'startDate', 'endDate', 'reason'],
+        optional: [],
+        description: 'Notificación de rechazo de solicitud'
+    }
+};
+
+/**
  * Procesar plantilla con variables
+ * Ahora incluye validación de variables requeridas
  */
 const processTemplate = async (type, variables) => {
     const template = await getTemplateByType(type);
@@ -41,6 +92,19 @@ const processTemplate = async (type, variables) => {
     if (!template) {
         console.warn(`⚠️ Template ${type} not found, using fallback`);
         return null;
+    }
+
+    // Validar variables requeridas usando el schema
+    const schema = TEMPLATE_VARIABLE_SCHEMAS[type];
+    if (schema) {
+        const validation = validateTemplateVariables(type, schema.required, variables);
+        if (!validation.valid) {
+            const error = `Missing required variables for ${type}: ${validation.missing.join(', ')}`;
+            console.error(`❌ ${error}`);
+            throw new Error(error);
+        }
+    } else {
+        console.warn(`⚠️ No schema defined for template ${type}, skipping validation`);
     }
 
     return {
@@ -161,5 +225,7 @@ module.exports = {
     getTemplateByType,
     replaceVariables,
     processTemplate,
-    createDefaultTemplates
+    createDefaultTemplates,
+    validateTemplateVariables,
+    TEMPLATE_VARIABLE_SCHEMAS
 };

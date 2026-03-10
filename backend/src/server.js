@@ -5,6 +5,7 @@ const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { getTodayRange } = require('./utils/fichajeUtils');
+const { notifyUser } = require('./services/notificationService');
 require('dotenv').config();
 
 const app = express();
@@ -248,33 +249,48 @@ async function initializeEmailTemplates() {
     }
 }
 
-// Periodic reminders to clock in near department start time
-async function sendEntryReminders() {
+// Send email reminder 30 minutes before shift start time
+async function sendShiftReminderEmails() {
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
     try {
-        const schedules = await prisma.departmentSchedule.findMany();
+        // Get all shifts (unified model)
+        const shifts = await prisma.departmentShift.findMany();
         const { today, tomorrow } = getTodayRange(now);
 
-        for (const schedule of schedules) {
-            if (schedule.flexibleSchedule) continue;
+        for (const shift of shifts) {
+            if (shift.flexibleSchedule) continue;
 
-            const [h, m] = schedule.horaEntrada.split(':').map(Number);
-            const entryMinutes = h * 60 + m;
-            const windowStart = entryMinutes - 10; // 10 minutes before start
-            const windowEnd = entryMinutes + schedule.toleranciaMinutos; // until tolerance expires
-
-            if (currentMinutes < windowStart || currentMinutes > windowEnd) {
+            // Check if it's an active day for this shift
+            const dayOfWeek = now.getDay();
+            const dayNames = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
+            const todayDayName = dayNames[dayOfWeek];
+            
+            if (!shift.activeDays.includes(todayDayName)) {
                 continue;
             }
 
+            const [h, m] = shift.horaEntrada.split(':').map(Number);
+            const entryMinutes = h * 60 + m;
+            const reminderMinutes = entryMinutes - 30; // 30 minutes before
+
+            // Only send if we're within a 5-minute window to avoid duplicates
+            if (currentMinutes < reminderMinutes - 2 || currentMinutes > reminderMinutes + 2) {
+                continue;
+            }
+
+            // Find users in this department who want reminders
             const users = await prisma.user.findMany({
-                where: { department: schedule.department },
-                select: { id: true, name: true }
+                where: { 
+                    department: shift.department,
+                    shiftReminderEmail: true // Must have enabled reminders
+                },
+                select: { id: true, email: true, name: true }
             });
 
             for (const user of users) {
+                // Check if user already clocked in today
                 const hasEntryToday = await prisma.fichaje.findFirst({
                     where: {
                         userId: user.id,
@@ -288,12 +304,12 @@ async function sendEntryReminders() {
 
                 if (hasEntryToday) continue;
 
-                // Prevent duplicate reminders in the same day
+                // Prevent duplicate reminders
                 const existingReminder = await prisma.notification.findFirst({
                     where: {
                         userId: user.id,
-                        title: 'Recordatorio de fichaje',
-                        date: {
+                        title: 'Recordatorio de Fichaje',
+                        createdAt: {
                             gte: today,
                             lt: tomorrow
                         }
@@ -302,15 +318,25 @@ async function sendEntryReminders() {
 
                 if (existingReminder) continue;
 
-                await createNotification(
-                    user.id,
-                    'Recordatorio de fichaje',
-                    `Recuerda fichar tu entrada para ${schedule.department}.`
-                );
+                try {
+                    // Use centralized notification service (imported at top)
+                    await notifyUser(
+                        user.id,
+                        'GENERIC',
+                        {
+                            title: 'Recordatorio de Fichaje',
+                            message: `Tienes ${shift.name} en 30 minutos. Tu entrada está configurada para las ${shift.horaEntrada}. ¡No olvides fichar!`
+                        },
+                        { sendEmail: true, sendPush: true }
+                    );
+                    console.log(`✅ Shift reminder sent to ${user.email}`);
+                } catch (error) {
+                    console.error(`Error sending reminder to ${user.email}:`, error);
+                }
             }
         }
     } catch (error) {
-        console.error('Error sending entry reminders:', error);
+        console.error('Error in sendShiftReminderEmails:', error);
     }
 }
 
@@ -320,9 +346,9 @@ Promise.all([
     initializeEmailTemplates()
 ]).then(() => {
     // Start reminder loop after startup
-    setInterval(sendEntryReminders, 5 * 60 * 1000); // every 5 minutes
+    setInterval(sendShiftReminderEmails, 5 * 60 * 1000); // every 5 minutes
     // Kick off once shortly after boot
-    setTimeout(sendEntryReminders, 30 * 1000);
+    setTimeout(sendShiftReminderEmails, 30 * 1000);
 
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);

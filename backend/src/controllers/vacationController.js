@@ -2,6 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { createNotification } = require('./notificationController');
 const { sendTemplateEmail } = require('../services/emailService');
+const { notifyDepartmentManagers, notifyAllAdmins } = require('../services/notificationService');
 
 // Get all vacations for the requesting user
 exports.getAllVacations = async (req, res) => {
@@ -50,36 +51,35 @@ exports.createVacation = async (req, res) => {
             }
         });
 
-        // NOTIFICATION LOGIC
-        const formattedStart = new Date(startDate).toLocaleDateString();
-        const formattedEnd = new Date(endDate).toLocaleDateString();
+        // NOTIFICATION LOGIC - Usando servicio centralizado
+        const formattedStart = new Date(startDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+        const formattedEnd = new Date(endDate).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
 
         if (initialStatus === 'PENDING_MANAGER') {
-            // Notify managers of the same department
-            const managers = await prisma.user.findMany({
-                where: {
-                    department: user.department,
-                    role: 'MANAGER',
-                    NOT: { id: req.user.userId } // Don't notify self if manager requests
+            // Notificar managers del mismo departamento (optimizado - 1 query)
+            await notifyDepartmentManagers(
+                user.department,
+                'VACATION_PENDING_MANAGER',
+                {
+                    employeeName: user.name,
+                    requestType: type,
+                    startDate: formattedStart,
+                    endDate: formattedEnd,
+                    days
                 }
-            });
-            for (const manager of managers) {
-                await createNotification(
-                    manager.id,
-                    'Nueva Solicitud de Vacaciones',
-                    `El empleado ${user.name} ha solicitado días desde el ${formattedStart} al ${formattedEnd}.`
-                );
-            }
+            );
         } else if (initialStatus === 'PENDING_ADMIN') {
-            // Notify all ADMINS
-            const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
-            for (const admin of admins) {
-                await createNotification(
-                    admin.id,
-                    'Nueva Solicitud Pendiente',
-                    `El usuario ${user.name} ha solicitado vacaciones del ${formattedStart} al ${formattedEnd} (Aprobado por Manager o directo).`
-                );
-            }
+            // Notificar todos los admins (optimizado - 1 query)
+            await notifyAllAdmins(
+                'VACATION_PENDING_ADMIN',
+                {
+                    employeeName: user.name,
+                    requestType: type,
+                    startDate: formattedStart,
+                    endDate: formattedEnd,
+                    days
+                }
+            );
         }
 
         res.json(request);

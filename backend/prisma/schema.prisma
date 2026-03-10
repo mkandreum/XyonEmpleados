@@ -55,6 +55,7 @@ model User {
   phone       String?
   address     String?
   emergencyContact String?
+  shiftReminderEmail Boolean @default(true) // Email reminder 30 min before shift
   joinDate    DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -163,7 +164,7 @@ model DepartmentBenefits {
   department            String @unique
   vacationDays          Int    @default(22)
   overtimeHoursBank     Int    @default(40)
-  sickLeaveDays         Int    @default(15)
+  sickLeaveHours        Int    @default(15)  // Renombrado de sickLeaveDays (almacena HORAS)
   paidAbsenceHours      Int    @default(20)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
@@ -175,7 +176,7 @@ model UserBenefitsBalance {
   user                  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   vacationDaysUsed      Int    @default(0) @map("vacationDaysUsed")
   overtimeHoursUsed     Int    @default(0) @map("overtimeHoursUsed")
-  sickLeaveDaysUsed     Int    @default(0) @map("sickLeaveDaysUsed")
+  sickLeaveHoursUsed    Int    @default(0) @map("sickLeaveHoursUsed")  // Renombrado de sickLeaveDaysUsed (almacena HORAS)
   paidAbsenceHoursUsed  Int    @default(0) @map("paidAbsenceHoursUsed")
   year                  Int
   createdAt             DateTime @default(now())
@@ -204,46 +205,26 @@ model Fichaje {
   @@index([userId, tipo, timestamp])
 }
 
+// Unified schedule model for all departments
 model DepartmentShift {
   id                  String   @id @default(uuid())
   department          String
-  name                String   // Ej: "Mañana", "Tarde", "Noche"
+  name                String   // Ej: "Mañana", "Tarde", "Noche", "General"
   activeDays          String   // Ej: "LUNES,MARTES,MIERCOLES,JUEVES,VIERNES" (CSV)
   horaEntrada         String   // "07:00"
   horaSalida          String   // "15:00"
-  horaEntradaTarde    String?  // Para partido
-  horaSalidaMañana    String?  // Para partido
+  horaEntradaTarde    String?  // Para turno partido
+  horaSalidaMañana    String?  // Para turno partido
   toleranciaMinutos   Int      @default(10)
   flexibleSchedule    Boolean  @default(false)
-  scheduleOverrides   Json?    // Per-day overrides opcional
+  scheduleOverrides   Json?    // Per-day overrides en formato: { "2026-03-15": {dayOff: true}, "2026-03-16": {horaEntrada: "10:00"} }
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
   shiftAssignments UserShiftAssignment[]
-}
-
-// Legacy: solo para compatibilidad temporal
-model DepartmentSchedule {
-  id                  String   @id @default(uuid())
-  department          String
-  name                String   @default("General") // Nombre o tipo de horario (ej: "General", "Turno Mañana")
-  horaEntrada         String
-  horaSalida          String
-  horaEntradaTarde    String?
-  horaSalidaMañana    String?
-  toleranciaMinutos   Int      @default(10)
-  flexibleSchedule    Boolean  @default(false)
-  scheduleLunes       Json?
-  scheduleMartes      Json?
-  scheduleMiercoles   Json?
-  scheduleJueves      Json?
-  scheduleViernes     Json?
-  scheduleSabado      Json?
-  scheduleDomingo     Json?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
 
   @@unique([department, name])
+  @@index([department])
 }
 
 model LateArrivalNotification {

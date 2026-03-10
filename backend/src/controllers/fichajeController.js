@@ -10,8 +10,8 @@ const {
     getNextFichajeTipo,
     getTodayRange
 } = require('../utils/fichajeUtils');
-const { getScheduleForDay, detectTurno } = require('../services/smartScheduleService');
 const { selectClosestShift } = require('../services/shiftAssignmentService');
+const { validateFichajeLocation } = require('../utils/gpsUtils');
 
 // Custom error class for validation errors
 class ValidationError extends Error {
@@ -29,7 +29,7 @@ class ValidationError extends Error {
 exports.createFichaje = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const { tipo } = req.body;
+        const { tipo, latitude, longitude, accuracy } = req.body;
 
         if (!tipo || !Object.values(FichajeTipo).includes(tipo)) {
             return res.status(400).json({ error: 'Tipo de fichaje inválido' });
@@ -55,6 +55,41 @@ exports.createFichaje = async (req, res) => {
                 throw new ValidationError('Usuario sin departamento asignado. Contacta con administración.');
             }
 
+            // ✅ VALIDACIÓN GPS
+            // Obtener ubicación de oficina del departamento
+            const officeLocationSetting = await tx.globalSettings.findUnique({
+                where: { key: `officeLocation_${user.department}` }
+            });
+
+            let gpsValidation = { valid: true, distance: null, message: null };
+
+            if (officeLocationSetting && officeLocationSetting.value) {
+                try {
+                    const officeLocation = JSON.parse(officeLocationSetting.value);
+                    
+                    // Si hay configuración de oficina, validar ubicación
+                    if (latitude !== undefined && longitude !== undefined) {
+                        gpsValidation = validateFichajeLocation(
+                            officeLocation,
+                            { latitude, longitude, accuracy },
+                            officeLocation.maxDistance || 500 // maxDistance configurable por departamento
+                        );
+
+                        if (!gpsValidation.valid) {
+                            throw new ValidationError(gpsValidation.message);
+                        }
+                    } else {
+                        // Si la oficina requiere GPS pero no se envió
+                        if (officeLocation.required) {
+                            throw new ValidationError('Se requiere ubicación GPS para fichar en este departamento. Habilita los permisos de ubicación.');
+                        }
+                    }
+                } catch (parseError) {
+                    console.error('Error parsing office location:', parseError);
+                    // Continuar sin validación GPS si hay error en configuración
+                }
+            }
+
             // Obtener fichajes del día actual dentro de la transacción
             const { today, tomorrow } = getTodayRange(now);
 
@@ -77,17 +112,20 @@ exports.createFichaje = async (req, res) => {
                 throw new ValidationError(`Debes fichar ${expectedTipo === FichajeTipo.ENTRADA ? 'entrada' : 'salida'} primero`);
             }
 
-            // Crear fichaje
+            // Crear fichaje con coordenadas GPS
             const fichaje = await tx.fichaje.create({
                 data: {
                     userId,
                     tipo,
                     department: user.department,
-                    timestamp: now
+                    timestamp: now,
+                    latitude: latitude || null,
+                    longitude: longitude || null,
+                    accuracy: accuracy || null
                 }
             });
 
-            return { fichaje, department: user.department };
+            return { fichaje, department: user.department, gpsValidation };
         });
 
         // Determinar estado actual
@@ -147,7 +185,8 @@ exports.createFichaje = async (req, res) => {
             },
             turno: turnoInfo,
             assignedShift,
-            warning: shiftWarning
+            warning: shiftWarning,
+            gpsValidation: result.gpsValidation // Información de validación GPS
         });
     } catch (error) {
         console.error('Error creating fichaje:', error);
@@ -190,13 +229,23 @@ exports.getCurrentFichaje = async (req, res) => {
         if (hasActiveEntry) {
             try {
                 const user = await prisma.user.findUnique({ where: { id: userId } });
-                const schedule = await prisma.departmentSchedule.findFirst({
+                const shifts = await prisma.departmentShift.findMany({
                     where: { department: user.department }
                 });
-                if (schedule) {
-                    const daySchedule = getScheduleForDay(schedule, new Date(lastFichaje.timestamp));
-                    if (daySchedule) {
-                        turnoInfo = detectTurno(new Date(lastFichaje.timestamp), daySchedule);
+                if (shifts && shifts.length > 0) {
+                    const assignedShift = selectClosestShift(shifts, new Date(lastFichaje.timestamp));
+                    if (assignedShift) {
+                        const fichajeTime = new Date(lastFichaje.timestamp);
+                        const fichajeMinutes = fichajeTime.getHours() * 60 + fichajeTime.getMinutes();
+                        const entryMinutes = parseInt(assignedShift.horaEntrada.split(':')[0]) * 60 + parseInt(assignedShift.horaEntrada.split(':')[1]);
+                        const diffMinutes = Math.abs(fichajeMinutes - entryMinutes);
+                        turnoInfo = {
+                            turno: assignedShift.name,
+                            expectedEntry: assignedShift.horaEntrada,
+                            expectedExit: assignedShift.horaSalida,
+                            tolerancia: assignedShift.toleranciaMinutos,
+                            diffMinutes: diffMinutes
+                        };
                     }
                 }
             } catch (e) {
@@ -315,11 +364,12 @@ exports.getWeek = async (req, res) => {
             return res.status(404).json({ error: 'Usuario o departamento no encontrado' });
         }
 
-        const schedule = await prisma.departmentSchedule.findFirst({
+        // Get shifts (DepartmentShift) - unified model
+        const shifts = await prisma.departmentShift.findMany({
             where: { department: user.department }
         });
 
-        const grouped = groupFichajesByDay(fichajes, schedule);
+        const grouped = groupFichajesByDay(fichajes, null);
 
         res.json(grouped);
     } catch (error) {
@@ -369,11 +419,12 @@ exports.getMonth = async (req, res) => {
             return res.status(404).json({ error: 'Usuario o departamento no encontrado' });
         }
 
-        const schedule = await prisma.departmentSchedule.findFirst({
+        // Get shifts (DepartmentShift) - unified model
+        const shifts = await prisma.departmentShift.findMany({
             where: { department: user.department }
         });
 
-        const grouped = groupFichajesByDay(fichajes, schedule);
+        const grouped = groupFichajesByDay(fichajes, null);
 
         res.json(grouped);
     } catch (error) {
@@ -407,8 +458,8 @@ exports.getAttendanceReport = async (req, res) => {
 
         if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-        // Get schedule
-        const schedule = await prisma.departmentSchedule.findFirst({
+        // Get shifts (DepartmentShift) - unified model
+        const shifts = await prisma.departmentShift.findMany({
             where: { department: user.department }
         });
 
@@ -601,8 +652,8 @@ exports.getDepartmentWeek = async (req, res) => {
             }
         });
 
-        // Obtener horario del departamento
-        const schedule = await prisma.departmentSchedule.findFirst({
+        // Obtener turnos del departamento (DepartmentShift)
+        const shifts = await prisma.departmentShift.findMany({
             where: { department: dept }
         });
 

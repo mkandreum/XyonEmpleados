@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { auditPayrollDownload } = require('../services/auditService');
 
 exports.getAllPayrolls = async (req, res) => {
     try {
@@ -72,6 +73,9 @@ exports.downloadPayroll = async (req, res) => {
         if (!payroll) {
             return res.status(404).json({ error: 'Nómina no encontrada' });
         }
+
+        // 📝 Auditar descarga
+        await auditPayrollDownload(userId, id, req);
 
         // Return the URL info so frontend can trigger the download
         res.json({

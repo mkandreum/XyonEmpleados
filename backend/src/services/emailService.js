@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { decryptSMTPPassword } = require('../utils/encryptionUtils');
 
 const getTransporter = async () => {
     try {
@@ -21,7 +22,7 @@ const getTransporter = async () => {
             host: config.smtpHost ? 'FOUND' : 'MISSING',
             port: config.smtpPort ? config.smtpPort : 'MISSING(Default:587)',
             user: config.smtpUser ? 'FOUND' : 'MISSING',
-            pass: config.smtpPass ? 'FOUND' : 'MISSING',
+            pass: config.smtpPass ? 'FOUND (encrypted)' : 'MISSING',
             secure: config.smtpSecure
         });
 
@@ -30,13 +31,16 @@ const getTransporter = async () => {
             return null;
         }
 
+        // Descifrar contraseña SMTP
+        const decryptedPassword = decryptSMTPPassword(config.smtpPass);
+
         const transportConfig = {
             host: config.smtpHost,
             port: parseInt(config.smtpPort) || 587,
             secure: config.smtpSecure === 'true', // true for 465, false for other ports
             auth: {
                 user: config.smtpUser,
-                pass: config.smtpPass,
+                pass: decryptedPassword,
             },
             tls: {
                 rejectUnauthorized: false // Helps with some self-signed certs or strict firewalls

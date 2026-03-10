@@ -161,7 +161,7 @@ export const VacationsPage: React.FC = () => {
                 }
 
                 const hoursRequested = parseInt(formData.hours);
-                const hoursAvailable = deptBenefits?.sickLeaveDays ? (deptBenefits.sickLeaveDays - (userBenefits?.sickLeaveDaysUsed || 0)) : 0;
+                const hoursAvailable = deptBenefits?.sickLeaveHours ? (deptBenefits.sickLeaveHours - (userBenefits?.sickLeaveHoursUsed || 0)) : 0;
 
                 if (hoursRequested > hoursAvailable) {
                     showAlert(`No tienes suficientes horas médicas disponibles.\n\nHoras solicitadas: ${hoursRequested}h\nHoras disponibles: ${hoursAvailable}h`, 'error');
@@ -379,7 +379,7 @@ export const VacationsPage: React.FC = () => {
                                                 required
                                             />
                                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                                                💡 Horas médicas disponibles: <span className="font-semibold text-green-600 dark:text-green-400">{deptBenefits?.sickLeaveDays ? (deptBenefits.sickLeaveDays - (userBenefits?.sickLeaveDaysUsed || 0)) : 0}h</span>
+                                                💡 Horas médicas disponibles: <span className="font-semibold text-green-600 dark:text-green-400">{deptBenefits?.sickLeaveHours ? (deptBenefits.sickLeaveHours - (userBenefits?.sickLeaveHoursUsed || 0)) : 0}h</span>
                                             </p>
                                         </div>
                                     </div>
@@ -500,9 +500,9 @@ export const VacationsPage: React.FC = () => {
                             <h3 className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Horas Médicas</h3>
                         </div>
                         <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                            {deptBenefits?.sickLeaveDays ? (deptBenefits.sickLeaveDays - (userBenefits?.sickLeaveDaysUsed || 0)) : 0}h
+                            {deptBenefits?.sickLeaveHours ? (deptBenefits.sickLeaveHours - (userBenefits?.sickLeaveHoursUsed || 0)) : 0}h
                         </p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">Restantes de {deptBenefits?.sickLeaveDays || 0}h</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">Restantes de {deptBenefits?.sickLeaveHours || 0}h</p>
                     </div>
                     <div className="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
                         <div className="flex items-center gap-2 mb-2">

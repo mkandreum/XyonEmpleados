@@ -205,7 +205,7 @@ export const ProfilePage: React.FC = () => {
 
                     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors animate-slide-up delay-200">
                         <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Seguridad</h3>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-4">
                             <div>
                                 <p className="font-medium text-slate-800 dark:text-slate-200">Contraseña</p>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">Mantén tu cuenta segura</p>
@@ -216,6 +216,32 @@ export const ProfilePage: React.FC = () => {
                             >
                                 Cambiar contraseña
                             </button>
+                        </div>
+                    </div>
+
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors animate-slide-up delay-300">
+                        <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Notificaciones</h3>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="font-medium text-slate-800 dark:text-slate-200">Recordatorio de Fichaje</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">Email 30 min antes de tu turno</p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={user?.shiftReminderEmail !== false}
+                                    onChange={async (e) => {
+                                        try {
+                                            await userService.updateProfile({ shiftReminderEmail: e.target.checked });
+                                            showAlert('Preferencia actualizada', 'success');
+                                        } catch (error) {
+                                            showAlert('Error al actualizar preferencia', 'error');
+                                        }
+                                    }}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 dark:peer-checked:bg-blue-500"></div>
+                            </label>
                         </div>
                     </div>
                 </div>

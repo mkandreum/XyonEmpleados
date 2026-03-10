@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const { createNotification } = require('./notificationController');
 const { updateUserBalanceLogic } = require('./benefitsController');
 const { sendTemplateEmail } = require('../services/emailService');
+const { encryptSMTPPassword } = require('../utils/encryptionUtils');
 
 const ensureDepartmentSetting = async (department) => {
     if (!department) return;
@@ -130,8 +131,38 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
+        
+        // Verificar que no se auto-elimine
+        if (id === req.user.userId) {
+            return res.status(400).json({
+                error: 'No puedes eliminar tu propia cuenta. Contacta con otro administrador.'
+            });
+        }
+        
+        const userToDelete = await prisma.user.findUnique({
+            where: { id },
+            select: { role: true, name: true }
+        });
+        
+        if (!userToDelete) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+        
+        // Si es admin, verificar que no sea el último
+        if (userToDelete.role === 'ADMIN') {
+            const adminCount = await prisma.user.count({
+                where: { role: 'ADMIN' }
+            });
+            
+            if (adminCount <= 1) {
+                return res.status(400).json({
+                    error: 'No puedes eliminar el último administrador del sistema. Crea otro admin primero.'
+                });
+            }
+        }
+        
         await prisma.user.delete({ where: { id } });
-        res.json({ message: 'User deleted successfully' });
+        res.json({ message: `Usuario ${userToDelete.name} eliminado correctamente` });
     } catch (error) {
         console.error("Delete user error:", error);
         res.status(500).json({ error: 'Failed to delete user' });
@@ -288,6 +319,12 @@ exports.updateSettings = async (req, res) => {
         const settings = req.body; // Expects object like { logoUrl: '...', companyName: '...', defaultAvatarUrl: '...' }
         const keys = Object.keys(settings);
 
+        // Cifrar contraseña SMTP si está presente
+        if (settings.smtpPass && settings.smtpPass.trim() !== '') {
+            console.log('🔐 Encrypting SMTP password before saving...');
+            settings.smtpPass = encryptSMTPPassword(settings.smtpPass);
+        }
+
         // Upsert each setting
         const promises = keys.map(key =>
             prisma.globalSettings.upsert({
@@ -399,5 +436,112 @@ exports.revokeInviteCode = async (req, res) => {
     } catch (error) {
         console.error("Revoke invite code error:", error);
         res.status(500).json({ error: 'Failed to revoke invite code' });
+    }
+};
+
+// --- Office Locations (GPS Validation) ---
+
+/**
+ * GET /api/admin/office-locations
+ * Obtener todas las ubicaciones de oficina configuradas
+ */
+exports.getOfficeLocations = async (req, res) => {
+    try {
+        const settings = await prisma.globalSettings.findMany({
+            where: {
+                key: {
+                    startsWith: 'officeLocation_'
+                }
+            }
+        });
+
+        const locations = settings.map(setting => {
+            const department = setting.key.replace('officeLocation_', '');
+            let location = null;
+            try {
+                location = JSON.parse(setting.value);
+            } catch (e) {
+                console.error(`Error parsing location for ${department}:`, e);
+            }
+            return {
+                department,
+                ...location,
+                updatedAt: setting.updatedAt
+            };
+        });
+
+        res.json(locations);
+    } catch (error) {
+        console.error('Get office locations error:', error);
+        res.status(500).json({ error: 'Failed to fetch office locations' });
+    }
+};
+
+/**
+ * POST /api/admin/office-locations/:department
+ * Configurar o actualizar ubicación de oficina para un departamento
+ * Body: { latitude, longitude, maxDistance, required, name }
+ */
+exports.setOfficeLocation = async (req, res) => {
+    try {
+        const { department } = req.params;
+        const { latitude, longitude, maxDistance, required, name } = req.body;
+
+        // Validar coordenadas
+        if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+            return res.status(400).json({ error: 'Latitud y longitud deben ser números' });
+        }
+
+        if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+            return res.status(400).json({ error: 'Coordenadas GPS inválidas' });
+        }
+
+        const locationData = {
+            latitude,
+            longitude,
+            maxDistance: maxDistance || 500, // Default 500m
+            required: required || false, // Si true, fichaje sin GPS será rechazado
+            name: name || `Oficina ${department}`,
+            updatedAt: new Date().toISOString()
+        };
+
+        await prisma.globalSettings.upsert({
+            where: { key: `officeLocation_${department}` },
+            update: { value: JSON.stringify(locationData) },
+            create: { 
+                key: `officeLocation_${department}`, 
+                value: JSON.stringify(locationData) 
+            }
+        });
+
+        res.json({ 
+            message: `Ubicación de oficina configurada para ${department}`,
+            location: locationData 
+        });
+    } catch (error) {
+        console.error('Set office location error:', error);
+        res.status(500).json({ error: 'Failed to set office location' });
+    }
+};
+
+/**
+ * DELETE /api/admin/office-locations/:department
+ * Eliminar configuración de ubicación de oficina
+ */
+exports.deleteOfficeLocation = async (req, res) => {
+    try {
+        const { department } = req.params;
+        
+        await prisma.globalSettings.delete({
+            where: { key: `officeLocation_${department}` }
+        });
+
+        res.json({ message: `Ubicación de oficina eliminada para ${department}` });
+    } catch (error) {
+        if (error.code === 'P2025') {
+            return res.status(404).json({ error: 'Ubicación no encontrada' });
+        }
+        console.error('Delete office location error:', error);
+        res.status(500).json({ error: 'Failed to delete office location' });
     }
 };
