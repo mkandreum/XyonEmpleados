@@ -245,8 +245,9 @@ export const TeamRequests: React.FC = () => {
 
                                     {/* Collapsible content */}
                                     {isExpanded && (
-                                        {group.requests.map((request: VacationRequest) => (
-                                            <div key={request.id} className="p-6 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
+                                        <>
+                                            {group.requests.map((request: VacationRequest) => (
+                                                <div key={request.id} className="p-6 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
                                                 <div className="flex flex-col md:flex-row justify-between gap-4">
                                                     <div className="space-y-3 flex-1">
                                                         <div className="flex flex-wrap items-center gap-3">
@@ -324,7 +325,7 @@ export const TeamRequests: React.FC = () => {
                                                 </div>
                                             </div>
                                         ))}
-                                    </div>
+                                    </>
                                     )}
                                 </div>
                             );
