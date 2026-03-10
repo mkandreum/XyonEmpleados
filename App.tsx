@@ -24,6 +24,7 @@ const AdminEvents = lazy(() => import('./pages/admin/Events').then(m => ({ defau
 const AdminPayrolls = lazy(() => import('./pages/admin/Payrolls').then(m => ({ default: m.AdminPayrolls })));
 const AdminBenefits = lazy(() => import('./pages/admin/Benefits').then(m => ({ default: m.AdminBenefits })));
 const AdminFichajes = lazy(() => import('./pages/admin/Fichajes').then(m => ({ default: m.AdminFichajes })));
+const AdminContentLayout = lazy(() => import('./pages/admin/ContentLayout').then(m => ({ default: m.AdminContentLayout })));
 
 // Lazy load manager pages
 const TeamRequests = lazy(() => import('./pages/manager/TeamRequests').then(m => ({ default: m.TeamRequests })));
@@ -110,6 +111,12 @@ const AppRoutes = () => {
             <Route path="/admin/fichajes" element={
                 <AdminRoute>
                     <AdminFichajes />
+                </AdminRoute>
+            } />
+
+            <Route path="/admin/content-layout" element={
+                <AdminRoute>
+                    <AdminContentLayout />
                 </AdminRoute>
             } />
 

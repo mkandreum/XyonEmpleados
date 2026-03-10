@@ -1,3 +1,36 @@
+// ─── Dashboard Layout CMS ───────────────────────────────────────────────────
+export type DashboardWidgetType =
+  | 'FICHAJE' | 'VACATIONS' | 'PAYROLL' | 'EVENTS'
+  | 'NEWS' | 'BENEFITS' | 'ALERTS' | 'ADJUSTMENTS' | 'BANNER';
+
+export type DashboardWidgetScope = 'ALL' | 'EMPLOYEE' | 'MANAGER' | 'ADMIN';
+
+export interface DashboardWidget {
+  id: string;
+  layoutId: string;
+  type: DashboardWidgetType;
+  label: string;
+  isActive: boolean;
+  order: number;
+  scope: DashboardWidgetScope;
+  department?: string | null;
+  config?: any;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DashboardLayout {
+  id: string;
+  name: string;
+  description?: string | null;
+  isActive: boolean;
+  startDate?: string | null;
+  endDate?: string | null;
+  widgets: DashboardWidget[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface UserShiftAssignment {
   id: string;
   userId: string;

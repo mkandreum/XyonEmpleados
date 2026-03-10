@@ -564,4 +564,44 @@ export const pushService = {
     },
 };
 
+// ─── Dashboard Layout CMS ─────────────────────────────────────────────────────
+export const dashboardLayoutService = {
+    getAll: async () => {
+        const r = await api.get('/dashboard-layouts');
+        return r.data;
+    },
+    getActive: async () => {
+        const r = await api.get('/dashboard-layouts/active');
+        return r.data;
+    },
+    create: async (data: { name: string; description?: string; startDate?: string; endDate?: string; isActive?: boolean }) => {
+        const r = await api.post('/dashboard-layouts', data);
+        return r.data;
+    },
+    update: async (id: string, data: Partial<{ name: string; description: string; startDate: string | null; endDate: string | null; isActive: boolean }>) => {
+        const r = await api.put(`/dashboard-layouts/${id}`, data);
+        return r.data;
+    },
+    remove: async (id: string) => {
+        const r = await api.delete(`/dashboard-layouts/${id}`);
+        return r.data;
+    },
+    addWidget: async (layoutId: string, data: { type: string; label: string; scope?: string; department?: string; isActive?: boolean; config?: any }) => {
+        const r = await api.post(`/dashboard-layouts/${layoutId}/widgets`, data);
+        return r.data;
+    },
+    updateWidget: async (widgetId: string, data: Partial<{ type: string; label: string; scope: string; department: string; isActive: boolean; order: number; config: any }>) => {
+        const r = await api.put(`/dashboard-layouts/widgets/${widgetId}`, data);
+        return r.data;
+    },
+    deleteWidget: async (widgetId: string) => {
+        const r = await api.delete(`/dashboard-layouts/widgets/${widgetId}`);
+        return r.data;
+    },
+    reorder: async (layoutId: string, widgetOrders: { id: string; order: number }[]) => {
+        const r = await api.put(`/dashboard-layouts/${layoutId}/reorder`, { widgetOrders });
+        return r.data;
+    },
+};
+
 export default api;

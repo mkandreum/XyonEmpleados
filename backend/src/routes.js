@@ -19,6 +19,7 @@ const fileController = require('./controllers/fileController');
 const emailTemplateController = require('./controllers/emailTemplateController');
 const pushController = require('./controllers/pushController');
 const userShiftAssignmentController = require('./controllers/userShiftAssignmentController');
+const dashboardLayoutController = require('./controllers/dashboardLayoutController');
 const { isAdmin, isManagerOrAdmin, validateManagerDepartment } = require('./middleware/auth');
 const { validate, loginSchema, registerSchema, changePasswordSchema, updateProfileSchema, vacationRequestSchema } = require('./middleware/validation');
 
@@ -332,6 +333,18 @@ router.delete('/department-shifts/:id', isAdmin, async (req, res) => {
         res.status(500).json({ error: 'Error al eliminar turno' });
     }
 });
+
+// ─── Dashboard Layout CMS ────────────────────────────────────────────────────
+// NOTE: /widgets/:widgetId routes before /:id to avoid route parameter conflicts
+router.get('/dashboard-layouts/active', authenticateToken, dashboardLayoutController.getActiveLayout);
+router.get('/dashboard-layouts', isAdmin, dashboardLayoutController.getLayouts);
+router.post('/dashboard-layouts', isAdmin, dashboardLayoutController.createLayout);
+router.put('/dashboard-layouts/widgets/:widgetId', isAdmin, dashboardLayoutController.updateWidget);
+router.delete('/dashboard-layouts/widgets/:widgetId', isAdmin, dashboardLayoutController.deleteWidget);
+router.put('/dashboard-layouts/:id', isAdmin, dashboardLayoutController.updateLayout);
+router.delete('/dashboard-layouts/:id', isAdmin, dashboardLayoutController.deleteLayout);
+router.post('/dashboard-layouts/:id/widgets', isAdmin, dashboardLayoutController.addWidget);
+router.put('/dashboard-layouts/:id/reorder', isAdmin, dashboardLayoutController.reorderWidgets);
 
 module.exports = router;
 

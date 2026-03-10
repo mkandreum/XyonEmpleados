@@ -18,12 +18,15 @@ RUN apk add --no-cache curl
 # Copy Prisma schema FIRST (needed by postinstall hook)
 COPY backend/prisma ./prisma
 
-# Install backend dependencies
+# Install backend dependencies (including dev for prisma generate)
 COPY backend/package*.json ./
-RUN npm install --only=production
+RUN npm ci
 
 # Copy backend source
 COPY backend/ .
+
+# Generate Prisma client, then remove dev dependencies to keep runtime image lean
+RUN npm run prisma:generate && npm prune --omit=dev
 
 # Copy built frontend to backend's public directory
 COPY --from=frontend-builder /app/dist ./public
@@ -40,5 +43,5 @@ VOLUME ["/app/uploads"]
 # Expose port
 EXPOSE 3000
 
-# Command to run migrations, seed (idempotent), and start server
-CMD npm run prisma:migrate && npm run seed && node src/server.js
+# Command to run migrations and start server
+CMD npm run prisma:migrate && node src/server.js

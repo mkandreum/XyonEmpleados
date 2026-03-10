@@ -17,6 +17,7 @@ import {
     X,
     Clock
 } from 'lucide-react';
+import { Layers } from 'lucide-react';
 
 interface SidebarItemProps {
     to: string;
@@ -62,6 +63,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
         { path: '/admin/events', label: 'Eventos', icon: CalendarDays },
         { path: '/admin/payrolls', label: 'Nóminas', icon: FileText },
         { path: '/admin/benefits', label: 'Beneficios', icon: Gift },
+        { path: '/admin/content-layout', label: 'Layouts', icon: Layers },
         { path: '/admin/settings', label: 'Configuración', icon: Settings },
     ];
 

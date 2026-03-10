@@ -278,6 +278,57 @@ model PushSubscription {
   @@index([userId])
 }
 
+// ─── Dashboard Layout CMS ────────────────────────────────────────────────────
+
+enum DashboardWidgetType {
+  FICHAJE
+  VACATIONS
+  PAYROLL
+  EVENTS
+  NEWS
+  BENEFITS
+  ALERTS
+  ADJUSTMENTS
+  BANNER
+}
+
+enum DashboardWidgetScope {
+  ALL
+  EMPLOYEE
+  MANAGER
+  ADMIN
+}
+
+model DashboardLayout {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  isActive    Boolean   @default(false)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  widgets     DashboardWidget[]
+}
+
+model DashboardWidget {
+  id         String               @id @default(uuid())
+  layoutId   String
+  layout     DashboardLayout      @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+  type       DashboardWidgetType
+  label      String
+  isActive   Boolean              @default(true)
+  order      Int                  @default(0)
+  scope      DashboardWidgetScope @default(ALL)
+  department String?
+  config     Json?                // Extra config (banner text, link URL, etc.)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  @@index([layoutId, order])
+}
+
 model FichajeAdjustment {
   id                  String                    @id @default(uuid())
   fichajeId           String

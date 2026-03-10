@@ -103,6 +103,15 @@ declare module 'lucide-react' {
     export const LogIn: any;
     export const Loader2: any;
     export const ChevronUp: any;
+    export const GripVertical: any;
+    export const Radio: any;
+    export const Copy: any;
+    export const EyeOff: any;
+    export const Gift: any;
+    export const ClipboardList: any;
+    export const Megaphone: any;
+    export const Layers: any;
+    export const Settings2: any;
 }
 
 declare module 'recharts' {
