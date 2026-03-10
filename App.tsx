@@ -177,45 +177,10 @@ const AppRoutes = () => {
 
 import { ThemeProvider } from './context/ThemeContext';
 import { Toaster } from 'react-hot-toast';
-import { forceLogout, isTokenExpired } from './services/api';
-
-/**
- * Background watchdog that periodically checks if the session is still valid.
- * It will force a hard logout and reload if the token is expired or older than 24h,
- * ensuring users are kicked out without needing to interact with the page.
- */
-function SessionWatchdog() {
-    const { isAuthenticated } = useAuth();
-
-    React.useEffect(() => {
-        if (!isAuthenticated) return;
-
-        const checkSession = async () => {
-            const token = localStorage.getItem('token');
-            if (!token) return;
-
-            if (isTokenExpired(token)) {
-                console.warn('Watchdog: Token expired, forcing nuclear logout...');
-                await forceLogout();
-            }
-        };
-
-        // Check every 30 seconds
-        const interval = setInterval(checkSession, 30000);
-
-        // Also check immediately when the component mounts
-        checkSession();
-
-        return () => clearInterval(interval);
-    }, [isAuthenticated]);
-
-    return null;
-}
 
 function App() {
     return (
         <AuthProvider>
-            <SessionWatchdog />
             <ThemeProvider>
                 <Router>
                     <AppRoutes />

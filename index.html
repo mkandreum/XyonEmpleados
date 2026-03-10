@@ -50,10 +50,13 @@
           .then(function (r) { return r.json(); })
           .then(function (data) {
             if (!data || !data.version) return;
-            var local = localStorage.getItem('asset_version') || '';
-            if (local && data.version !== local) {
+            // Compare against baked build version to avoid reload loops
+            if (data.version !== ASSET_VERSION) {
+              var reloadedForVersion = sessionStorage.getItem('reloaded_for_version');
+              if (reloadedForVersion === data.version) return;
+              sessionStorage.setItem('reloaded_for_version', data.version);
               localStorage.setItem('asset_version', data.version);
-              window.location.reload(true);
+              window.location.reload();
             }
           })
           .catch(function () { });
