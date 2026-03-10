@@ -1,46 +1,79 @@
-/**
- * Migration Helper Script
- * Ejecuta las migraciones de manera segura en ambiente de producción
- * Uso: node prisma/runMigrations.js
- */
-
 const { PrismaClient } = require('@prisma/client');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const prisma = new PrismaClient();
 
+const migrationsDir = path.join(__dirname, 'migrations');
+
+function runCommand(command) {
+    execSync(command, { stdio: 'inherit' });
+}
+
+async function ensureMigrationTable() {
+    await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "_AppMigrations" (
+            "name" TEXT PRIMARY KEY,
+            "executedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+    `);
+}
+
+async function isApplied(name) {
+    const rows = await prisma.$queryRawUnsafe(
+        'SELECT 1 FROM "_AppMigrations" WHERE "name" = $1 LIMIT 1',
+        name
+    );
+    return rows.length > 0;
+}
+
+async function markApplied(name) {
+    await prisma.$executeRawUnsafe(
+        'INSERT INTO "_AppMigrations" ("name") VALUES ($1) ON CONFLICT ("name") DO NOTHING',
+        name
+    );
+}
+
+function getSqlFiles() {
+    if (!fs.existsSync(migrationsDir)) return [];
+    return fs
+        .readdirSync(migrationsDir)
+        .filter((file) => file.endsWith('.sql'))
+        .sort();
+}
+
 async function runMigrations() {
-    console.log('🔄 Starting database migrations...\n');
+    console.log('🔄 Running database migrations...\n');
 
     try {
-        // Las migraciones se ejecutan automáticamente con `prisma migrate deploy`
-        // Este script documenta el flujo
-        
-        console.log('✅ Las migraciones se ejecutarán de forma automática:');
-        console.log('   1️⃣ rename_sick_leave_to_hours.sql');
-        console.log('      - Renombra sickLeaveDays → sickLeaveHours');
-        console.log('      - Tablas: DepartmentBenefits, UserBenefitsBalance\n');
-        
-        console.log('   2️⃣ unify_schedule_models.sql');
-        console.log('      - Migra DepartmentSchedule → DepartmentShift');
-        console.log('      - Convierte per-day schedules a JSON overrides\n');
-        
-        console.log('   3️⃣ add_shift_reminder_email.sql');
-        console.log('      - Agrega User.shiftReminderEmail (Boolean)\n');
+        await prisma.$queryRawUnsafe('SELECT 1');
+        await ensureMigrationTable();
 
-        // Conectar para verificar DB
-        const version = await prisma.$queryRaw`SELECT version()`;
-        console.log(`📊 Base de datos conectada: PostgreSQL`);
-        console.log(`✅ Migraciones listas para ejecutar\n`);
+        const migrationFiles = getSqlFiles();
 
-        console.log('💡 Para aplicar migraciones en Coolify, asegurate de:');
-        console.log('   - DATABASE_URL configurada en variables de entorno');
-        console.log('   - Usuario DB con permisos ALTER TABLE');
-        console.log('   - Script start ejecuta: npm run prisma:migrate\n');
+        if (migrationFiles.length === 0) {
+            console.log('ℹ️ No custom SQL migrations found in prisma/migrations');
+            return;
+        }
 
+        for (const migrationFile of migrationFiles) {
+            const alreadyApplied = await isApplied(migrationFile);
+            if (alreadyApplied) {
+                console.log(`⏭️  Skipping already applied migration: ${migrationFile}`);
+                continue;
+            }
+
+            const fullPath = path.join('prisma', 'migrations', migrationFile);
+            console.log(`▶️  Applying migration: ${migrationFile}`);
+            runCommand(`npx prisma db execute --schema prisma/schema.prisma --file "${fullPath}"`);
+            await markApplied(migrationFile);
+            console.log(`✅ Applied: ${migrationFile}\n`);
+        }
+
+        console.log('✅ Migration process completed successfully');
     } catch (error) {
-        console.error('❌ Error verificando migraciones:', error);
+        console.error('❌ Migration process failed:', error.message || error);
         process.exit(1);
     } finally {
         await prisma.$disconnect();

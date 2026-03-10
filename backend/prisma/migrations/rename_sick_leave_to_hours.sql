@@ -1,17 +1,39 @@
--- Migración: Renombrar sickLeaveDays a sickLeaveHours
+-- Migración: Renombrar sickLeaveDays a sickLeaveHours (idempotente)
 -- Fecha: 2026-03-10
--- Descripción: Corrige la nomenclatura inconsistente donde sickLeaveDays realmente almacena HORAS
 
--- 1. Renombrar columna en DepartmentBenefits
-ALTER TABLE "DepartmentBenefits" 
-  RENAME COLUMN "sickLeaveDays" TO "sickLeaveHours";
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'DepartmentBenefits'
+      AND column_name = 'sickLeaveDays'
+  ) AND NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'DepartmentBenefits'
+      AND column_name = 'sickLeaveHours'
+  ) THEN
+    ALTER TABLE "DepartmentBenefits"
+      RENAME COLUMN "sickLeaveDays" TO "sickLeaveHours";
+  END IF;
 
--- 2. Renombrar columna en UserBenefitsBalance
-ALTER TABLE "UserBenefitsBalance" 
-  RENAME COLUMN "sickLeaveDaysUsed" TO "sickLeaveHoursUsed";
-
--- Notas:
--- - No se pierden datos en esta migración
--- - Los valores almacenados siguen siendo los mismos (horas)
--- - Solo cambia el nombre del campo para reflejar correctamente su contenido
--- - Después de esta migración, actualizar el schema.prisma y los controllers
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'UserBenefitsBalance'
+      AND column_name = 'sickLeaveDaysUsed'
+  ) AND NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'UserBenefitsBalance'
+      AND column_name = 'sickLeaveHoursUsed'
+  ) THEN
+    ALTER TABLE "UserBenefitsBalance"
+      RENAME COLUMN "sickLeaveDaysUsed" TO "sickLeaveHoursUsed";
+  END IF;
+END $$;
