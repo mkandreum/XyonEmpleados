@@ -6,6 +6,22 @@ Este documento describe todas las migraciones de base de datos que se ejecutará
 
 ---
 
+## 🔧 Fix Importante - Docker Build (March 10, 2026)
+
+**Problema:** El build de Docker fallaba porque la hook `postinstall` de npm intentaba generar el cliente Prisma antes de que el schema estuviera disponible.
+
+**Solución implementada:**
+1. ✅ Copiar `backend/prisma` **ANTES** de `npm install --only=production`
+2. ✅ Modificar `postinstall` para validar que la carpeta `prisma` existe: `if [ -d prisma ]; then npm run prisma:generate; fi`
+
+**Archivos modificados:**
+- `Dockerfile` - Orden de COPYs reordenado
+- `backend/package.json` - Hook postinstall condicional
+
+**Resultado:** Build completará exitosamente durante el deploy en Coolify.
+
+---
+
 ## ✅ Migraciones Automáticas
 
 Al hacer deploy en Coolify, el sistema ejecutará automáticamente **3 migraciones**:
