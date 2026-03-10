@@ -15,6 +15,9 @@ WORKDIR /app
 # Install curl for health checks
 RUN apk add --no-cache curl
 
+# Copy Prisma schema FIRST (needed by postinstall hook)
+COPY backend/prisma ./prisma
+
 # Install backend dependencies
 COPY backend/package*.json ./
 RUN npm install --only=production
@@ -27,12 +30,6 @@ COPY --from=frontend-builder /app/dist ./public
 
 # Copy version.json generated during frontend build (prebuild script)
 COPY --from=frontend-builder /app/backend/version.json ./version.json
-
-# Copy Prisma schema
-COPY backend/prisma ./prisma
-
-# Generate Prisma Client
-RUN npx prisma generate
 
 # Create uploads directory structure (public for logos/avatars/news, private for payrolls/justifications)
 RUN mkdir -p uploads/public/logos uploads/public/avatars uploads/public/news uploads/private/payrolls uploads/private/justifications
