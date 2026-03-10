@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock, Users, Calendar, Download, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { fichajeService, adminService } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import toast from 'react-hot-toast';
 
 export const AdminFichajes: React.FC = () => {
     const { user } = useAuth() as any;
@@ -88,6 +89,7 @@ export const AdminFichajes: React.FC = () => {
             }
         } catch (error) {
             console.error('Error loading fichajes:', error);
+            toast.error('Error al cargar los fichajes');
             setFichajes([]);
         } finally {
             setLoading(false);

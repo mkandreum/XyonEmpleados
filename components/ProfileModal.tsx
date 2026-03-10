@@ -3,6 +3,8 @@ import { User, Mail, Phone, MapPin, X } from 'lucide-react';
 import { userService, uploadService } from '../services/api';
 import { getAbsoluteUrl } from '../utils/urlUtils';
 import { useTheme, ThemeColor } from '../context/ThemeContext';
+import toast from 'react-hot-toast';
+import { haptic } from '../utils/haptics';
 
 interface ProfileModalProps {
     isOpen: boolean;
@@ -44,7 +46,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
         try {
             await userService.updateProfile({ shiftReminderEmail: checked });
             setFormData((prev) => ({ ...prev, shiftReminderEmail: checked }));
-
+            haptic('tap');
             const storedUser = localStorage.getItem('user');
             if (storedUser) {
                 const parsed = JSON.parse(storedUser);
@@ -53,7 +55,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
             }
         } catch (error) {
             console.error('Failed to update shift reminder preference', error);
-            alert('Error al actualizar recordatorio de fichaje');
+            haptic('error');
+            toast.error('Error al actualizar recordatorio de fichaje');
         } finally {
             setReminderLoading(false);
         }
@@ -65,11 +68,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
             const updatedUser = await userService.updateProfile(formData);
             localStorage.setItem('user', JSON.stringify(updatedUser));
             setIsEditing(false);
+            haptic('success');
             onUpdate();
             window.location.reload();
         } catch (error) {
             console.error("Failed to update profile", error);
-            alert("Error al guardar los datos.");
+            haptic('error');
+            toast.error("Error al guardar los datos.");
         } finally {
             setLoading(false);
         }
@@ -78,16 +83,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            alert("Las contraseñas no coinciden");
+            haptic('error');
+            toast.error("Las contraseñas no coinciden");
             return;
         }
         try {
             await userService.changePassword(passwordData.currentPassword, passwordData.newPassword);
-            alert("Contraseña cambiada correctamente");
+            haptic('success');
+            toast.success("Contraseña cambiada correctamente");
             setShowPasswordModal(false);
             setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
         } catch (error) {
-            alert("Error al cambiar la contraseña");
+            haptic('error');
+            toast.error("Error al cambiar la contraseña");
         }
     };
 

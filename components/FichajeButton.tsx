@@ -4,6 +4,7 @@ import { fichajeService } from '../services/api';
 import { FichajeTipo, TurnoInfo, Fichaje } from '../types';
 import { AdjustFichajeModal } from './AdjustFichajeModal';
 import { toast } from 'react-hot-toast'; // Assuming hot-toast is used based on context or similar toast logic
+import { haptic } from '../utils/haptics';
 
 export const FichajeButton: React.FC = () => {
     const [loading, setLoading] = useState(false);
@@ -75,12 +76,15 @@ export const FichajeButton: React.FC = () => {
             if (tipo === FichajeTipo.ENTRADA) {
                 const turnoStr = result.turno ? ` — ${result.turno.label} (${result.turno.expectedEntry} - ${result.turno.expectedExit})` : '';
                 message = `✓ Entrada registrada${turnoStr}`;
+                haptic('impact');
                 toast.success(message, { duration: 5000 });
             } else {
+                haptic('impact');
                 toast.success('✓ Salida registrada correctamente');
             }
         } catch (error: any) {
             console.error('Error creating fichaje:', error);
+            haptic('error');
             toast.error(error.response?.data?.error || 'Error al registrar fichaje');
         } finally {
             setLoading(false);

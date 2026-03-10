@@ -17,6 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import {
     notificationService,
 } from '../services/api';
+import { haptic } from '../utils/haptics';
 
 interface NavItem {
     path: string;
@@ -205,6 +206,7 @@ export const FloatingNavbar: React.FC = () => {
 
     // Helper to handle click: mark section notifications as read, close menu and scroll top
     const handleNavClick = async (path: string) => {
+        haptic('light');
         await markSectionAsRead(path);
         setShowMore(false);
         window.scrollTo({ top: 0, behavior: 'smooth' });

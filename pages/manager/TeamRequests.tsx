@@ -9,14 +9,16 @@ import { getAbsoluteUrl } from '../../utils/urlUtils';
 import { openProtectedFile } from '../../utils/fileUtils';
 import { VacationGanttChart } from '../../components/VacationGanttChart';
 import toast from 'react-hot-toast';
+import { haptic } from '../../utils/haptics';
 
 export const TeamRequests: React.FC = () => {
     const [requests, setRequests] = useState<VacationRequest[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'requests' | 'calendar'>('requests');
     const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
     const [filterPending, setFilterPending] = useState(false);
-    const { modalState, showAlert, showConfirm, closeModal } = useModal();
+    const { modalState, showConfirm, closeModal } = useModal();
 
     const fetchTeamRequests = async () => {
         try {
@@ -67,13 +69,18 @@ export const TeamRequests: React.FC = () => {
     };
 
     const handleApprove = async (id: string) => {
+        setActionLoadingId(id);
         try {
             await managerService.approveVacation(id);
-            toast.success('✅ Solicitud aprobada y enviada a Admin');
+            haptic('success');
+            toast.success('Solicitud aprobada y enviada a Admin');
             fetchTeamRequests(); // Reload
         } catch (error) {
             console.error('Error approving request:', error);
-            toast.error('❌ Error al aprobar la solicitud');
+            haptic('error');
+            toast.error('Error al aprobar la solicitud');
+        } finally {
+            setActionLoadingId(null);
         }
     };
 
@@ -81,13 +88,18 @@ export const TeamRequests: React.FC = () => {
         showConfirm(
             '¿Estás seguro de rechazar esta solicitud?',
             async () => {
+                setActionLoadingId(id);
                 try {
                     await managerService.rejectVacation(id);
+                    haptic('double');
                     toast.success('Solicitud rechazada');
                     fetchTeamRequests(); // Reload
                 } catch (error) {
                     console.error('Error rejecting request:', error);
+                    haptic('error');
                     toast.error('Error al rechazar la solicitud');
+                } finally {
+                    setActionLoadingId(null);
                 }
             }
         );
@@ -254,6 +266,9 @@ export const TeamRequests: React.FC = () => {
                                                             <span className={`px-2.5 py-1 rounded-md text-xs font-bold border ${getTypeColor(request.type)}`}>
                                                                 {getTypeLabel(request.type, request.subtype)}
                                                             </span>
+                                                            <span className={`px-2.5 py-1 rounded-md text-xs font-semibold ${getStatusColor(request.status)}`}>
+                                                                {getStatusText(request.status)}
+                                                            </span>
                                                             {request.justificationUrl && (
                                                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
                                                                     Justificante
@@ -308,17 +323,19 @@ export const TeamRequests: React.FC = () => {
                                                         <div className="flex items-center gap-3 self-start md:self-center w-full md:w-auto mt-2 md:mt-0">
                                                             <button
                                                                 onClick={() => handleApprove(request.id)}
-                                                                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all shadow-sm hover:shadow-md font-medium text-sm"
+                                                                disabled={actionLoadingId === request.id}
+                                                                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all shadow-sm hover:shadow-md font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                                                             >
                                                                 <CheckCircle className="h-5 w-5" />
-                                                                Aprobar
+                                                                {actionLoadingId === request.id ? 'Procesando...' : 'Aprobar'}
                                                             </button>
                                                             <button
                                                                 onClick={() => handleReject(request.id)}
-                                                                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all shadow-sm hover:shadow-md font-medium text-sm"
+                                                                disabled={actionLoadingId === request.id}
+                                                                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all shadow-sm hover:shadow-md font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                                                             >
                                                                 <XCircle className="h-5 w-5" />
-                                                                Rechazar
+                                                                {actionLoadingId === request.id ? 'Procesando...' : 'Rechazar'}
                                                             </button>
                                                         </div>
                                                     )}

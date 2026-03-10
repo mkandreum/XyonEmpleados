@@ -5,6 +5,8 @@ import { fichajeAdjustmentService } from '../../services/api';
 import { FichajeAdjustment, FichajeAdjustmentStatus } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import toast from 'react-hot-toast';
+import { haptic } from '../../utils/haptics';
 
 export const ManagerFichajes: React.FC = () => {
     // Ajustes de Fichaje
@@ -39,9 +41,11 @@ export const ManagerFichajes: React.FC = () => {
         try {
             setProcessingId(id);
             await fichajeAdjustmentService.approve(id);
+            haptic('success');
             await loadRequests();
         } catch (error) {
-            alert('Error al aprobar la solicitud');
+            haptic('error');
+            toast.error('Error al aprobar la solicitud');
         } finally {
             setProcessingId(null);
         }
@@ -49,17 +53,20 @@ export const ManagerFichajes: React.FC = () => {
 
     const handleReject = async (id: string) => {
         if (!rejectionReason) {
-            alert('Por favor, indica un motivo para el rechazo');
+            haptic('error');
+            toast.error('Por favor, indica un motivo para el rechazo');
             return;
         }
         try {
             setProcessingId(id);
             await fichajeAdjustmentService.reject(id, rejectionReason);
+            haptic('double');
             setRejectionReasonId(null);
             setRejectionReason('');
             await loadRequests();
         } catch (error) {
-            alert('Error al rechazar la solicitud');
+            haptic('error');
+            toast.error('Error al rechazar la solicitud');
         } finally {
             setProcessingId(null);
         }

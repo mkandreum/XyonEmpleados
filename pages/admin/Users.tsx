@@ -4,10 +4,12 @@ import { User } from '../../types';
 import { Plus, Edit2 as Edit, Trash2 as Trash, Search, User as UserIcon, Building, X, Save } from 'lucide-react';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import toast from 'react-hot-toast';
+import { haptic } from '../../utils/haptics';
 
 export const AdminUsers: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -118,31 +120,39 @@ export const AdminUsers: React.FC = () => {
             await adminService.deleteUser(userToDelete);
             setDeleteModalOpen(false);
             setUserToDelete(null);
+            haptic('double');
             fetchData();
             toast.success('Usuario eliminado');
         } catch (error) {
+            haptic('error');
             toast.error('Error al eliminar usuario');
         }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSubmitting(true);
         try {
             if (editingUser && editingUser.id) {
                 // Update
                 const updateData = { ...formData };
                 if (!updateData.password) delete (updateData as any).password;
                 await adminService.updateUser(editingUser.id, updateData as any);
+                haptic('success');
                 toast.success('Usuario actualizado');
             } else {
                 // Create
                 await adminService.createUser(formData as any);
+                haptic('success');
                 toast.success('Usuario creado');
             }
             setIsModalOpen(false);
             fetchData();
         } catch (error) {
+            haptic('error');
             toast.error('Error al guardar usuario');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -479,9 +489,10 @@ export const AdminUsers: React.FC = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    disabled={isSubmitting}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
                                 >
-                                    Guardar
+                                    {isSubmitting ? 'Guardando...' : 'Guardar'}
                                 </button>
                             </div>
                         </form>

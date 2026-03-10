@@ -4,6 +4,8 @@ import { Check, X, FileText, ChevronDown, ChevronRight, AlertCircle } from 'luci
 import { getTypeLabel, getTypeColor } from '../../utils/vacationUtils';
 import { getAbsoluteUrl } from '../../utils/urlUtils';
 import { openProtectedFile } from '../../utils/fileUtils';
+import toast from 'react-hot-toast';
+import { haptic } from '../../utils/haptics';
 
 interface VacationRequest {
     id: string;
@@ -38,6 +40,7 @@ interface UserGroup {
 export const AdminVacations: React.FC = () => {
     const [vacations, setVacations] = useState<VacationRequest[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
     const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
     const [viewMode, setViewMode] = useState<'grouped' | 'list'>('grouped');
     const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
@@ -48,6 +51,7 @@ export const AdminVacations: React.FC = () => {
             setVacations(data);
         } catch (error) {
             console.error("Error fetching vacations:", error);
+            toast.error('Error al cargar solicitudes');
         } finally {
             setIsLoading(false);
         }
@@ -58,11 +62,17 @@ export const AdminVacations: React.FC = () => {
     }, []);
 
     const handleStatusUpdate = async (id: string, status: 'APPROVED' | 'REJECTED') => {
+        setActionLoadingId(id);
         try {
             await adminService.updateVacationStatus(id, status);
-            fetchVacations();
+            haptic(status === 'APPROVED' ? 'success' : 'double');
+            toast.success(status === 'APPROVED' ? 'Solicitud aprobada' : 'Solicitud rechazada');
+            await fetchVacations();
         } catch (error) {
-            alert('Error updating status');
+            haptic('error');
+            toast.error('Error al actualizar el estado');
+        } finally {
+            setActionLoadingId(null);
         }
     };
 
@@ -194,9 +204,13 @@ export const AdminVacations: React.FC = () => {
                                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                     <div className="flex-1">
                                         <div className="flex flex-wrap items-center gap-2 mb-2">
-                                            <span className="font-semibold text-slate-800 dark:text-white">{request.user.name}</span>
-                                            <span className="text-sm text-slate-500 dark:text-slate-500 hidden md:inline">•</span>
-                                            <span className="text-sm text-slate-600 dark:text-slate-400">{request.user.department}</span>
+                                            <span className="text-base font-semibold text-slate-900 dark:text-white">{request.user.name}</span>
+                                            <span className={`px-2 py-1 rounded-md text-xs font-semibold ${request.status === 'PENDING_ADMIN' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'}`}>
+                                                {getStatusLabel(request.status)}
+                                            </span>
+                                        </div>
+                                        <div className="mb-2 text-xs text-slate-500 dark:text-slate-400">
+                                            {request.user.department} · Solicitada el {formatDate(request.createdAt)}
                                         </div>
                                         <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-slate-600 dark:text-slate-400">
                                             <span>{formatDate(request.startDate)} - {formatDate(request.endDate)}</span>
@@ -219,7 +233,7 @@ export const AdminVacations: React.FC = () => {
                                                                 await openProtectedFile(request.justificationUrl || '');
                                                             } catch (error) {
                                                                 console.error('Open file error:', error);
-                                                                alert('No se pudo abrir el justificante');
+                                                                        toast.error('No se pudo abrir el justificante');
                                                             }
                                                         }}
                                                         className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 text-xs md:text-sm transition-colors"
@@ -235,19 +249,21 @@ export const AdminVacations: React.FC = () => {
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => handleStatusUpdate(request.id, 'APPROVED')}
-                                            className="flex-1 md:flex-none px-3 md:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                                            disabled={actionLoadingId === request.id}
+                                            className="flex-1 md:flex-none px-3 md:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                                         >
                                             <Check size={16} />
-                                            <span className="hidden md:inline">Aprobar</span>
-                                            <span className="md:hidden">✓</span>
+                                            <span className="hidden md:inline">{actionLoadingId === request.id ? 'Procesando...' : 'Aprobar'}</span>
+                                            <span className="md:hidden">{actionLoadingId === request.id ? '...' : '✓'}</span>
                                         </button>
                                         <button
                                             onClick={() => handleStatusUpdate(request.id, 'REJECTED')}
-                                            className="flex-1 md:flex-none px-3 md:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
+                                            disabled={actionLoadingId === request.id}
+                                            className="flex-1 md:flex-none px-3 md:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                                         >
                                             <X size={16} />
-                                            <span className="hidden md:inline">Rechazar</span>
-                                            <span className="md:hidden">✗</span>
+                                            <span className="hidden md:inline">{actionLoadingId === request.id ? 'Procesando...' : 'Rechazar'}</span>
+                                            <span className="md:hidden">{actionLoadingId === request.id ? '...' : '✗'}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -360,7 +376,7 @@ export const AdminVacations: React.FC = () => {
                                                                                     await openProtectedFile(request.justificationUrl || '');
                                                                                 } catch (error) {
                                                                                     console.error('Open file error:', error);
-                                                                                    alert('No se pudo abrir el justificante');
+                                                                                    toast.error('No se pudo abrir el justificante');
                                                                                 }
                                                                             }}
                                                                             className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
@@ -419,7 +435,7 @@ export const AdminVacations: React.FC = () => {
                                                                                 await openProtectedFile(request.justificationUrl || '');
                                                                             } catch (error) {
                                                                                 console.error('Open file error:', error);
-                                                                                alert('No se pudo abrir el justificante');
+                                                                                toast.error('No se pudo abrir el justificante');
                                                                             }
                                                                         }}
                                                                         className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 text-xs transition-colors"
@@ -490,7 +506,7 @@ export const AdminVacations: React.FC = () => {
                                                                     await openProtectedFile(request.justificationUrl || '');
                                                                 } catch (error) {
                                                                     console.error('Open file error:', error);
-                                                                    alert('No se pudo abrir el justificante');
+                                                                    toast.error('No se pudo abrir el justificante');
                                                                 }
                                                             }}
                                                             className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
@@ -553,7 +569,7 @@ export const AdminVacations: React.FC = () => {
                                                                 await openProtectedFile(request.justificationUrl || '');
                                                             } catch (error) {
                                                                 console.error('Open file error:', error);
-                                                                alert('No se pudo abrir el justificante');
+                                                                toast.error('No se pudo abrir el justificante');
                                                             }
                                                         }}
                                                         className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1 text-xs transition-colors"
