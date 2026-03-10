@@ -149,5 +149,6 @@ export const AdjustFichajeModal: React.FC<AdjustFichajeModalProps> = ({ fichaje,
                     </div>
                 </div>
             </div>
-            );
+        </>
+    );
 };
