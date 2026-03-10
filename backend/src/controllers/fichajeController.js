@@ -96,24 +96,47 @@ exports.createFichaje = async (req, res) => {
         // Buscar todos los horarios del departamento y asignar el más cercano
         let assignedShift = null;
         let turnoInfo = null;
+        let shiftWarning = null;
+        
         try {
             const shifts = await prisma.departmentShift.findMany({
                 where: { department: result.department }
             });
+            
             if (shifts && shifts.length > 0) {
+                console.log(`[fichajeController] Found ${shifts.length} shifts for department ${result.department}`);
                 assignedShift = selectClosestShift(shifts, new Date(result.fichaje.timestamp));
+                
                 if (assignedShift && tipo === FichajeTipo.ENTRADA) {
+                    const fichajeTime = new Date(result.fichaje.timestamp);
+                    const fichajeMinutes = fichajeTime.getHours() * 60 + fichajeTime.getMinutes();
+                    const entryMinutes = parseInt(assignedShift.horaEntrada.split(':')[0]) * 60 + parseInt(assignedShift.horaEntrada.split(':')[1]);
+                    const diffMinutes = Math.abs(fichajeMinutes - entryMinutes);
+                    
                     // Usar detectTurno si es necesario, adaptando a la estructura de shift
                     turnoInfo = {
                         turno: assignedShift.name,
                         expectedEntry: assignedShift.horaEntrada,
                         expectedExit: assignedShift.horaSalida,
-                        tolerancia: assignedShift.toleranciaMinutos
+                        tolerancia: assignedShift.toleranciaMinutos,
+                        diffMinutes: diffMinutes
                     };
+                    
+                    // Si la diferencia es mayor a 30 minutos, avisar al usuario
+                    if (diffMinutes > 30) {
+                        shiftWarning = `Fichaje asignado al turno "${assignedShift.name}" (${assignedShift.horaEntrada}-${assignedShift.horaSalida}). Si no es correcto, contacta con tu supervisor.`;
+                    }
+                    
+                    console.log(`[fichajeController] ✅ Assigned shift: ${assignedShift.name} (diff: ${diffMinutes}min)`);
+                } else if (!assignedShift) {
+                    console.log('[fichajeController] ⚠️ No shift could be assigned');
+                    shiftWarning = 'No se pudo asignar un turno automáticamente. Contacta con tu supervisor.';
                 }
+            } else {
+                console.log(`[fichajeController] ⚠️ No shifts defined for department ${result.department}`);
             }
         } catch (e) {
-            console.error('Error asignando turno:', e);
+            console.error('[fichajeController] Error asignando turno:', e);
         }
 
         res.json({
@@ -123,7 +146,8 @@ exports.createFichaje = async (req, res) => {
                 currentFichaje: hasActiveEntry ? result.fichaje : null
             },
             turno: turnoInfo,
-            assignedShift
+            assignedShift,
+            warning: shiftWarning
         });
     } catch (error) {
         console.error('Error creating fichaje:', error);

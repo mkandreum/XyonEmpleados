@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { VacationRequest, VacationStatus } from '../../types';
 import { managerService } from '../../services/api';
-import { CheckCircle, XCircle, Calendar, Clock, User as UserIcon, FileText } from 'lucide-react';
+import { CheckCircle, XCircle, Calendar, Clock, User as UserIcon, FileText, ChevronDown, ChevronUp, Maximize2, Minimize2 } from 'lucide-react';
 import { useModal } from '../../hooks/useModal';
 import { Modal } from '../../components/Modal';
 import { getTypeLabel, getTypeColor } from '../../utils/vacationUtils';
@@ -14,12 +14,23 @@ export const TeamRequests: React.FC = () => {
     const [requests, setRequests] = useState<VacationRequest[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'requests' | 'calendar'>('requests');
+    const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+    const [filterPending, setFilterPending] = useState(false);
     const { modalState, showAlert, showConfirm, closeModal } = useModal();
 
     const fetchTeamRequests = async () => {
         try {
             const data = await managerService.getTeamVacations();
             setRequests(data);
+            
+            // Auto-expand users with PENDING_MANAGER requests by default
+            const usersWithPending = new Set(
+                data
+                    .filter(r => r.status === VacationStatus.PENDING_MANAGER)
+                    .map(r => r.user?.id)
+                    .filter(Boolean)
+            );
+            setExpandedUsers(usersWithPending);
         } catch (error) {
             console.error('Error fetching team requests:', error);
             toast.error('Error al cargar las solicitudes del equipo');
@@ -31,6 +42,29 @@ export const TeamRequests: React.FC = () => {
     useEffect(() => {
         fetchTeamRequests();
     }, []);
+
+    const toggleUserExpanded = (userId: string) => {
+        setExpandedUsers(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(userId)) {
+                newSet.delete(userId);
+            } else {
+                newSet.add(userId);
+            }
+            return newSet;
+        });
+    };
+
+    const expandAll = () => {
+        const allUserIds = new Set(
+            requests.map(r => r.user?.id).filter(Boolean) as string[]
+        );
+        setExpandedUsers(allUserIds);
+    };
+
+    const collapseAll = () => {
+        setExpandedUsers(new Set());
+    };
 
     const handleApprove = async (id: string) => {
         try {
@@ -81,12 +115,24 @@ export const TeamRequests: React.FC = () => {
         return <div className="p-8 text-center text-slate-500 dark:text-slate-400 transition-colors">Cargando solicitudes...</div>;
     }
 
+    // Filter requests if needed
+    const displayedRequests = filterPending 
+        ? requests.filter(r => r.status === VacationStatus.PENDING_MANAGER)
+        : requests;
+
+    const pendingCount = requests.filter(r => r.status === VacationStatus.PENDING_MANAGER).length;
+
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center animate-slide-up">
-                <h1 className="text-2xl font-bold text-slate-800 dark:text-white transition-colors">Gestión de Equipo</h1>
-                <div className="px-4 py-2 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-lg font-medium transition-colors">
-                    {requests.length} Solicitud{requests.length !== 1 ? 'es' : ''} Pendiente{requests.length !== 1 ? 's' : ''}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-slide-up">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-800 dark:text-white transition-colors">Gestión de Equipo</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Administra las solicitudes de tu equipo</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="px-4 py-2 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-lg font-medium transition-colors">
+                        {pendingCount} Pendiente{pendingCount !== 1 ? 's' : ''}
+                    </div>
                 </div>
             </div>
 
@@ -117,7 +163,35 @@ export const TeamRequests: React.FC = () => {
             {/* Content */}
             {activeTab === 'requests' ? (
                 <div>
-                    {requests.length === 0 ? (
+                    {/* Controls */}
+                    <div className="mb-4 flex flex-wrap items-center gap-3">
+                        <button
+                            onClick={expandAll}
+                            className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                        >
+                            <Maximize2 size={16} />
+                            Expandir todo
+                        </button>
+                        <button
+                            onClick={collapseAll}
+                            className="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                        >
+                            <Minimize2 size={16} />
+                            Colapsar todo
+                        </button>
+                        <button
+                            onClick={() => setFilterPending(!filterPending)}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
+                                filterPending 
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                            }`}
+                        >
+                            Sólo pendientes {filterPending && `(${pendingCount})`}
+                        </button>
+                    </div>
+
+                    {displayedRequests.length === 0 ? (
                         <div className="bg-white dark:bg-slate-900 p-12 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 text-center transition-colors animate-slide-up delay-75">
                             <Calendar className="h-16 w-16 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
                             <p className="text-slate-600 dark:text-slate-400 text-lg">No hay solicitudes pendientes de tu equipo</p>
@@ -125,31 +199,52 @@ export const TeamRequests: React.FC = () => {
                     ) : (
                         <div className="space-y-6 animate-slide-up delay-75">
                             {/* Group requests by User */}
-                            {Object.values(requests.reduce((acc, req) => {
+                            {Object.values(displayedRequests.reduce((acc, req) => {
                                 const userId = req.user?.id || 'unknown';
                                 if (!acc[userId]) {
                                     acc[userId] = { user: req.user, requests: [] };
                                 }
                                 acc[userId].requests.push(req);
                                 return acc;
-                            }, {} as Record<string, { user: any, requests: VacationRequest[] }>)).map((group: any) => (
-                                <div key={group.user.name} className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
-                                    <div className="bg-slate-50 dark:bg-slate-800/50 px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                            }, {} as Record<string, { user: any, requests: VacationRequest[] }>)).map((group: any) => {
+                                const isExpanded = expandedUsers.has(group.user.id);
+                                const hasPending = group.requests.some((r: VacationRequest) => r.status === VacationStatus.PENDING_MANAGER);
+                                
+                                return (
+                                <div key={group.user.id} className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors">
+                                    {/* Header - Always visible, clickable */}
+                                    <button
+                                        onClick={() => toggleUserExpanded(group.user.id)}
+                                        className="w-full bg-slate-50 dark:bg-slate-800/50 px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                    >
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
                                                 {group.user.name.charAt(0)}
                                             </div>
-                                            <div>
+                                            <div className="text-left">
                                                 <h3 className="font-bold text-lg text-slate-800 dark:text-white">{group.user.name}</h3>
-                                                <p className="text-sm text-slate-500 dark:text-slate-400">{group.user.department}</p>
+                                                <p className="text-sm text-slate-500 dark:text-slate-400">{group.user.position || group.user.department}</p>
                                             </div>
                                         </div>
-                                        <span className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-semibold px-3 py-1 rounded-full">
-                                            {group.requests.length} solicitud{group.requests.length !== 1 ? 'es' : ''}
-                                        </span>
-                                    </div>
+                                        <div className="flex items-center gap-3">
+                                            {hasPending && (
+                                                <span className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 text-xs font-semibold px-3 py-1 rounded-full">
+                                                    {group.requests.filter((r: VacationRequest) => r.status === VacationStatus.PENDING_MANAGER).length} pendiente(s)
+                                                </span>
+                                            )}
+                                            <span className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-semibold px-3 py-1 rounded-full">
+                                                {group.requests.length} total
+                                            </span>
+                                            {isExpanded ? (
+                                                <ChevronUp className="h-5 w-5 text-slate-500" />
+                                            ) : (
+                                                <ChevronDown className="h-5 w-5 text-slate-500" />
+                                            )}
+                                        </div>
+                                    </button>
 
-                                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                    {/* Collapsible content */}
+                                    {isExpanded && (
                                         {group.requests.map((request: VacationRequest) => (
                                             <div key={request.id} className="p-6 hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
                                                 <div className="flex flex-col md:flex-row justify-between gap-4">
@@ -230,8 +325,10 @@ export const TeamRequests: React.FC = () => {
                                             </div>
                                         ))}
                                     </div>
+                                    )}
                                 </div>
-                            ))}
+                            );
+                            })}
                         </div>
                     )}
                 </div>

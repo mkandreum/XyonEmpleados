@@ -262,6 +262,14 @@ export const CalendarPage: React.FC = () => {
         OVERTIME: 'Compensación Horas',
         OTHER: 'Ausencia'
       };
+      const emojiMap = {
+        VACATION: '🏖️',
+        SICK_LEAVE: '🏥',
+        MEDICAL_LEAVE: '😷',
+        PERSONAL: '📄',
+        OVERTIME: '⏰',
+        OTHER: '💼'
+      };
 
       const start = new Date(v.startDate);
       const end = new Date(v.endDate);
@@ -271,8 +279,9 @@ export const CalendarPage: React.FC = () => {
       return {
         color: colorMap[v.type as keyof typeof colorMap] || 'bg-blue-500',
         textColor: 'text-white',
-        label: labelMap[v.type as keyof typeof labelMap] || 'Ausencia',
+        label: `${emojiMap[v.type as keyof typeof emojiMap] || ''} ${labelMap[v.type as keyof typeof labelMap] || 'Ausencia'}`,
         shortLabel: v.type === 'VACATION' ? 'V' : 'A',
+        detail: v.hours ? `${v.hours}h` : `${v.days} día(s)`,
         outline: v.type !== 'VACATION',
         range: { isStart, isEnd }
       } as any;
@@ -285,8 +294,9 @@ export const CalendarPage: React.FC = () => {
       return {
         color: 'bg-rose-500',
         textColor: 'text-white',
-        label: 'No fichado',
-        shortLabel: '!'
+        label: '❌ No fichado - Ausencia no justificada',
+        shortLabel: '!',
+        detail: 'Sin fichajes registrados'
       };
     }
 
@@ -295,7 +305,7 @@ export const CalendarPage: React.FC = () => {
       return {
         color: 'bg-emerald-500',
         textColor: 'text-white',
-        label: 'Fichado correcto',
+        label: `✅ Fichado correcto - ${stats.horasTrabajadas}h trabajadas`,
         shortLabel: '✓',
         detail: `${stats.horasTrabajadas}h`
       };
@@ -481,16 +491,85 @@ export const CalendarPage: React.FC = () => {
             />
           )}
 
-          {/* Legend */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-3 sm:p-4">
-            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-4 gap-y-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-              <LegendDot color="bg-emerald-500" label="Correcto" />
-              <LegendDot color="bg-amber-500" label="Incidencia" />
-              <LegendDot color="bg-rose-500" label="No fichado" />
-              <LegendDot color="bg-blue-500" label="Vacaciones" />
-              <LegendDot color="bg-red-500" label="Rechazadas" />
-              <LegendDot color="bg-emerald-500" label="Horas médicas" outline />
-              <LegendDot color="bg-amber-400" label="Permiso" outline />
+          {/* Legend & Help Section */}
+          <div className="space-y-4">
+            {/* Expanded Legend */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                <span className="text-lg">📖</span> Leyenda del Calendario
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs sm:text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm flex-shrink-0"></span>
+                  <span className="text-slate-700 dark:text-slate-300">✅ <b>Correcto:</b> Fichajes completos y a tiempo</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-amber-500 shadow-sm flex-shrink-0"></span>
+                  <span className="text-slate-700 dark:text-slate-300">⚠️ <b>Incidencia:</b> Llegada tarde o salida temprana</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-rose-500 shadow-sm flex-shrink-0"></span>
+                  <span className="text-slate-700 dark:text-slate-300">❌ <b>No fichado:</b> Sin registros de fichaje</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-blue-500 shadow-sm flex-shrink-0"></span>
+                  <span className="text-slate-700 dark:text-slate-300">🏖️ <b>Vacaciones:</b> Días de vacaciones aprobados</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-orange-500 border-2 border-orange-500 bg-white flex-shrink-0"></span>
+                  <span className="text-slate-700 dark:text-slate-300">🏥 <b>Horas Médicas:</b> Permisos médicos (horas)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-red-500 border-2 border-red-500 bg-white flex-shrink-0"></span>
+                  <span className="text-slate-700 dark:text-slate-300">😷 <b>Baja Médica:</b> Ausencia por enfermedad</span>
+                </div>
+              </div>
+            </div>
+
+            {/* How to Read Section */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl shadow-sm p-4">
+              <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-3 flex items-center gap-2">
+                <span className="text-lg">💡</span> Cómo Leer el Calendario
+              </h3>
+              <div className="space-y-2 text-xs sm:text-sm text-blue-900 dark:text-blue-200">
+                <p><b>Haz clic en cualquier día</b> para ver los detalles completos de tus fichajes, horas trabajadas e incidencias.</p>
+                <p><b>Los puntos de colores</b> indican el estado de cada día. Verde = todo correcto, Ámbar = incidencias, Rojo = sin fichajes.</p>
+                <p><b>Las etiquetas</b> muestran información adicional como horas trabajadas o tipo de ausencia.</p>
+                <p><b>Los días con rango</b> (vacaciones) se muestran con una franja de color conectando los días.</p>
+              </div>
+            </div>
+
+            {/* Monthly Summary */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                <span className="text-lg">📊</span> Resumen del Mes
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3">
+                  <div className="text-emerald-600 dark:text-emerald-400 text-2xl font-bold">
+                    {Object.values(fichajeDays).filter(s => s.isComplete && !s.isLate && !s.isEarlyDeparture).length}
+                  </div>
+                  <div className="text-emerald-700 dark:text-emerald-300 text-xs font-medium mt-1">Días OK</div>
+                </div>
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                  <div className="text-amber-600 dark:text-amber-400 text-2xl font-bold">
+                    {Object.values(fichajeDays).filter(s => s.isLate || s.isEarlyDeparture).length}
+                  </div>
+                  <div className="text-amber-700 dark:text-amber-300 text-xs font-medium mt-1">Incidencias</div>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <div className="text-blue-600 dark:text-blue-400 text-2xl font-bold">
+                    {vacations.filter(v => v.status === 'APPROVED' && new Date(v.startDate).getMonth() === currentMonth.getMonth()).length}
+                  </div>
+                  <div className="text-blue-700 dark:text-blue-300 text-xs font-medium mt-1">Vacaciones</div>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3">
+                  <div className="text-slate-600 dark:text-slate-400 text-2xl font-bold">
+                    {Object.values(fichajeDays).reduce((acc, s) => acc + s.horasTrabajadas, 0).toFixed(1)}
+                  </div>
+                  <div className="text-slate-700 dark:text-slate-300 text-xs font-medium mt-1">Horas Total</div>
+                </div>
+              </div>
             </div>
           </div>
         </>

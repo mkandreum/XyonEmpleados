@@ -152,6 +152,41 @@ export const VacationsPage: React.FC = () => {
 
         setSubmitting(true);
         try {
+            // SPECIAL CASE: SICK_LEAVE (Horas Médicas) is measured in HOURS, not days
+            if (formData.type === 'SICK_LEAVE') {
+                if (!formData.hours || parseInt(formData.hours) <= 0) {
+                    showAlert('Debes especificar las horas para Horas Médicas', 'warning');
+                    setSubmitting(false);
+                    return;
+                }
+
+                const hoursRequested = parseInt(formData.hours);
+                const hoursAvailable = deptBenefits?.sickLeaveDays ? (deptBenefits.sickLeaveDays - (userBenefits?.sickLeaveDaysUsed || 0)) : 0;
+
+                if (hoursRequested > hoursAvailable) {
+                    showAlert(`No tienes suficientes horas médicas disponibles.\n\nHoras solicitadas: ${hoursRequested}h\nHoras disponibles: ${hoursAvailable}h`, 'error');
+                    setSubmitting(false);
+                    return;
+                }
+
+                await vacationService.create({
+                    startDate: formData.startDate,
+                    endDate: formData.startDate, // Same day for medical hours
+                    days: 0, // No days for medical hours
+                    hours: hoursRequested,
+                    type: 'SICK_LEAVE',
+                    subtype: formData.subtype || undefined,
+                    justificationUrl: formData.justificationUrl || undefined
+                });
+
+                fetchVacations();
+                setShowRequestForm(false);
+                setFormData({ startDate: today, endDate: today, type: 'VACATION', subtype: '', justificationUrl: '', hours: '', durationMode: 'days', lessThanOneDay: false });
+                showAlert('Solicitud de Horas Médicas enviada correctamente', 'success');
+                setSubmitting(false);
+                return;
+            }
+
             const start = new Date(formData.startDate);
             const end = new Date(formData.endDate);
 
@@ -171,9 +206,15 @@ export const VacationsPage: React.FC = () => {
                 return;
             }
 
-            // Exceso Jornada validation? 
+            // Exceso Jornada validation
             if (formData.type === 'OVERTIME') {
-                // Check logic if needed
+                const hoursRequested = formData.lessThanOneDay && formData.hours ? parseInt(formData.hours) : (daysCalculated * 8);
+                const hoursAvailable = deptBenefits?.overtimeHoursBank ? (deptBenefits.overtimeHoursBank - (userBenefits?.overtimeHoursUsed || 0)) : 0;
+                if (hoursRequested > hoursAvailable) {
+                    showAlert(`No tienes suficientes horas de exceso disponibles.\n\nHoras solicitadas: ${hoursRequested}h\nHoras disponibles: ${hoursAvailable}h`, 'error');
+                    setSubmitting(false);
+                    return;
+                }
             }
 
             await vacationService.create({
@@ -314,17 +355,47 @@ export const VacationsPage: React.FC = () => {
                                 )}
                             </div>
 
-                            {/* Date Range Picker */}
+                            {/* Date Range Picker (or Single Date for SICK_LEAVE) */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Selecciona las Fechas</label>
-                                <DateRangePicker
-                                    startDate={formData.startDate}
-                                    endDate={formData.endDate}
-                                    onChange={(start, end) => setFormData({ ...formData, startDate: start, endDate: end })}
-                                />
+                                {formData.type === 'SICK_LEAVE' ? (
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Fecha</label>
+                                        <input
+                                            type="date"
+                                            value={formData.startDate}
+                                            onChange={(e) => setFormData({ ...formData, startDate: e.target.value, endDate: e.target.value })}
+                                            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                                        />
+                                        <div className="mt-4">
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Número de Horas</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="8"
+                                                value={formData.hours}
+                                                onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
+                                                className="w-full md:w-48 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                                                placeholder="Ej: 2"
+                                                required
+                                            />
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                                                💡 Horas médicas disponibles: <span className="font-semibold text-green-600 dark:text-green-400">{deptBenefits?.sickLeaveDays ? (deptBenefits.sickLeaveDays - (userBenefits?.sickLeaveDaysUsed || 0)) : 0}h</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Selecciona las Fechas</label>
+                                        <DateRangePicker
+                                            startDate={formData.startDate}
+                                            endDate={formData.endDate}
+                                            onChange={(start, end) => setFormData({ ...formData, startDate: start, endDate: end })}
+                                        />
+                                    </>
+                                )}
 
-                                {/* Less than one day checkbox - Only for Non-Vacation types usually? Or specifically requested for Other Permissions to measure hours */}
-                                {formData.type !== 'VACATION' && (
+                                {/* Less than one day checkbox - Only for Non-Vacation types (excluding SICK_LEAVE which has its own hours field) */}
+                                {formData.type !== 'VACATION' && formData.type !== 'SICK_LEAVE' && (
                                     <div className="mt-4 space-y-3">
                                         <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 cursor-pointer">
                                             <input
