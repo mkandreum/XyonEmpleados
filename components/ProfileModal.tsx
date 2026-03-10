@@ -242,24 +242,26 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
                             </div>
                         </div>
 
-                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                            <div className="flex items-center justify-between gap-4">
-                                <div>
-                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Recordatorio de fichaje</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">Recibir email 30 min antes de tu turno</p>
+                        {user?.role !== 'ADMIN' && (
+                            <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div>
+                                        <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Recordatorio de fichaje</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">Recibir email 30 min antes de tu turno</p>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.shiftReminderEmail}
+                                            disabled={reminderLoading}
+                                            onChange={(e) => handleToggleShiftReminder(e.target.checked)}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 dark:peer-checked:bg-blue-500"></div>
+                                    </label>
                                 </div>
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.shiftReminderEmail}
-                                        disabled={reminderLoading}
-                                        onChange={(e) => handleToggleShiftReminder(e.target.checked)}
-                                        className="sr-only peer"
-                                    />
-                                    <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 dark:peer-checked:bg-blue-500"></div>
-                                </label>
                             </div>
-                        </div>
+                        )}
 
                         {/* Action Buttons */}
                         <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">

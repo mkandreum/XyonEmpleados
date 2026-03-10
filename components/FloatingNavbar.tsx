@@ -15,13 +15,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
-    adminService,
-    fichajeAdjustmentService,
-    managerService,
     notificationService,
-    vacationService
 } from '../services/api';
-import { VacationStatus } from '../types';
 
 interface NavItem {
     path: string;
@@ -35,6 +30,7 @@ export const FloatingNavbar: React.FC = () => {
     const [showMore, setShowMore] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [pendingDots, setPendingDots] = useState<Set<string>>(new Set());
+    const [unreadNotifications, setUnreadNotifications] = useState<any[]>([]);
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -128,6 +124,7 @@ export const FloatingNavbar: React.FC = () => {
     useEffect(() => {
         if (!user?.role) {
             setPendingDots(new Set());
+            setUnreadNotifications([]);
             return;
         }
 
@@ -138,48 +135,15 @@ export const FloatingNavbar: React.FC = () => {
 
             try {
                 const notifications = await notificationService.getAll();
-                notifications
-                    .filter((n: any) => !n.read)
+                const unread = notifications.filter((n: any) => !n.read);
+                setUnreadNotifications(unread);
+
+                unread
                     .forEach((n: any) => {
                         mapUnreadToPaths(n.title || '', n.message || '', user.role).forEach((path) => nextDots.add(path));
                     });
             } catch (error) {
                 console.warn('Error loading unread notifications for navbar dots:', error);
-            }
-
-            try {
-                if (user.role === 'ADMIN') {
-                    const [adminVacations, pendingAdjustments] = await Promise.all([
-                        adminService.getVacations(),
-                        fichajeAdjustmentService.getPending(),
-                    ]);
-
-                    const hasVacationPending = adminVacations.some(
-                        (v: any) => v.status === VacationStatus.PENDING || v.status === VacationStatus.PENDING_ADMIN
-                    );
-                    if (hasVacationPending) nextDots.add('/admin/vacations');
-                    if (pendingAdjustments.length > 0) nextDots.add('/admin/fichajes');
-                } else if (user.role === 'MANAGER') {
-                    const [teamVacations, pendingAdjustments] = await Promise.all([
-                        managerService.getTeamVacations(),
-                        fichajeAdjustmentService.getPending(),
-                    ]);
-
-                    const hasManagerPending = teamVacations.some((v: any) => v.status === VacationStatus.PENDING_MANAGER);
-                    if (hasManagerPending) nextDots.add('/manager/team');
-                    if (pendingAdjustments.length > 0) nextDots.add('/manager/fichajes');
-                } else {
-                    const myVacations = await vacationService.getAll();
-                    const hasMyPending = myVacations.some(
-                        (v: any) =>
-                            v.status === VacationStatus.PENDING ||
-                            v.status === VacationStatus.PENDING_MANAGER ||
-                            v.status === VacationStatus.PENDING_ADMIN
-                    );
-                    if (hasMyPending) nextDots.add('/vacations');
-                }
-            } catch (error) {
-                console.warn('Error loading pending section data for navbar dots:', error);
             }
 
             if (mounted) setPendingDots(nextDots);
@@ -218,8 +182,30 @@ export const FloatingNavbar: React.FC = () => {
     // If active item is hidden (in "More" menu), we don't show sliding pill on main bar
     const showSlider = activeIndex !== -1;
 
-    // Helper to handle click: Close menu & Scroll top
-    const handleNavClick = () => {
+    const markSectionAsRead = async (path: string) => {
+        const relatedUnread = unreadNotifications.filter((n: any) => {
+            const mapped = mapUnreadToPaths(n.title || '', n.message || '', user?.role || '');
+            return mapped.includes(path);
+        });
+
+        if (relatedUnread.length === 0) return;
+
+        try {
+            await Promise.all(relatedUnread.map((n: any) => notificationService.markAsRead(n.id)));
+            setUnreadNotifications((prev) => prev.filter((n: any) => !relatedUnread.some((r: any) => r.id === n.id)));
+            setPendingDots((prev) => {
+                const updated = new Set(prev);
+                updated.delete(path);
+                return updated;
+            });
+        } catch (error) {
+            console.warn('Error marking section notifications as read:', error);
+        }
+    };
+
+    // Helper to handle click: mark section notifications as read, close menu and scroll top
+    const handleNavClick = async (path: string) => {
+        await markSectionAsRead(path);
         setShowMore(false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -257,7 +243,7 @@ export const FloatingNavbar: React.FC = () => {
                         <Link
                             key={item.path}
                             to={item.path}
-                            onClick={handleNavClick}
+                            onClick={() => { void handleNavClick(item.path); }}
                             className={`
                                 relative z-10 flex flex-col items-center justify-center gap-1
                                 h-14 sm:h-16
@@ -318,7 +304,7 @@ export const FloatingNavbar: React.FC = () => {
                                         <Link
                                             key={item.path}
                                             to={item.path}
-                                            onClick={handleNavClick}
+                                            onClick={() => { void handleNavClick(item.path); }}
                                             className={`
                                                 flex items-center gap-3 px-4 py-3 rounded-xl transition-colors
                                                 ${isActive
