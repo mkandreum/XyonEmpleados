@@ -14,6 +14,7 @@ interface ProfileModalProps {
 export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, onUpdate }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [reminderLoading, setReminderLoading] = useState(false);
     const { themeColor, setThemeColor } = useTheme();
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -22,7 +23,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
         phone: user?.phone || '',
         address: user?.address || '',
         emergencyContact: user?.emergencyContact || '',
-        avatarUrl: user?.avatarUrl || ''
+        avatarUrl: user?.avatarUrl || '',
+        shiftReminderEmail: user?.shiftReminderEmail !== false
     });
 
     useEffect(() => {
@@ -31,10 +33,31 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
                 phone: user.phone || '',
                 address: user.address || '',
                 emergencyContact: user.emergencyContact || '',
-                avatarUrl: user.avatarUrl || ''
+                avatarUrl: user.avatarUrl || '',
+                shiftReminderEmail: user.shiftReminderEmail !== false
             });
         }
     }, [user]);
+
+    const handleToggleShiftReminder = async (checked: boolean) => {
+        setReminderLoading(true);
+        try {
+            await userService.updateProfile({ shiftReminderEmail: checked });
+            setFormData((prev) => ({ ...prev, shiftReminderEmail: checked }));
+
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                const parsed = JSON.parse(storedUser);
+                parsed.shiftReminderEmail = checked;
+                localStorage.setItem('user', JSON.stringify(parsed));
+            }
+        } catch (error) {
+            console.error('Failed to update shift reminder preference', error);
+            alert('Error al actualizar recordatorio de fichaje');
+        } finally {
+            setReminderLoading(false);
+        }
+    };
 
     const handleSave = async () => {
         setLoading(true);
@@ -216,6 +239,25 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
                                         />
                                     );
                                 })}
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                            <div className="flex items-center justify-between gap-4">
+                                <div>
+                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200">Recordatorio de fichaje</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">Recibir email 30 min antes de tu turno</p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.shiftReminderEmail}
+                                        disabled={reminderLoading}
+                                        onChange={(e) => handleToggleShiftReminder(e.target.checked)}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 dark:peer-checked:bg-blue-500"></div>
+                                </label>
                             </div>
                         </div>
 
