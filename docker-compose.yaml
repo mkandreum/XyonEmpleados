@@ -31,8 +31,9 @@ services:
         if [ -z "$JWT_SECRET" ]; then echo "[FATAL] JWT_SECRET is required"; exit 1; fi
         if [ -z "$ADMIN_INITIAL_PASSWORD" ]; then echo "[FATAL] ADMIN_INITIAL_PASSWORD is required"; exit 1; fi
         if [ -z "$POSTGRES_PASSWORD" ]; then echo "[FATAL] POSTGRES_PASSWORD is required"; exit 1; fi
-        # ── Build DATABASE_URL automatically ──
-        export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
+        # ── Build DATABASE_URL with URL-encoded password (handles special chars) ──
+        DB_PASS_ENCODED=$(node -e "console.log(encodeURIComponent(process.env.POSTGRES_PASSWORD))")
+        export DATABASE_URL="postgresql://${POSTGRES_USER}:${DB_PASS_ENCODED}@db:5432/${POSTGRES_DB}"
         echo "[app] DATABASE_URL built → connecting to db:5432/${POSTGRES_DB}"
         # ── Run migrations with retry ──
         until npm run prisma:migrate; do
