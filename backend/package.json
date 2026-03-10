@@ -11,7 +11,7 @@
     "prisma:migrate": "prisma migrate deploy",
     "seed": "node prisma/seed.js",
     "build": "npm run prisma:generate && npm run prisma:migrate && echo 'Build complete'",
-    "postinstall": "if [ -d prisma ]; then npm run prisma:generate; fi"
+    "postinstall": "node -e \"const fs=require('fs');const {execSync}=require('child_process');if(fs.existsSync('prisma/schema.prisma')) execSync('npm run prisma:generate',{stdio:'inherit'});\""
   },
   "dependencies": {
     "@prisma/client": "^6.4.0",
