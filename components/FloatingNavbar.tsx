@@ -14,6 +14,14 @@ import {
     MoreHorizontal
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import {
+    adminService,
+    fichajeAdjustmentService,
+    managerService,
+    notificationService,
+    vacationService
+} from '../services/api';
+import { VacationStatus } from '../types';
 
 interface NavItem {
     path: string;
@@ -26,6 +34,7 @@ export const FloatingNavbar: React.FC = () => {
     const location = useLocation();
     const [showMore, setShowMore] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [pendingDots, setPendingDots] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -51,11 +60,139 @@ export const FloatingNavbar: React.FC = () => {
         { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/admin/users', label: 'Usuarios', icon: Users },
         { path: '/admin/fichajes', label: 'Fichajes', icon: Clock },
-        { path: '/admin/vacations', label: 'Vacaciones', icon: Calendar },
+        { path: '/admin/vacations', label: 'Solicitudes', icon: Calendar },
         { path: '/admin/payrolls', label: 'Nóminas', icon: FileText },
         { path: '/admin/news', label: 'Noticias', icon: Newspaper },
         { path: '/admin/settings', label: 'Ajustes', icon: Settings },
     ];
+
+    const mapUnreadToPaths = (title: string, message: string, role: string) => {
+        const normalizedTitle = (title || '').trim().toLowerCase();
+        const text = `${title} ${message}`.toLowerCase();
+        const paths: string[] = [];
+
+        const vacationTitles = new Set([
+            'solicitud aprobada',
+            'solicitud rechazada',
+            'nueva solicitud pendiente',
+            'solicitud requiere aprobación final',
+        ]);
+
+        const fichajeTitles = new Set([
+            'aviso de llegada tarde',
+            'aviso de fichaje',
+            'ajuste de fichaje aprobado',
+            'ajuste de fichaje rechazado',
+            'recordatorio de fichaje',
+        ]);
+
+        if (vacationTitles.has(normalizedTitle)) {
+            if (role === 'ADMIN') paths.push('/admin/vacations');
+            else if (role === 'MANAGER') paths.push('/manager/team');
+            else paths.push('/vacations');
+            return paths;
+        }
+
+        if (fichajeTitles.has(normalizedTitle)) {
+            if (role === 'ADMIN') paths.push('/admin/fichajes');
+            else if (role === 'MANAGER') paths.push('/manager/fichajes');
+            else paths.push('/news');
+            return paths;
+        }
+
+        if (text.includes('vacacion') || text.includes('ausenc') || text.includes('permiso') || text.includes('solicitud')) {
+            if (role === 'ADMIN') paths.push('/admin/vacations');
+            else if (role === 'MANAGER') paths.push('/manager/team');
+            else paths.push('/vacations');
+        }
+
+        if (text.includes('fichaje') || text.includes('tarde') || text.includes('ajuste') || text.includes('justific')) {
+            if (role === 'ADMIN') paths.push('/admin/fichajes');
+            else if (role === 'MANAGER') paths.push('/manager/fichajes');
+            else paths.push('/news');
+        }
+
+        if (text.includes('nomina') || text.includes('nómina') || text.includes('payroll')) {
+            if (role === 'ADMIN') paths.push('/admin/payrolls');
+            else paths.push('/payroll');
+        }
+
+        if (text.includes('noticia') || text.includes('comunicado') || text.includes('evento')) {
+            if (role === 'ADMIN') paths.push('/admin/news');
+            else paths.push('/news');
+        }
+
+        return paths;
+    };
+
+    useEffect(() => {
+        if (!user?.role) {
+            setPendingDots(new Set());
+            return;
+        }
+
+        let mounted = true;
+
+        const fetchPendingDots = async () => {
+            const nextDots = new Set<string>();
+
+            try {
+                const notifications = await notificationService.getAll();
+                notifications
+                    .filter((n: any) => !n.read)
+                    .forEach((n: any) => {
+                        mapUnreadToPaths(n.title || '', n.message || '', user.role).forEach((path) => nextDots.add(path));
+                    });
+            } catch (error) {
+                console.warn('Error loading unread notifications for navbar dots:', error);
+            }
+
+            try {
+                if (user.role === 'ADMIN') {
+                    const [adminVacations, pendingAdjustments] = await Promise.all([
+                        adminService.getVacations(),
+                        fichajeAdjustmentService.getPending(),
+                    ]);
+
+                    const hasVacationPending = adminVacations.some(
+                        (v: any) => v.status === VacationStatus.PENDING || v.status === VacationStatus.PENDING_ADMIN
+                    );
+                    if (hasVacationPending) nextDots.add('/admin/vacations');
+                    if (pendingAdjustments.length > 0) nextDots.add('/admin/fichajes');
+                } else if (user.role === 'MANAGER') {
+                    const [teamVacations, pendingAdjustments] = await Promise.all([
+                        managerService.getTeamVacations(),
+                        fichajeAdjustmentService.getPending(),
+                    ]);
+
+                    const hasManagerPending = teamVacations.some((v: any) => v.status === VacationStatus.PENDING_MANAGER);
+                    if (hasManagerPending) nextDots.add('/manager/team');
+                    if (pendingAdjustments.length > 0) nextDots.add('/manager/fichajes');
+                } else {
+                    const myVacations = await vacationService.getAll();
+                    const hasMyPending = myVacations.some(
+                        (v: any) =>
+                            v.status === VacationStatus.PENDING ||
+                            v.status === VacationStatus.PENDING_MANAGER ||
+                            v.status === VacationStatus.PENDING_ADMIN
+                    );
+                    if (hasMyPending) nextDots.add('/vacations');
+                }
+            } catch (error) {
+                console.warn('Error loading pending section data for navbar dots:', error);
+            }
+
+            if (mounted) setPendingDots(nextDots);
+        };
+
+        fetchPendingDots();
+        const interval = setInterval(fetchPendingDots, 30000);
+
+        return () => {
+            mounted = false;
+            clearInterval(interval);
+        };
+    }, [user?.role]);
 
     // Determine items based on role
     let items: NavItem[] = [];
@@ -114,6 +251,7 @@ export const FloatingNavbar: React.FC = () => {
                 {visibleItems.map((item) => {
                     const isActive = location.pathname === item.path;
                     const Icon = item.icon;
+                    const hasPending = pendingDots.has(item.path);
 
                     return (
                         <Link
@@ -131,6 +269,9 @@ export const FloatingNavbar: React.FC = () => {
                             `}
                         >
                             <Icon size={isMobile ? 20 : 22} strokeWidth={isActive ? 3 : 2} className="transition-transform duration-200" />
+                            {hasPending && (
+                                <span className="absolute top-2 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border border-white dark:border-slate-900" />
+                            )}
 
                             <span className={`text-[10px] sm:text-xs font-semibold leading-none ${isActive ? 'text-white font-bold' : 'transition-colors'}`}>
                                 {item.label}
@@ -172,6 +313,7 @@ export const FloatingNavbar: React.FC = () => {
                                 {hiddenItems.map((item) => {
                                     const isActive = location.pathname === item.path;
                                     const Icon = item.icon;
+                                    const hasPending = pendingDots.has(item.path);
                                     return (
                                         <Link
                                             key={item.path}
@@ -184,7 +326,12 @@ export const FloatingNavbar: React.FC = () => {
                                                     : 'text-blue-700 dark:text-blue-400 hover:bg-white/50 dark:hover:bg-slate-800/50'}
                                             `}
                                         >
-                                            <Icon size={18} />
+                                            <div className="relative">
+                                                <Icon size={18} />
+                                                {hasPending && (
+                                                    <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border border-white dark:border-slate-900" />
+                                                )}
+                                            </div>
                                             <span className="text-sm font-medium">{item.label}</span>
                                         </Link>
                                     );
