@@ -76,3 +76,65 @@ Configura estas variables en el servicio del stack:
 
 - En este entorno local no hay CLI de Docker instalada, por lo que la validación fue estática de configuración.
 - El build de frontend sí quedó validado correctamente (`npm run build` OK).
+
+## 7) Recovery: "password authentication failed" con volumen existente
+
+Síntoma típico en logs:
+- `PostgreSQL Database directory appears to contain a database; Skipping initialization`
+- `FATAL: password authentication failed for user "postgres"`
+
+Causa:
+- Al existir volumen persistente, Postgres **no** reaplica `POSTGRES_PASSWORD`.
+- El backend intenta conectar con credenciales nuevas (o `DATABASE_URL` diferente) y falla.
+
+## 8) Modo 100% automático (implementado)
+
+El stack ahora arranca con estas garantías automáticas:
+
+1. Servicio `db-credentials-init` genera una contraseña aleatoria una sola vez.
+2. La contraseña se persiste en volumen `db_auth`.
+3. `db` usa `POSTGRES_PASSWORD_FILE` leyendo ese archivo.
+4. `app` construye `DATABASE_URL` en runtime leyendo el mismo archivo.
+5. `app` reintenta `prisma:migrate` hasta que la DB acepte autenticación.
+
+Resultado:
+- Sin gestión manual de `DATABASE_URL`/`POSTGRES_PASSWORD` en despliegues nuevos.
+- Sin desincronización de credenciales entre `app` y `db`.
+
+### Importante para tu caso actual (volumen legacy ya creado)
+
+Si el volumen `postgres_data` ya existe con contraseña histórica desconocida, hay una única acción inicial:
+
+- **Opción recomendada**: eliminar `postgres_data` si puedes perder datos (entorno nuevo/testing), y redeploy.
+- **Si NO puedes perder datos**: restaurar temporalmente credenciales antiguas para arrancar y migrar a este modo automático.
+
+Después de esa única corrección inicial, el modo automático mantiene las credenciales sincronizadas sin intervención manual.
+
+### Opción A (recomendada, sin pérdida de datos): usar la contraseña real del volumen
+
+1. En Coolify, edita variables del stack para que:
+   - `POSTGRES_PASSWORD` = contraseña original del volumen
+   - `DATABASE_URL` use exactamente esa contraseña
+2. Redeploy.
+
+### Opción B (si no recuerdas la contraseña): resetear password dentro del contenedor DB
+
+Ejecuta en terminal del contenedor `db`:
+
+```bash
+psql -U postgres -d postgres -c "ALTER USER postgres WITH PASSWORD 'NUEVA_PASSWORD_SEGURA';"
+```
+
+Luego actualiza en Coolify:
+- `POSTGRES_PASSWORD=NUEVA_PASSWORD_SEGURA`
+- `DATABASE_URL=postgresql://postgres:NUEVA_PASSWORD_SEGURA@db:5432/xyonempleados_db`
+
+Y redeploy.
+
+### Opción C (destructiva): reinicializar DB
+
+Solo si quieres empezar desde cero:
+- borrar volumen persistente de Postgres en Coolify
+- redeploy con nuevas variables
+
+Esto elimina todos los datos.
