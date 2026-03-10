@@ -32,11 +32,11 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required}
+      - JWT_SECRET=${JWT_SECRET:-}
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_DB=${POSTGRES_DB:-xyonempleados_db}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@xyonempleados.com}
-      - ADMIN_INITIAL_PASSWORD=${ADMIN_INITIAL_PASSWORD:?ADMIN_INITIAL_PASSWORD is required}
+      - ADMIN_INITIAL_PASSWORD=${ADMIN_INITIAL_PASSWORD:-}
       - FRONTEND_URL=${FRONTEND_URL:-}
     volumes:
       - uploads:/app/uploads
@@ -46,6 +46,9 @@ services:
       - -c
       - |
         set -eu
+        # Validate required secrets at runtime (not at build time)
+        if [ -z "$JWT_SECRET" ]; then echo "[ERROR] JWT_SECRET env var is required"; exit 1; fi
+        if [ -z "$ADMIN_INITIAL_PASSWORD" ]; then echo "[ERROR] ADMIN_INITIAL_PASSWORD env var is required"; exit 1; fi
         DB_PASS="$(cat /run/secrets-db/postgres_password)"
         export DATABASE_URL="postgresql://${POSTGRES_USER}:${DB_PASS}@db:5432/${POSTGRES_DB}"
         echo "[app] waiting for database auth + migrations..."
