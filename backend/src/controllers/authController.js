@@ -52,7 +52,6 @@ exports.updateProfile = async (req, res) => {
         });
 
         const { password: _, ...userWithoutPassword } = user;
-        localStorage.setItem('user', JSON.stringify(userWithoutPassword));
         res.json(userWithoutPassword);
     } catch (error) {
         console.error("Update profile error:", error);
@@ -77,7 +76,7 @@ exports.changePassword = async (req, res) => {
             return res.status(401).json({ error: 'Current password is incorrect' });
         }
 
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const hashedPassword = await bcrypt.hash(newPassword, 12);
         await prisma.user.update({
             where: { id: req.user.userId },
             data: { password: hashedPassword }
@@ -123,7 +122,7 @@ exports.register = async (req, res) => {
             return res.status(400).json({ error: 'El email ya está registrado' });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, 12);
 
         // Get default avatar from settings
         const defaultAvatarSetting = await prisma.globalSettings.findUnique({
@@ -262,7 +261,7 @@ exports.resetPassword = async (req, res) => {
             return res.status(400).json({ error: 'Invalid token' });
         }
 
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const hashedPassword = await bcrypt.hash(newPassword, 12);
         await prisma.user.update({
             where: { id: user.id },
             data: {
