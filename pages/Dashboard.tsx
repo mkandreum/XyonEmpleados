@@ -1,0 +1,314 @@
+﻿import React, { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { vacationService, eventsService, holidayService, benefitsService, payrollService, lateNotificationService, fichajeAdjustmentService, dashboardLayoutService } from '../services/api';
+import { VacationRequest, Event, Holiday, UserBenefitsBalance, DepartmentBenefits, Payroll, LateArrivalNotification } from '../types';
+import { DashboardLayout, DashboardWidgetType } from '../types';
+import { Calendar, Clock, Briefcase, FileText, Download, ChevronRight, Plane, AlertTriangle } from 'lucide-react';
+import { DigitalClock } from '../components/DigitalClock';
+import { FichajeButton } from '../components/FichajeButton';
+import { openProtectedFile } from '../utils/fileUtils';
+
+export const Dashboard: React.FC = () => {
+  const { user } = useAuth() as any;
+  const navigate = useNavigate();
+  const [activeLayout, setActiveLayout] = useState<DashboardLayout | null>(null);
+  const [vacations, setVacations] = useState<VacationRequest[]>([]);
+  const [pendingVacations, setPendingVacations] = useState<VacationRequest[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [pendingAdjustments, setPendingAdjustments] = useState<any[]>([]);
+  const [nextHoliday, setNextHoliday] = useState<Holiday | null>(null);
+  const [benefits, setBenefits] = useState<UserBenefitsBalance | null>(null);
+  const [deptBenefits, setDeptBenefits] = useState<DepartmentBenefits | null>(null);
+  const [lastPayroll, setLastPayroll] = useState<Payroll | null>(null);
+  const [pendingWarnings, setPendingWarnings] = useState<LateArrivalNotification[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const promises: Promise<any>[] = [
+          dashboardLayoutService.getActive(),
+          vacationService.getAll(),
+          eventsService.getAll(),
+          holidayService.getNext(),
+          benefitsService.getUserBalance(),
+          payrollService.getAll(),
+          lateNotificationService.getAll()
+        ];
+
+        if (user?.role === 'MANAGER' || user?.role === 'ADMIN') {
+          promises.push(fichajeAdjustmentService.getPending());
+        }
+
+        if (user?.department) {
+          promises.push(benefitsService.getDepartmentBenefits(user.department));
+        }
+
+        const results = await Promise.all(promises);
+        const [layout, vacs, evts, holiday, benefitBalance, payrolls, warnings] = results;
+        setActiveLayout(layout);
+
+        setVacations(vacs);
+        setPendingVacations(vacs.filter((v: VacationRequest) => v.status === 'PENDING'));
+        setEvents(evts);
+        setNextHoliday(holiday);
+        setBenefits(benefitBalance);
+
+        if (Array.isArray(warnings)) {
+          setPendingWarnings(warnings.filter((w: LateArrivalNotification) => !w.justificado));
+        }
+
+        if (Array.isArray(payrolls) && payrolls.length > 0) {
+          setLastPayroll(payrolls[payrolls.length - 1]);
+        }
+
+        const isManagerAdmin = user?.role === 'MANAGER' || user?.role === 'ADMIN';
+        if (isManagerAdmin && results[7]) {
+          setPendingAdjustments(results[7]);
+        }
+
+        const deptIdx = 7 + (isManagerAdmin ? 1 : 0);
+        if (user?.department && results[deptIdx]) {
+          setDeptBenefits(results[deptIdx] as DepartmentBenefits);
+        }
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
+
+  const nextPayrollDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+  const nextPayrollStr = nextPayrollDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+
+  if (loading) return <div className="flex items-center justify-center h-screen"><div className="text-slate-500">Cargando...</div></div>;
+
+  const vacationLimit = deptBenefits?.vacationDays || 22;
+  const vacationUsed = benefits?.vacationDaysUsed || 0;
+  const remainingVacations = vacationLimit - vacationUsed;
+
+  // Layout-aware ordering
+  type WType = DashboardWidgetType;
+  const DEFAULT_ORDER: WType[] = ['ADJUSTMENTS', 'ALERTS', 'FICHAJE', 'VACATIONS', 'PAYROLL', 'EVENTS', 'NEWS', 'BENEFITS', 'BANNER'];
+
+  const widgetOrder = (type: WType): number => {
+    if (activeLayout && activeLayout.widgets.length > 0) {
+      const idx = activeLayout.widgets.findIndex(w => w.type === type && w.isActive);
+      return idx >= 0 ? idx + 2 : 999;
+    }
+    return DEFAULT_ORDER.indexOf(type) + 2;
+  };
+
+  const widgetHidden = (type: WType): boolean => {
+    if (!activeLayout || activeLayout.widgets.length === 0) return false;
+    return !activeLayout.widgets.some(w => w.type === type && w.isActive);
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="animate-slide-up" style={{ order: 1 }}>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Hola, {user?.name?.split(' ')[0]}!</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">{new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      </div>
+
+      {pendingAdjustments.length > 0 && (
+        <div className={`bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/50 rounded-xl p-6 relative overflow-hidden animate-slide-up delay-75 ${widgetHidden('ADJUSTMENTS') ? 'hidden' : ''}`} style={{ order: widgetOrder('ADJUSTMENTS') }}>
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <Clock size={100} className="text-blue-500" />
+          </div>
+          <div className="relative z-10">
+            <h2 className="text-blue-700 dark:text-blue-300 font-bold text-lg flex items-center gap-2 mb-2">
+              <Clock className="text-blue-600 dark:text-blue-400" />
+              Solicitudes de Ajuste Pendientes
+            </h2>
+            <p className="text-sm text-blue-600 dark:text-blue-300 mt-2">
+              Hay {pendingAdjustments.length} {pendingAdjustments.length === 1 ? 'solicitud' : 'solicitudes'} de ajuste de fichaje esperando revision.
+            </p>
+            <button
+              onClick={() => navigate('/manager/adjustments')}
+              className="mt-4 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2"
+            >
+              Gestionar Ajustes
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {pendingWarnings.length > 0 && (
+        <div className={`bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-xl p-6 relative overflow-hidden animate-slide-up delay-75 ${widgetHidden('ALERTS') ? 'hidden' : ''}`} style={{ order: widgetOrder('ALERTS') }}>
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <AlertTriangle size={100} className="text-red-500" />
+          </div>
+          <div className="relative z-10">
+            <h2 className="text-red-700 dark:text-red-300 font-bold text-lg flex items-center gap-2 mb-2">
+              <AlertTriangle className="text-red-600 dark:text-red-400" />
+              Tienes {pendingWarnings.length} {pendingWarnings.length === 1 ? 'Aviso' : 'Avisos'} de Asistencia
+            </h2>
+            <div className="space-y-3 mt-4">
+              {pendingWarnings.slice(0, 2).map((warning) => (
+                <div key={warning.id} className="bg-white/60 dark:bg-slate-800/60 p-3 rounded-lg border border-red-100 dark:border-red-900/30 backdrop-blur-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-red-800 dark:text-red-200">
+                        {new Date(warning.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+                      </p>
+                      <p className="text-xs text-red-600 dark:text-red-300">
+                        Reclamado por: {warning.manager?.name || 'Manager'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {pendingWarnings.length > 2 && (
+                <p className="text-xs text-red-600 dark:text-red-300 font-medium pl-1">
+                  ... y {pendingWarnings.length - 2} mas.
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => navigate('/news?tab=attendance')}
+              className="mt-4 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2"
+            >
+              Ver y Justificar
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${widgetHidden('VACATIONS') && widgetHidden('PAYROLL') ? 'hidden' : ''}`} style={{ order: Math.min(widgetOrder('VACATIONS'), widgetOrder('PAYROLL')) }}>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors animate-slide-up delay-150">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg">
+              <Briefcase size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Dias de Vacaciones</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{remainingVacations}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors animate-slide-up delay-200">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 rounded-lg">
+              <Clock size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Solicitudes Pendientes</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{pendingVacations.length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors animate-slide-up delay-300">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-lg">
+              <Clock size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Proxima Nomina</p>
+              <p className="text-lg font-bold text-slate-900 dark:text-white">{nextPayrollStr}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={`bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 p-6 rounded-xl shadow-sm border border-blue-100 dark:border-slate-700 transition-colors animate-slide-up delay-300 ${widgetHidden('FICHAJE') ? 'hidden' : ''}`} style={{ order: widgetOrder('FICHAJE') }}>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Control de Asistencia</h2>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <DigitalClock />
+          <FichajeButton />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ order: Math.min(widgetOrder('PAYROLL'), widgetOrder('EVENTS')) + 1 }}>
+        <div className="lg:col-span-2 space-y-6">
+          <button
+            onClick={() => navigate('/vacations')}
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-700 dark:to-blue-900 text-white rounded-xl p-6 shadow-sm shadow-blue-200 dark:shadow-none transition-all transform hover:-translate-y-1 flex items-center justify-between group animate-slide-up delay-400"
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-white/20 rounded-lg">
+                <Plane size={32} className="text-white" />
+              </div>
+              <div className="text-left">
+                <h3 className="text-xl font-bold">Gestion de Vacaciones y Ausencias</h3>
+                <p className="text-blue-100 text-sm">Solicitar dias libres, bajas o consultar historico</p>
+              </div>
+            </div>
+            <div className="bg-white/20 p-2 rounded-full group-hover:bg-white/30 transition-colors">
+              <ChevronRight size={24} />
+            </div>
+          </button>
+
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 flex items-center justify-between transition-colors animate-slide-up delay-500">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg border border-green-100 dark:border-green-900/30">
+                <FileText size={28} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-white text-lg">Ultima Nomina Disponible</h3>
+                {lastPayroll ? (
+                  <p className="text-slate-500 dark:text-slate-400 text-sm capitalize">{lastPayroll.month} {lastPayroll.year}</p>
+                ) : (
+                  <p className="text-slate-400 dark:text-slate-500 text-sm">No hay nominas disponibles</p>
+                )}
+              </div>
+            </div>
+            {lastPayroll && (
+              <button
+                onClick={async () => {
+                  try {
+                    await openProtectedFile(lastPayroll.pdfUrl);
+                  } catch (error) {
+                    console.error('Error opening payroll:', error);
+                  }
+                }}
+                className="flex items-center gap-2 bg-slate-900 dark:bg-slate-800 text-white px-5 py-3 rounded-lg hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors font-medium shadow-sm"
+              >
+                <Download size={18} />
+                Descargar PDF
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 h-full transition-colors animate-slide-up delay-500">
+            <h2 className="font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <Calendar size={18} className="text-slate-400" />
+              Eventos Proximos
+            </h2>
+            {events.length > 0 ? (
+              <div className="space-y-3">
+                {events.slice(0, 3).map(event => (
+                  <div key={event.id} className="flex gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                    <div className="flex-shrink-0 w-12 h-12 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg flex flex-col items-center justify-center">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{new Date(event.date).toLocaleDateString('es-ES', { month: 'short' })}</span>
+                      <span className="text-lg font-bold text-slate-900 dark:text-white">{new Date(event.date).getDate()}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-slate-900 dark:text-white text-sm truncate">{event.title}</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{event.location || 'Ubicacion pendiente'}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-slate-400 dark:text-slate-500 text-sm">No hay eventos proximos</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

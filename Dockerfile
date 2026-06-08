@@ -1,0 +1,47 @@
+# Stage 1: Build Frontend
+FROM node:20-alpine as frontend-builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+# Build the Vite app
+RUN npm run build   
+# Output is usually in /dist
+
+# Stage 2: Setup Backend & Runtime
+FROM node:20-alpine
+WORKDIR /app
+
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+# Copy Prisma schema FIRST (needed by postinstall hook)
+COPY backend/prisma ./prisma
+
+# Install backend dependencies (including dev for prisma generate)
+COPY backend/package*.json ./
+RUN npm ci
+
+# Copy backend source
+COPY backend/ .
+
+# Generate Prisma client, then remove dev dependencies to keep runtime image lean
+RUN npm run prisma:generate && npm prune --omit=dev
+
+# Copy built frontend to backend's public directory
+COPY --from=frontend-builder /app/dist ./public
+
+# Copy version.json generated during frontend build (prebuild script)
+COPY --from=frontend-builder /app/backend/version.json ./version.json
+
+# Create uploads directory structure (public for logos/avatars/news, private for payrolls/justifications)
+RUN mkdir -p uploads/public/logos uploads/public/avatars uploads/public/news uploads/private/payrolls uploads/private/justifications
+
+# Declare volume for persistent storage
+VOLUME ["/app/uploads"]
+
+# Expose port
+EXPOSE 3000
+
+# Command to run migrations and start server
+CMD npm run prisma:migrate && node src/server.js

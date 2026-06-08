@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>XyonEmpleados | Portal del Empleado</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="apple-touch-icon" href="/pwa-192x192.png">
+  <meta name="theme-color" content="#ffffff">
+</head>
+
+<body>
+  <div id="root"></div>
+  <!-- Kill any old service workers + version check -->
+  <script>
+    (function () {
+      // 1. KILL all service workers and caches immediately
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (r) { r.unregister(); });
+        });
+      }
+      if ('caches' in window) {
+        caches.keys().then(function (names) {
+          names.forEach(function (n) { caches.delete(n); });
+        });
+      }
+
+      // 2. Version check - reload if new deploy detected
+      var ASSET_VERSION = '1773138926';
+      try {
+        var stored = localStorage.getItem('asset_version');
+        if (stored && stored !== ASSET_VERSION && ASSET_VERSION !== '__BUILD_' + 'VERSION__') {
+          localStorage.setItem('asset_version', ASSET_VERSION);
+          window.location.reload(true);
+          return;
+        }
+        if (ASSET_VERSION !== '__BUILD_' + 'VERSION__') {
+          localStorage.setItem('asset_version', ASSET_VERSION);
+        }
+      } catch (e) { }
+
+      // 3. Poll /api/version every 2 min for new deploys
+      function checkServerVersion() {
+        fetch('/api/version', { cache: 'no-store' })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data || !data.version) return;
+            // Compare against baked build version to avoid reload loops
+            if (data.version !== ASSET_VERSION) {
+              var reloadedForVersion = sessionStorage.getItem('reloaded_for_version');
+              if (reloadedForVersion === data.version) return;
+              sessionStorage.setItem('reloaded_for_version', data.version);
+              localStorage.setItem('asset_version', data.version);
+              window.location.reload();
+            }
+          })
+          .catch(function () { });
+      }
+      setTimeout(checkServerVersion, 3000);
+      setInterval(checkServerVersion, 2 * 60 * 1000);
+
+      // 4. Session / token expiry guard
+      try {
+        var token = localStorage.getItem('token');
+        if (token) {
+          var parts = token.split('.');
+          if (parts.length === 3) {
+            var payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+            if (payload.exp && (payload.exp * 1000) < Date.now()) {
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              if (window.location.pathname !== '/login' &&
+                window.location.pathname !== '/register' &&
+                window.location.pathname !== '/forgot-password' &&
+                window.location.pathname !== '/reset-password') {
+                window.location.replace('/login?expired=1');
+              }
+            }
+          } else {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          }
+        }
+      } catch (e) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+
+    })();
+  </script>
+  <script type="module" src="/index.tsx?v=1773138926"></script>
+</body>
+
+</html>

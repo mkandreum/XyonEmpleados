@@ -1,0 +1,90 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET:-}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
+      - POSTGRES_DB=${POSTGRES_DB:-xyonempleados_db}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@xyonempleados.com}
+      - ADMIN_INITIAL_PASSWORD=${ADMIN_INITIAL_PASSWORD:-}
+      - FRONTEND_URL=${FRONTEND_URL:-}
+    volumes:
+      - uploads:/app/uploads
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        # ── Validate required env vars at runtime ──
+        if [ -z "$JWT_SECRET" ]; then echo "[FATAL] JWT_SECRET is required"; exit 1; fi
+        if [ -z "$ADMIN_INITIAL_PASSWORD" ]; then echo "[FATAL] ADMIN_INITIAL_PASSWORD is required"; exit 1; fi
+        if [ -z "$POSTGRES_PASSWORD" ]; then echo "[FATAL] POSTGRES_PASSWORD is required"; exit 1; fi
+        # ── Build DATABASE_URL with URL-encoded password (handles special chars) ──
+        DB_PASS_ENCODED=$(node -e "console.log(encodeURIComponent(process.env.POSTGRES_PASSWORD))")
+        export DATABASE_URL="postgresql://${POSTGRES_USER}:${DB_PASS_ENCODED}@db:5432/${POSTGRES_DB}"
+        echo "[app] DATABASE_URL built → connecting to db:5432/${POSTGRES_DB}"
+        # ── Run migrations with retry ──
+        until npm run prisma:migrate; do
+          echo "[app] prisma:migrate failed, retrying in 5s..."
+          sleep 5
+        done
+        echo "[app] migrations OK — starting server"
+        exec node src/server.js
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      POSTGRES_DB: ${POSTGRES_DB:-xyonempleados_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        PGDATA="/var/lib/postgresql/data"
+        if [ -f "$$PGDATA/PG_VERSION" ] && [ -n "$$POSTGRES_PASSWORD" ]; then
+          echo "[db] Existing database detected — force-syncing password..."
+          cp "$$PGDATA/pg_hba.conf" "$$PGDATA/pg_hba.conf.bak"
+          printf 'local all all trust\nhost all all all trust\n' > "$$PGDATA/pg_hba.conf"
+          docker-entrypoint.sh postgres &
+          PG_PID=$$!
+          while ! pg_isready -U "$$POSTGRES_USER" -q 2>/dev/null; do sleep 1; done
+          SAFE_PW=$$(printf '%s' "$$POSTGRES_PASSWORD" | sed "s/'/''/g")
+          psql -U "$$POSTGRES_USER" -d postgres -c "ALTER USER \"$$POSTGRES_USER\" WITH PASSWORD '$$SAFE_PW';"
+          echo "[db] Password synced OK — restoring auth config"
+          cp "$$PGDATA/pg_hba.conf.bak" "$$PGDATA/pg_hba.conf"
+          rm -f "$$PGDATA/pg_hba.conf.bak"
+          pg_ctl reload -D "$$PGDATA"
+          wait $$PG_PID
+        else
+          echo "[db] Fresh database — normal startup"
+          exec docker-entrypoint.sh postgres
+        fi
+
+volumes:
+  postgres_data:
+  uploads:

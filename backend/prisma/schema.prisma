@@ -1,0 +1,354 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  EMPLOYEE
+  MANAGER
+  ADMIN
+}
+
+enum VacationStatus {
+  PENDING
+  PENDING_MANAGER
+  PENDING_ADMIN
+  APPROVED
+  REJECTED
+}
+
+enum NewsCategory {
+  CORPORATE
+  EVENT
+  URGENT
+}
+
+enum FichajeTipo {
+  ENTRADA
+  SALIDA
+}
+
+enum FichajeAdjustmentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String
+  name        String
+  role        Role     @default(EMPLOYEE)
+  department  String
+  position    String
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  avatarUrl   String?
+  phone       String?
+  address     String?
+  emergencyContact String?
+  shiftReminderEmail Boolean @default(true) // Email reminder 30 min before shift
+  joinDate    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  vacations   VacationRequest[]
+  payrolls    Payroll[]
+  notifications Notification[]
+  benefitsBalance UserBenefitsBalance?
+  fichajes    Fichaje[]
+  lateNotificationsReceived LateArrivalNotification[] @relation("UserLateNotifications")
+  lateNotificationsSent     LateArrivalNotification[] @relation("ManagerNotifications")
+  pushSubscriptions        PushSubscription[]
+  fichajeAdjustmentsRequested FichajeAdjustment[] @relation("UserAdjustments")
+  fichajeAdjustmentsManaged   FichajeAdjustment[] @relation("ManagerAdjustments")
+  shiftAssignments UserShiftAssignment[]
+}
+
+model UserShiftAssignment {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shiftId   String
+  shift     DepartmentShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  date      DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([shiftId])
+}
+
+model Payroll {
+  id           String   @id @default(uuid())
+  month        String
+  year         Int
+  amount       Float
+  pdfUrl       String
+  signedPdfUrl String?
+  status       String   @default("PAID") // 'PAID' | 'PENDING'
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+}
+
+model VacationRequest {
+  id        String         @id @default(uuid())
+  startDate DateTime
+  endDate   DateTime
+  days      Int
+  hours     Int?
+  status    VacationStatus @default(PENDING)
+  type      String         // 'VACATION' | 'PERSONAL' | 'SICK_LEAVE' | 'OVERTIME' | 'OTHER'
+  subtype   String?
+  justificationUrl String?
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+}
+
+model NewsItem {
+  id        String       @id @default(uuid())
+  title     String
+  summary   String
+  content   String       @db.Text
+  date      DateTime     @default(now())
+  category  NewsCategory
+  imageUrl  String?
+  createdAt DateTime     @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  date      DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model GlobalSettings {
+  id        String   @id @default(uuid())
+  key       String   @unique // e.g., 'logoUrl', 'companyName'
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  date        DateTime
+  location    String?
+  createdAt   DateTime @default(now())
+}
+
+model Holiday {
+  id    String   @id @default(uuid())
+  name  String
+  date  DateTime
+  year  Int
+}
+
+model DepartmentBenefits {
+  id                    String @id @default(uuid())
+  department            String @unique
+  vacationDays          Int    @default(22)
+  overtimeHoursBank     Int    @default(40)
+  sickLeaveHours        Int    @default(15)  // Renombrado de sickLeaveDays (almacena HORAS)
+  paidAbsenceHours      Int    @default(20)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model UserBenefitsBalance {
+  id                    String @id @default(uuid())
+  userId                String @unique
+  user                  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vacationDaysUsed      Int    @default(0) @map("vacationDaysUsed")
+  overtimeHoursUsed     Int    @default(0) @map("overtimeHoursUsed")
+  sickLeaveHoursUsed    Int    @default(0) @map("sickLeaveHoursUsed")  // Renombrado de sickLeaveDaysUsed (almacena HORAS)
+  paidAbsenceHoursUsed  Int    @default(0) @map("paidAbsenceHoursUsed")
+  year                  Int
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model Fichaje {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tipo        FichajeTipo
+  timestamp   DateTime @default(now())
+  department  String
+  createdAt   DateTime @default(now())
+
+  // Geolocation
+  latitude    Float?
+  longitude   Float?
+  accuracy    Float?
+
+  lateNotifications LateArrivalNotification[]
+  adjustments       FichajeAdjustment[]
+
+  @@index([userId, timestamp])
+  @@index([department, timestamp])
+  @@index([userId, tipo, timestamp])
+}
+
+// Unified schedule model for all departments
+model DepartmentShift {
+  id                  String   @id @default(uuid())
+  department          String
+  name                String   // Ej: "Mañana", "Tarde", "Noche", "General"
+  activeDays          String   // Ej: "LUNES,MARTES,MIERCOLES,JUEVES,VIERNES" (CSV)
+  horaEntrada         String   // "07:00"
+  horaSalida          String   // "15:00"
+  horaEntradaTarde    String?  // Para turno partido
+  horaSalidaMañana    String?  // Para turno partido
+  toleranciaMinutos   Int      @default(10)
+  flexibleSchedule    Boolean  @default(false)
+  scheduleOverrides   Json?    // Per-day overrides en formato: { "2026-03-15": {dayOff: true}, "2026-03-16": {horaEntrada: "10:00"} }
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  shiftAssignments UserShiftAssignment[]
+
+  @@unique([department, name])
+  @@index([department])
+}
+
+model LateArrivalNotification {
+  id                  String   @id @default(uuid())
+  userId              String
+  user                User     @relation("UserLateNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  managerId           String
+  manager             User     @relation("ManagerNotifications", fields: [managerId], references: [id])
+  fichajeId           String
+  fichaje             Fichaje  @relation(fields: [fichajeId], references: [id])
+  fecha               DateTime
+  justificado         Boolean  @default(false)
+  justificacionTexto  String?  @db.Text
+  leido               Boolean  @default(false)
+  createdAt           DateTime @default(now())
+
+  @@index([userId, leido])
+}
+
+model InvitationCode {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  isUsed    Boolean  @default(false)
+  usedBy    String?  // ID/Email of user who used it
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+}
+
+model EmailTemplate {
+  id          String   @id @default(uuid())
+  type        String   @unique // 'LATE_ARRIVAL', 'CLOCKING_WARNING', 'REQUEST_APPROVED', 'REQUEST_REJECTED'
+  name        String   // Nombre descriptivo
+  subject     String   // Asunto del email
+  htmlBody    String   @db.Text // Contenido HTML con variables {{variable}}
+  variables   String   @db.Text // JSON array de variables disponibles
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PushSubscription {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint        String   @unique
+  keys            Json
+  expirationTime  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ─── Dashboard Layout CMS ────────────────────────────────────────────────────
+
+enum DashboardWidgetType {
+  FICHAJE
+  VACATIONS
+  PAYROLL
+  EVENTS
+  NEWS
+  BENEFITS
+  ALERTS
+  ADJUSTMENTS
+  BANNER
+}
+
+enum DashboardWidgetScope {
+  ALL
+  EMPLOYEE
+  MANAGER
+  ADMIN
+}
+
+model DashboardLayout {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  isActive    Boolean   @default(false)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  widgets     DashboardWidget[]
+}
+
+model DashboardWidget {
+  id         String               @id @default(uuid())
+  layoutId   String
+  layout     DashboardLayout      @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+  type       DashboardWidgetType
+  label      String
+  isActive   Boolean              @default(true)
+  order      Int                  @default(0)
+  scope      DashboardWidgetScope @default(ALL)
+  department String?
+  config     Json?                // Extra config (banner text, link URL, etc.)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  @@index([layoutId, order])
+}
+
+model FichajeAdjustment {
+  id                  String                    @id @default(uuid())
+  fichajeId           String
+  fichaje             Fichaje                   @relation(fields: [fichajeId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User                      @relation("UserAdjustments", fields: [userId], references: [id], onDelete: Cascade)
+  managerId           String?
+  manager             User?                     @relation("ManagerAdjustments", fields: [managerId], references: [id])
+
+  originalTimestamp   DateTime
+  requestedTimestamp  DateTime
+  reason              String                    @db.Text
+
+  status              FichajeAdjustmentStatus   @default(PENDING)
+  rejectionReason     String?
+
+  resolvedAt          DateTime?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+
+  @@index([userId, status])
+  @@index([status])
+}
