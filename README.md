@@ -1,93 +1,56 @@
-# Portal del Empleado Corporativo (HR Portal)
-
-Plataforma integral y adaptable de gestión de Recursos Humanos, diseñada para centralizar y modernizar la interacción entre la empresa y sus colaboradores. Este sistema ofrece una solución *white-label* personalizable, permitiendo gestionar vacaciones, nóminas, comunicados internos y perfiles de usuario de manera eficiente y segura.
-
 <div align="center">
-  <h3>🚀 Solución Enterprise para Gestión de Talento y Administración</h3>
+
+# 👥 XyonEmpleados
+
+**Sistema de gestión de empleados y RRHH**
+
+*Un producto de [Xyon Platforms](https://github.com/mkandreum)*
+
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
+
 </div>
 
-## 🌟 Características Principales
+---
 
-### 👤 Portal del Empleado
-- **Dashboard Personalizable**: Vista unificada de días libres, ausencias y comunicados relevantes.
-- **Gestión de Ausencias y Vacaciones**: 
-  - Solicitud de días de descanso con validación automática de días disponibles.
-  - Seguimiento de estado en tiempo real (Pendiente/Aprobado/Rechazado).
-- **Mis Documentos**: Acceso seguro a nóminas, contratos y certificados (PDF).
-- **Comunicación Interna**: Muro de noticias corporativas y calendario de eventos.
-- **Autogestión**: Actualización de perfil personal y datos de contacto.
+## ¿Qué es XyonEmpleados?
 
-### 🛡️ Panel de Administración (Backoffice)
-- **Dashboard Analítico**: KPIs de RRHH en tiempo real.
-- **Gestión de Usuarios Multi-Rol**: Admisión de empleados, managers y administradores con control de acceso granular (RBAC).
-- **Flujos de Aprobación**: Sistema centralizado para validar solicitudes de vacaciones.
-- **CMS de Contenidos**: Publicación de noticias y eventos segmentados.
-- **Gestión Documental**: Carga masiva o individual de nóminas y documentos laborales.
+XyonEmpleados es una plataforma de gestión de empleados diseñada para empresas y pymes. Centraliza la administración del personal, control de presencia y organización de equipos en una sola herramienta web, lista para desplegar en infraestructura propia.
 
-## 🛠️ Stack Tecnológico
+## ✨ Funcionalidades
 
-Arquitectura moderna diseñada para escalabilidad y fácil mantenimiento:
+- **Gestión completa de empleados**: alta, baja y modificación de fichas
+- **Control de presencia y fichaje**
+- **Organización por departamentos y equipos**
+- **Panel de administración** con roles diferenciados
+- **Despliegue self-hosted** compatible con Coolify y Docker
 
-### Frontend
-- **React 18** + **Vite**: Rendimiento óptimo y experiencia de desarrollo ágil.
-- **Tailwind CSS**: Estilos personalizables y diseño *mobile-first*.
-- **Arquitectura de Componentes**: UI modular y reutilizable.
-- **Feedback System**: Interfaz reactiva con notificaciones modales integradas.
+## 🛠️ Stack técnico
 
-### Backend
-- **Node.js**: Servidor ligero y escalable.
-- **Prisma ORM**: Capa de datos agnóstica (compatible con PostgreSQL, MySQL, SQLite).
-- **Seguridad**: Autenticación JWT y protección de endpoints sensibles.
+| Capa | Tecnología |
+|------|----------|
+| Frontend | React + TypeScript + Vite |
+| Backend | Node.js + TypeScript |
+| Despliegue | Docker + Coolify |
 
-## 🚀 Despliegue e Instalación
-
-### Requisitos
-- Node.js v18+
-- Docker (Opcional, recomendado para producción)
-
-### Puesta en Marcha Local
-
-1. **Clonar el proyecto**:
-   ```bash
-   git clone https://github.com/tu-organizacion/hr-portal.git
-   cd hr-portal
-   ```
-
-2. **Instalación de Dependencias**:
-   ```bash
-   npm install && cd backend && npm install && cd ..
-   ```
-
-3. **Configuración de Base de Datos**:
-   ```bash
-   cd backend
-   npx prisma generate
-   npx prisma db push
-   npx prisma db seed # Inicializa datos base
-   cd ..
-   ```
-
-4. **Ejecutar**:
-   ```bash
-   npm run dev
-   ```
-   Acceso: `http://localhost:5173`
-
-## 📦 Despliegue Dockerizado
-
-El sistema está listo para desplegarse como microservicios:
+## 🚀 Instalación
 
 ```bash
-docker-compose up --build -d
+git clone https://github.com/mkandreum/XyonEmpleados.git
+cd XyonEmpleados
+cp .env.example .env
+docker-compose up -d
 ```
 
-## 🔐 Usuarios de Prueba (Seed)
+### Desarrollo local
 
-| Rol | Email | Contraseña |
-|-----|-------|------------|
-| **Admin** | `admin@empresa.com` | `admin123` |
-| **Manager** | `manager@empresa.com` | `user123` |
-| **Empleado** | `empleado@empresa.com` | `user123` |
+```bash
+npm install
+npm run dev
+```
 
----
-**Adaptable a cualquier identidad corporativa.**
+## 🏢 Xyon Platforms
+
+XyonEmpleados es un producto desarrollado y mantenido por **Xyon Platforms**, empresa especializada en soluciones digitales para negocios locales y pymes.
+
+> © Xyon Platforms — Todos los derechos reservados
