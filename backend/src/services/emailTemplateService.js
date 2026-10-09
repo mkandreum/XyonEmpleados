@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 /**
  * Obtener plantilla por tipo
@@ -25,8 +25,11 @@ const replaceVariables = (text, variables) => {
 
     let result = text;
     Object.keys(variables).forEach(key => {
-        const regex = new RegExp(`{{${key}}}`, 'g');
-        result = result.replace(regex, variables[key] || '');
+        const safeKey = key.replace(/\W/g, '');
+        const regex = new RegExp(`{{${safeKey}}}`, 'g');
+        // Escapar HTML: los valores (nombres, motivos) los controlan los usuarios
+        const value = String(variables[key] ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        result = result.replace(regex, () => value);
     });
 
     return result;

@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const webpush = require('web-push');
 
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;

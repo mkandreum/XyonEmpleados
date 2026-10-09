@@ -69,13 +69,13 @@ export const ProfilePage: React.FC = () => {
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="animate-slide-up">
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Mi Perfil</h1>
+                <h1 className="page-title">Mi Perfil</h1>
                 <p className="text-slate-500 dark:text-slate-400">Gestiona tu información personal y de contacto.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-1 animate-slide-up delay-75">
-                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 flex flex-col items-center text-center transition-colors">
+                    <div className="card p-6 flex flex-col items-center text-center">
                         <div className="relative mb-4">
                             <img
                                 src={formData.avatarUrl || user.avatarUrl}
@@ -112,15 +112,15 @@ export const ProfilePage: React.FC = () => {
                         <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">{user.position}</p>
                         <div className="w-full pt-4 border-t border-slate-100 dark:border-slate-800 text-left space-y-3">
                             <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
-                                <Briefcase size={16} className="text-slate-400 dark:text-slate-500" />
+                                <Briefcase size={16} className="text-slate-500 dark:text-slate-400" />
                                 <span>{user.department}</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
-                                <User size={16} className="text-slate-400 dark:text-slate-500" />
+                                <User size={16} className="text-slate-500 dark:text-slate-400" />
                                 <span>ID: {user.id.substring(0, 8)}...</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
-                                <Calendar size={16} className="text-slate-400 dark:text-slate-500" />
+                                <Calendar size={16} className="text-slate-500 dark:text-slate-400" />
                                 <span>Desde: {new Date(user.joinDate).toLocaleDateString()}</span>
                             </div>
                         </div>
@@ -128,7 +128,7 @@ export const ProfilePage: React.FC = () => {
                 </div>
 
                 <div className="md:col-span-2 space-y-6">
-                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-150">
+                    <div className="card overflow-hidden animate-slide-up delay-150">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                             <h3 className="font-semibold text-slate-900 dark:text-white">Información de Contacto</h3>
                             <button
@@ -141,50 +141,50 @@ export const ProfilePage: React.FC = () => {
                         <div className="p-6 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email Corporativo</label>
-                                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors">
+                                    <label className="label">Email Corporativo</label>
+                                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-control border border-slate-200 dark:border-slate-700 transition-colors">
                                         <Mail size={16} />
                                         <span className="text-sm">{user.email}</span>
                                     </div>
-                                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Este campo no se puede editar.</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Este campo no se puede editar.</p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Teléfono</label>
+                                    <label className="label">Teléfono</label>
                                     <div className="relative">
-                                        <Phone size={16} className="absolute left-3 top-3 text-slate-400 dark:text-slate-500" />
+                                        <Phone size={16} className="absolute left-3 top-3 text-slate-500 dark:text-slate-400" />
                                         <input
                                             type="text"
                                             value={formData.phone}
                                             disabled={!isEditing}
                                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                             placeholder={!isEditing && !formData.phone ? 'No especificado' : '+34...'}
-                                            className={`w-full pl-9 p-2 rounded-lg border text-sm transition-colors ${isEditing ? 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500' : 'bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}
+                                            className={`w-full pl-9 p-2 rounded-control border text-sm transition-colors ${isEditing ? 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500' : 'bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}
                                         />
                                     </div>
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Dirección Postal</label>
+                                    <label className="label">Dirección Postal</label>
                                     <div className="relative">
-                                        <MapPin size={16} className="absolute left-3 top-3 text-slate-400 dark:text-slate-500" />
+                                        <MapPin size={16} className="absolute left-3 top-3 text-slate-500 dark:text-slate-400" />
                                         <input
                                             type="text"
                                             value={formData.address}
                                             disabled={!isEditing}
                                             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                                             placeholder={!isEditing && !formData.address ? 'No especificado' : 'Calle...'}
-                                            className={`w-full pl-9 p-2 rounded-lg border text-sm transition-colors ${isEditing ? 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500' : 'bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}
+                                            className={`w-full pl-9 p-2 rounded-control border text-sm transition-colors ${isEditing ? 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500' : 'bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}
                                         />
                                     </div>
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Contacto de Emergencia</label>
+                                    <label className="label">Contacto de Emergencia</label>
                                     <input
                                         type="text"
                                         value={formData.emergencyContact}
                                         disabled={!isEditing}
                                         onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
                                         placeholder={!isEditing && !formData.emergencyContact ? 'No especificado' : 'Nombre - Teléfono'}
-                                        className={`w-full p-2 rounded-lg border text-sm transition-colors ${isEditing ? 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500' : 'bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}
+                                        className={`w-full p-2 rounded-control border text-sm transition-colors ${isEditing ? 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500' : 'bg-slate-50 dark:bg-slate-800/30 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'}`}
                                     />
                                 </div>
                             </div>
@@ -194,7 +194,7 @@ export const ProfilePage: React.FC = () => {
                                     <button
                                         onClick={handleSave}
                                         disabled={loading}
-                                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm disabled:opacity-50"
+                                        className="btn-primary"
                                     >
                                         {loading ? 'Guardando...' : 'Guardar Cambios'}
                                     </button>
@@ -203,7 +203,7 @@ export const ProfilePage: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors animate-slide-up delay-200">
+                    <div className="card p-6 animate-slide-up delay-200">
                         <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Seguridad</h3>
                         <div className="flex items-center justify-between mb-4">
                             <div>
@@ -220,7 +220,7 @@ export const ProfilePage: React.FC = () => {
                     </div>
 
                     {user?.role !== 'ADMIN' && (
-                        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors animate-slide-up delay-300">
+                        <div className="card p-6 animate-slide-up delay-300">
                             <h3 className="font-semibold text-slate-900 dark:text-white mb-4">Notificaciones</h3>
                             <div className="flex items-center justify-between">
                                 <div>
@@ -251,45 +251,45 @@ export const ProfilePage: React.FC = () => {
 
             {/* Password Change Modal */}
             {showPasswordModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowPasswordModal(false)}>
-                    <div className="bg-white dark:bg-slate-900 rounded-xl max-w-md w-full p-6 pb-24 shadow-2xl border border-slate-200 dark:border-slate-800 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-backdrop" onClick={() => setShowPasswordModal(false)}>
+                    <div className="card rounded-modal max-w-md w-full p-6 shadow-2xl animate-scale-in" onClick={(e) => e.stopPropagation()}>
                         <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Cambiar Contraseña</h2>
                         <form onSubmit={handleChangePassword} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Contraseña Actual</label>
+                                <label className="label">Contraseña Actual</label>
                                 <input
                                     type="password"
                                     required
                                     value={passwordData.currentPassword}
                                     onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                    className="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900 dark:text-white transition-colors"
+                                    className="field"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nueva Contraseña</label>
+                                <label className="label">Nueva Contraseña</label>
                                 <input
                                     type="password"
                                     required
                                     value={passwordData.newPassword}
                                     onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                    className="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900 dark:text-white transition-colors"
+                                    className="field"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Confirmar Nueva Contraseña</label>
+                                <label className="label">Confirmar Nueva Contraseña</label>
                                 <input
                                     type="password"
                                     required
                                     value={passwordData.confirmPassword}
                                     onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                    className="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900 dark:text-white transition-colors"
+                                    className="field"
                                 />
                             </div>
                             <div className="flex justify-end gap-3 pt-4">
-                                <button type="button" onClick={() => setShowPasswordModal(false)} className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                <button type="button" onClick={() => setShowPasswordModal(false)} className="btn-ghost">
                                     Cancelar
                                 </button>
-                                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                <button type="submit" className="btn-primary">
                                     Cambiar
                                 </button>
                             </div>

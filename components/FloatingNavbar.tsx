@@ -261,7 +261,7 @@ export const FloatingNavbar: React.FC = () => {
                                 <span className="absolute top-2 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border border-white dark:border-slate-900" />
                             )}
 
-                            <span className={`text-[10px] sm:text-xs font-semibold leading-none ${isActive ? 'text-white font-bold' : 'transition-colors'}`}>
+                            <span className={`text-2xs sm:text-xs font-semibold leading-none ${isActive ? 'text-white font-bold' : 'transition-colors'}`}>
                                 {item.label}
                             </span>
                         </Link>
@@ -284,7 +284,7 @@ export const FloatingNavbar: React.FC = () => {
                             `}
                         >
                             <MoreHorizontal size={22} />
-                            <span className="text-[10px] sm:text-xs font-medium leading-none">Más</span>
+                            <span className="text-2xs sm:text-xs font-medium leading-none">Más</span>
                         </button>
 
                         {/* Popup Menu for Hidden Items */}
@@ -294,7 +294,7 @@ export const FloatingNavbar: React.FC = () => {
                                 flex flex-col gap-2 p-2 
                                 bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl 
                                 border border-white/40 dark:border-slate-700
-                                shadow-xl rounded-2xl
+                                shadow-xl rounded-card
                                 min-w-[160px]
                                 animate-slide-up origin-bottom-right
                             ">
@@ -308,7 +308,7 @@ export const FloatingNavbar: React.FC = () => {
                                             to={item.path}
                                             onClick={() => { void handleNavClick(item.path); }}
                                             className={`
-                                                flex items-center gap-3 px-4 py-3 rounded-xl transition-colors
+                                                flex items-center gap-3 px-4 py-3 rounded-control transition-colors
                                                 ${isActive
                                                     ? 'bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400'
                                                     : 'text-blue-700 dark:text-blue-400 hover:bg-white/50 dark:hover:bg-slate-800/50'}

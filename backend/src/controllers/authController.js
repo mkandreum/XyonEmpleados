@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
@@ -10,6 +10,8 @@ if (!JWT_SECRET) {
     console.error('Generate one with: openssl rand -base64 64');
     process.exit(1);
 }
+
+const DUMMY_HASH = bcrypt.hashSync('dummy-password-for-timing', 12);
 
 exports.getProfile = async (req, res) => {
     try {
@@ -40,6 +42,10 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
     try {
         const { phone, address, emergencyContact, avatarUrl, shiftReminderEmail } = req.body;
+        // Solo URLs propias (/uploads/public/...) o https: evita esquemas javascript:/data:
+        if (avatarUrl && !/^(\/uploads\/public\/|https:\/\/)/.test(avatarUrl)) {
+            return res.status(400).json({ error: 'avatarUrl invalido' });
+        }
         const user = await prisma.user.update({
             where: { id: req.user.userId },
             data: { 
@@ -51,7 +57,7 @@ exports.updateProfile = async (req, res) => {
             }
         });
 
-        const { password: _, ...userWithoutPassword } = user;
+        const { password: _, resetToken: _rt, resetTokenExpiry: _re, ...userWithoutPassword } = user;
         res.json(userWithoutPassword);
     } catch (error) {
         console.error("Update profile error:", error);
@@ -164,7 +170,7 @@ exports.register = async (req, res) => {
             return newUser;
         });
 
-        const { password: _, ...userWithoutPassword } = user;
+        const { password: _, resetToken: _rt, resetTokenExpiry: _re, ...userWithoutPassword } = user;
 
         // Send welcome email (outside transaction)
         try {
@@ -174,7 +180,7 @@ exports.register = async (req, res) => {
             console.error('Email service not ready or failed', e);
         }
 
-        const token = jwt.sign({ userId: user.id, role: user.role, department: user.department }, JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ userId: user.id, role: user.role, department: user.department }, JWT_SECRET, { expiresIn: '1d', algorithm: 'HS256' });
 
         res.status(201).json({ token, user: userWithoutPassword });
     } catch (error) {
@@ -188,18 +194,18 @@ exports.login = async (req, res) => {
         const { email, password } = req.body;
         const user = await prisma.user.findUnique({ where: { email } });
 
+        // Comparar siempre contra un hash para no filtrar la existencia del usuario por timing
+        const isValid = await bcrypt.compare(password, user ? user.password : DUMMY_HASH);
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
-
-        const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        const token = jwt.sign({ userId: user.id, role: user.role, department: user.department }, JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ userId: user.id, role: user.role, department: user.department }, JWT_SECRET, { expiresIn: '1d', algorithm: 'HS256' });
 
-        const { password: _, ...userWithoutPassword } = user;
+        const { password: _, resetToken: _rt, resetTokenExpiry: _re, ...userWithoutPassword } = user;
 
         res.json({ token, user: userWithoutPassword });
     } catch (error) {
@@ -211,6 +217,9 @@ exports.login = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
+        if (typeof email !== 'string' || !email) {
+            return res.status(400).json({ error: 'Email requerido' });
+        }
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
             // Security: Do not reveal if email exists, but simulating success
@@ -234,7 +243,11 @@ exports.forgotPassword = async (req, res) => {
         const frontendUrl = process.env.FRONTEND_URL || 'https://portalempleado.xyoncloud.win';
         const resetLink = `${frontendUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
-        await sendPasswordResetEmail(user.email, resetLink);
+        try {
+            await sendPasswordResetEmail(user.email, resetLink);
+        } catch (mailErr) {
+            console.error('Password reset email failed:', mailErr.message);
+        }
 
         res.json({ message: 'If the email exists, a reset link has been sent.' });
     } catch (err) {
@@ -246,6 +259,12 @@ exports.forgotPassword = async (req, res) => {
 exports.resetPassword = async (req, res) => {
     try {
         const { token, email, newPassword } = req.body;
+        if (typeof token !== 'string' || typeof email !== 'string' || typeof newPassword !== 'string') {
+            return res.status(400).json({ error: 'Invalid request' });
+        }
+        if (newPassword.length < 12 || !/[a-z]/.test(newPassword) || !/[A-Z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
+            return res.status(400).json({ error: 'La contrasena debe tener al menos 12 caracteres, mayuscula, minuscula, numero y simbolo' });
+        }
 
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user || !user.resetToken || !user.resetTokenExpiry) {

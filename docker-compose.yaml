@@ -20,6 +20,18 @@ services:
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@xyonempleados.com}
       - ADMIN_INITIAL_PASSWORD=${ADMIN_INITIAL_PASSWORD:-}
       - FRONTEND_URL=${FRONTEND_URL:-}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-}
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:-}
+      - VAPID_SUBJECT=${VAPID_SUBJECT:-}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
     volumes:
       - uploads:/app/uploads
     command:
@@ -30,18 +42,21 @@ services:
         # ── Validate required env vars at runtime ──
         if [ -z "$JWT_SECRET" ]; then echo "[FATAL] JWT_SECRET is required"; exit 1; fi
         if [ -z "$ADMIN_INITIAL_PASSWORD" ]; then echo "[FATAL] ADMIN_INITIAL_PASSWORD is required"; exit 1; fi
+        if [ "$${#JWT_SECRET}" -lt 32 ]; then echo "[FATAL] JWT_SECRET must be at least 32 chars"; exit 1; fi
         if [ -z "$POSTGRES_PASSWORD" ]; then echo "[FATAL] POSTGRES_PASSWORD is required"; exit 1; fi
         # ── Build DATABASE_URL with URL-encoded password (handles special chars) ──
         DB_PASS_ENCODED=$(node -e "console.log(encodeURIComponent(process.env.POSTGRES_PASSWORD))")
         export DATABASE_URL="postgresql://${POSTGRES_USER}:${DB_PASS_ENCODED}@db:5432/${POSTGRES_DB}"
         echo "[app] DATABASE_URL built → connecting to db:5432/${POSTGRES_DB}"
         # ── Run migrations with retry ──
-        until npm run prisma:migrate; do
+        # ── Volume ownership, then drop root privileges ──
+        chown -R node:node /app/uploads
+        until su-exec node npm run prisma:migrate; do
           echo "[app] prisma:migrate failed, retrying in 5s..."
           sleep 5
         done
         echo "[app] migrations OK — starting server"
-        exec node src/server.js
+        exec su-exec node node src/server.js
     depends_on:
       db:
         condition: service_healthy
@@ -49,6 +64,8 @@ services:
   db:
     image: postgres:15-alpine
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}" ]
       interval: 10s

@@ -82,7 +82,7 @@ export const AdminEvents: React.FC = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center animate-slide-up">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestión de Eventos</h1>
+                    <h1 className="page-title">Gestión de Eventos</h1>
                     <p className="text-slate-500 dark:text-slate-400">Crea y gestiona los eventos del calendario</p>
                 </div>
                 <button
@@ -91,15 +91,15 @@ export const AdminEvents: React.FC = () => {
                         setFormData({ title: '', description: '', date: '', location: '' });
                         setShowModal(true);
                     }}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-purple-700 shadow-sm transition-colors"
+                    className="bg-purple-600 text-white px-4 py-2 rounded-control flex items-center gap-2 hover:bg-purple-700 shadow-sm transition-colors"
                 >
                     <Plus size={18} />
                     Nuevo Evento
                 </button>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-75">
-                <table className="w-full">
+            <div className="card overflow-hidden animate-slide-up delay-75">
+                <div className="overflow-x-auto"><table className="w-full">
                     <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 transition-colors">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Título</th>
@@ -122,7 +122,7 @@ export const AdminEvents: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">{event.location || '-'}</td>
                                     <td className="px-6 py-4 text-right text-sm space-x-2">
-                                        <button onClick={() => handleDelete(event.id)} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                                        <button aria-label="Eliminar" onClick={() => handleDelete(event.id)} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-control transition-colors">
                                             <Trash2 size={16} />
                                         </button>
                                     </td>
@@ -130,65 +130,65 @@ export const AdminEvents: React.FC = () => {
                             ))
                         )}
                     </tbody>
-                </table>
+                </table></div>
             </div>
 
             {/* Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-                    <div className="bg-white dark:bg-slate-900 rounded-xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-xl transition-colors" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-backdrop" onClick={() => setShowModal(false)}>
+                    <div className="bg-white dark:bg-slate-900 rounded-modal max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-xl transition-colors" onClick={(e) => e.stopPropagation()}>
                         <div className="border-b border-slate-200 dark:border-slate-800 p-4 flex justify-between items-center">
                             <h2 className="text-xl font-bold text-slate-900 dark:text-white">Nuevo Evento</h2>
-                            <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                            <button aria-label="Cerrar" onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-control transition-colors">
                                 <X size={20} className="text-slate-500 dark:text-slate-400" />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 pb-24 space-y-4">
+                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Título</label>
+                                <label className="label">Título</label>
                                 <input
                                     type="text"
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
+                                    className="field"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Descripción</label>
+                                <label className="label">Descripción</label>
                                 <textarea
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
+                                    className="field"
                                     rows={3}
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Fecha</label>
+                                    <label className="label">Fecha</label>
                                     <input
                                         type="datetime-local"
                                         value={formData.date}
                                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                        className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
+                                        className="field"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Ubicación</label>
+                                    <label className="label">Ubicación</label>
                                     <input
                                         type="text"
                                         value={formData.location}
                                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                        className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
+                                        className="field"
                                     />
                                 </div>
                             </div>
                             <div className="flex justify-end gap-3 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                <button type="button" onClick={() => setShowModal(false)} className="btn-ghost">
                                     Cancelar
                                 </button>
-                                <button type="submit" className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                                <button type="submit" className="px-4 py-2 bg-purple-600 text-white rounded-control hover:bg-purple-700 transition-colors font-medium">
                                     Crear Evento
                                 </button>
                             </div>

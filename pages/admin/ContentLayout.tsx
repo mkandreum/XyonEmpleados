@@ -9,6 +9,7 @@ import { dashboardLayoutService } from '../../services/api';
 import { DashboardLayout, DashboardWidget, DashboardWidgetType, DashboardWidgetScope } from '../../types';
 import toast from 'react-hot-toast';
 import { haptic } from '../../utils/haptics';
+import { ConfirmModal } from '../../components/ConfirmModal';
 
 // ─── Widget metadata ───────────────────────────────────────────────────────────
 
@@ -70,6 +71,9 @@ export const AdminContentLayout: React.FC = () => {
     const [showWidgetModal, setShowWidgetModal] = useState(false);
     const [editingWidget, setEditingWidget] = useState<DashboardWidget | null>(null);
     const [widgetForm, setWidgetForm] = useState(emptyWidget());
+
+    // Pending deletion awaiting confirmation
+    const [pendingDelete, setPendingDelete] = useState<{ kind: 'layout'; item: DashboardLayout } | { kind: 'widget'; item: DashboardWidget } | null>(null);
 
     const load = async () => {
         setLoading(true);
@@ -165,9 +169,12 @@ export const AdminContentLayout: React.FC = () => {
         }
     };
 
-    const removeLayout = async (l: DashboardLayout, e: React.MouseEvent) => {
+    const askRemoveLayout = (l: DashboardLayout, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!confirm(`¿Eliminar "${l.name}"?`)) return;
+        setPendingDelete({ kind: 'layout', item: l });
+    };
+
+    const removeLayout = async (l: DashboardLayout) => {
         try {
             await dashboardLayoutService.remove(l.id);
             haptic('double'); toast.success('Layout eliminado');
@@ -241,8 +248,9 @@ export const AdminContentLayout: React.FC = () => {
         } catch { haptic('error'); toast.error('Error al actualizar'); }
     };
 
+    const askRemoveWidget = (w: DashboardWidget) => setPendingDelete({ kind: 'widget', item: w });
+
     const removeWidget = async (w: DashboardWidget) => {
-        if (!confirm(`¿Eliminar widget "${w.label}"?`)) return;
         try {
             await dashboardLayoutService.deleteWidget(w.id);
             haptic('double'); toast.success('Widget eliminado');
@@ -276,7 +284,7 @@ export const AdminContentLayout: React.FC = () => {
             {/* Page header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-slide-up">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <h1 className="page-title flex items-center gap-2">
                         <Layers size={24} className="text-blue-600" />
                         Gestión de Layouts
                     </h1>
@@ -286,7 +294,7 @@ export const AdminContentLayout: React.FC = () => {
                 </div>
                 <button
                     onClick={openCreateLayout}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl hover:bg-blue-700 transition-colors shadow-sm font-medium text-sm"
+                    className="btn-primary"
                 >
                     <Plus size={18} />
                     Nuevo Layout
@@ -303,13 +311,13 @@ export const AdminContentLayout: React.FC = () => {
                         {/* Mobile: horizontal scroll */}
                         <div className="lg:hidden flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                             {layouts.length === 0 && (
-                                <p className="text-sm text-slate-400 py-4 px-1">Sin layouts</p>
+                                <p className="text-sm text-slate-500 py-4 px-1">Sin layouts</p>
                             )}
                             {layouts.map(l => (
                                 <button
                                     key={l.id}
                                     onClick={() => setSelected(l)}
-                                    className={`shrink-0 flex flex-col gap-1 p-3 rounded-xl border text-left min-w-[160px] transition-all ${
+                                    className={`shrink-0 flex flex-col gap-1 p-3 rounded-control border text-left min-w-[160px] transition-all ${
                                         selected?.id === l.id
                                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                                             : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900'
@@ -317,33 +325,37 @@ export const AdminContentLayout: React.FC = () => {
                                 >
                                     <div className="flex items-center gap-1.5">
                                         {isLive(l) && (
-                                            <span className="flex items-center gap-1 text-[10px] font-bold text-white bg-green-500 rounded-full px-1.5 py-0.5">
+                                            <span className="flex items-center gap-1 text-2xs font-bold text-white bg-green-500 rounded-full px-1.5 py-0.5">
                                                 <Radio size={8} />LIVE
                                             </span>
                                         )}
                                         <span className="text-xs font-semibold text-slate-900 dark:text-white truncate">{l.name}</span>
                                     </div>
-                                    <span className="text-[10px] text-slate-400">
+                                    <span className="text-2xs text-slate-500">
                                         {l.startDate || l.endDate ? `${fmtDate(l.startDate)} → ${fmtDate(l.endDate)}` : 'Sin fecha'}
                                     </span>
-                                    <span className="text-[10px] text-slate-500">{l.widgets.length} widgets</span>
+                                    <span className="text-2xs text-slate-500">{l.widgets.length} widgets</span>
                                 </button>
                             ))}
                         </div>
 
                         {/* Desktop: vertical list */}
                         <div className="hidden lg:flex flex-col gap-3">
-                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-1">Layouts</p>
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-1">Layouts</p>
                             {layouts.length === 0 && (
-                                <div className="text-center py-8 text-sm text-slate-400">
+                                <div className="text-center py-8 text-sm text-slate-500">
                                     No hay layouts.<br/>Crea uno nuevo.
                                 </div>
                             )}
                             {layouts.map(l => (
-                                <button
+                                <div
                                     key={l.id}
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-pressed={selected?.id === l.id}
+                                    onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setSelected(l); } }}
                                     onClick={() => setSelected(l)}
-                                    className={`w-full flex flex-col gap-2 p-4 rounded-xl border text-left transition-all hover:shadow-md ${
+                                    className={`w-full flex flex-col gap-2 p-4 rounded-control border text-left transition-all hover:shadow-md cursor-pointer ${
                                         selected?.id === l.id
                                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-sm shadow-blue-100 dark:shadow-none'
                                             : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300'
@@ -353,12 +365,12 @@ export const AdminContentLayout: React.FC = () => {
                                     <div className="flex items-start justify-between gap-2">
                                         <span className="font-semibold text-slate-900 dark:text-white text-sm leading-tight">{l.name}</span>
                                         {isLive(l) && (
-                                            <span className="shrink-0 flex items-center gap-1 text-[10px] font-bold text-white bg-green-500 rounded-full px-2 py-0.5">
+                                            <span className="shrink-0 flex items-center gap-1 text-2xs font-bold text-white bg-green-500 rounded-full px-2 py-0.5">
                                                 <Radio size={8} />LIVE
                                             </span>
                                         )}
                                         {l.isActive && !isLive(l) && (
-                                            <span className="shrink-0 text-[10px] font-bold text-white bg-amber-500 rounded-full px-2 py-0.5">
+                                            <span className="shrink-0 text-2xs font-bold text-white bg-amber-500 rounded-full px-2 py-0.5">
                                                 Programado
                                             </span>
                                         )}
@@ -366,39 +378,39 @@ export const AdminContentLayout: React.FC = () => {
 
                                     {/* Dates */}
                                     {(l.startDate || l.endDate) && (
-                                        <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                        <div className="flex items-center gap-1 text-2xs text-slate-500 dark:text-slate-400">
                                             <Calendar size={10} />
                                             {fmtDate(l.startDate)} → {fmtDate(l.endDate)}
                                         </div>
                                     )}
 
                                     {/* Widget count */}
-                                    <div className="text-[11px] text-slate-400">{l.widgets.length} widgets</div>
+                                    <div className="text-2xs text-slate-500">{l.widgets.length} widgets</div>
 
                                     {/* Actions */}
                                     <div className="flex gap-1 mt-1 pt-2 border-t border-slate-100 dark:border-slate-800">
                                         <button
                                             onClick={(e) => openEditLayout(l, e)}
-                                            className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
+                                            className="flex items-center gap-1 text-2xs text-blue-600 dark:text-blue-400 hover:underline"
                                         >
                                             <Edit2 size={11} />Editar
                                         </button>
                                         <span className="text-slate-300 dark:text-slate-700">·</span>
                                         <button
                                             onClick={(e) => duplicateLayout(l, e)}
-                                            className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:underline"
+                                            className="flex items-center gap-1 text-2xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:underline"
                                         >
                                             <Copy size={11} />Duplicar
                                         </button>
                                         <span className="text-slate-300 dark:text-slate-700">·</span>
                                         <button
-                                            onClick={(e) => removeLayout(l, e)}
-                                            className="flex items-center gap-1 text-[11px] text-red-500 hover:underline"
+                                            onClick={(e) => askRemoveLayout(l, e)}
+                                            className="flex items-center gap-1 text-2xs text-red-600 hover:underline"
                                         >
                                             <Trash2 size={11} />Borrar
                                         </button>
                                     </div>
-                                </button>
+                                </div>
                             ))}
                         </div>
                     </div>
@@ -406,12 +418,12 @@ export const AdminContentLayout: React.FC = () => {
                     {/* ── Main: widget list ────────────────────────────────── */}
                     <div className="flex-1 min-w-0">
                         {!selected ? (
-                            <div className="flex flex-col items-center justify-center py-24 text-slate-400 gap-3">
+                            <div className="flex flex-col items-center justify-center py-24 text-slate-500 gap-3">
                                 <LayoutDashboard size={40} className="opacity-30" />
                                 <p className="text-sm">Selecciona o crea un layout</p>
                             </div>
                         ) : (
-                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden animate-slide-up">
+                            <div className="card overflow-hidden animate-slide-up">
 
                                 {/* Layout header */}
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 border-b border-slate-100 dark:border-slate-800">
@@ -446,14 +458,14 @@ export const AdminContentLayout: React.FC = () => {
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => openEditLayout(selected, { stopPropagation: () => {} } as any)}
-                                            className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                                            className="btn-secondary gap-1.5"
                                         >
                                             <Settings2 size={15} />
                                             <span className="hidden sm:inline">Configurar</span>
                                         </button>
                                         <button
                                             onClick={openAddWidget}
-                                            className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                                            className="btn-primary gap-1.5"
                                         >
                                             <Plus size={16} />
                                             Add Widget
@@ -463,7 +475,7 @@ export const AdminContentLayout: React.FC = () => {
 
                                 {/* Widget table header — desktop */}
                                 {selWidgets.length > 0 && (
-                                    <div className="hidden md:grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 px-5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                                    <div className="hidden md:grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 px-5 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-2xs font-semibold text-slate-500 uppercase tracking-wider">
                                         <span></span>
                                         <span>Widget</span>
                                         <span>Visible para</span>
@@ -474,7 +486,7 @@ export const AdminContentLayout: React.FC = () => {
 
                                 {/* Widget rows */}
                                 {selWidgets.length === 0 ? (
-                                    <div className="flex flex-col items-center gap-3 py-16 text-slate-400">
+                                    <div className="flex flex-col items-center gap-3 py-16 text-slate-500">
                                         <Layers size={36} className="opacity-20" />
                                         <p className="text-sm">Sin widgets. Pulsa "+ Add Widget" para añadir.</p>
                                     </div>
@@ -497,16 +509,16 @@ export const AdminContentLayout: React.FC = () => {
                                                     <div className="flex items-center gap-3 min-w-0">
                                                         {/* Mobile reorder arrows */}
                                                         <div className="flex flex-col gap-0.5 md:hidden shrink-0">
-                                                            <button onClick={() => moveWidget(w, 'up')} disabled={idx === 0} className="p-0.5 text-slate-400 hover:text-slate-700 disabled:opacity-20">
+                                                            <button aria-label="Subir" onClick={() => moveWidget(w, 'up')} disabled={idx === 0} className="p-0.5 text-slate-500 hover:text-slate-700 disabled:opacity-20">
                                                                 <ChevronUp size={14} />
                                                             </button>
-                                                            <button onClick={() => moveWidget(w, 'down')} disabled={idx === selWidgets.length - 1} className="p-0.5 text-slate-400 hover:text-slate-700 disabled:opacity-20">
+                                                            <button aria-label="Bajar" onClick={() => moveWidget(w, 'down')} disabled={idx === selWidgets.length - 1} className="p-0.5 text-slate-500 hover:text-slate-700 disabled:opacity-20">
                                                                 <ChevronDown size={14} />
                                                             </button>
                                                         </div>
                                                         <div className="min-w-0">
                                                             <p className="font-semibold text-sm text-slate-900 dark:text-white">{w.label}</p>
-                                                            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full mt-0.5 ${meta.color}`}>
+                                                            <span className={`inline-flex items-center gap-1 text-2xs font-semibold px-2 py-0.5 rounded-full mt-0.5 ${meta.color}`}>
                                                                 {meta.icon}
                                                                 {meta.label}
                                                             </span>
@@ -514,7 +526,7 @@ export const AdminContentLayout: React.FC = () => {
                                                     </div>
 
                                                     {/* Scope */}
-                                                    <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full self-start md:self-auto ${scopeMeta.color}`}>
+                                                    <span className={`text-2xs font-medium px-2.5 py-0.5 rounded-full self-start md:self-auto ${scopeMeta.color}`}>
                                                         {scopeMeta.label}
                                                         {w.department ? ` · ${w.department}` : ''}
                                                     </span>
@@ -531,22 +543,22 @@ export const AdminContentLayout: React.FC = () => {
                                                     {/* Actions */}
                                                     <div className="flex items-center gap-1.5 self-start md:self-auto">
                                                         {/* Desktop reorder arrows */}
-                                                        <button onClick={() => moveWidget(w, 'up')} disabled={idx === 0} className="hidden md:flex p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-20 rounded hover:bg-slate-100 dark:hover:bg-slate-700">
+                                                        <button aria-label="Subir" onClick={() => moveWidget(w, 'up')} disabled={idx === 0} className="hidden md:flex p-1.5 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-20 rounded hover:bg-slate-100 dark:hover:bg-slate-700">
                                                             <ChevronUp size={14} />
                                                         </button>
-                                                        <button onClick={() => moveWidget(w, 'down')} disabled={idx === selWidgets.length - 1} className="hidden md:flex p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-20 rounded hover:bg-slate-100 dark:hover:bg-slate-700">
+                                                        <button aria-label="Bajar" onClick={() => moveWidget(w, 'down')} disabled={idx === selWidgets.length - 1} className="hidden md:flex p-1.5 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-20 rounded hover:bg-slate-100 dark:hover:bg-slate-700">
                                                             <ChevronDown size={14} />
                                                         </button>
                                                         <button
                                                             onClick={() => openEditWidget(w)}
-                                                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                                                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-control hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                                                         >
                                                             <Edit2 size={12} />
                                                             <span className="hidden sm:inline">Edit</span>
                                                         </button>
-                                                        <button
-                                                            onClick={() => removeWidget(w)}
-                                                            className="p-1.5 text-red-400 hover:text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors border border-transparent hover:border-red-200 dark:hover:border-red-900/30"
+                                                        <button aria-label="Eliminar"
+                                                            onClick={() => askRemoveWidget(w)}
+                                                            className="p-1.5 text-red-400 hover:text-red-600 rounded-control hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors border border-transparent hover:border-red-200 dark:hover:border-red-900/30"
                                                         >
                                                             <Trash2 size={14} />
                                                         </button>
@@ -564,56 +576,56 @@ export const AdminContentLayout: React.FC = () => {
 
             {/* ── Layout modal ───────────────────────────────────────────── */}
             {showLayoutModal && (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-100 dark:border-slate-800">
+                <div className="modal-backdrop z-popover">
+                    <div className="card rounded-modal shadow-2xl max-w-md w-full p-6">
                         <div className="flex justify-between items-center mb-5">
                             <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                                 {editingLayout ? 'Editar Layout' : 'Nuevo Layout'}
                             </h3>
-                            <button onClick={() => setShowLayoutModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                            <button aria-label="Cerrar" onClick={() => setShowLayoutModal(false)} className="text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
                                 <X size={22} />
                             </button>
                         </div>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nombre *</label>
+                                <label className="label">Nombre *</label>
                                 <input
                                     type="text" autoFocus
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="field"
                                     value={layoutForm.name}
                                     onChange={e => setLayoutForm(p => ({ ...p, name: e.target.value }))}
                                     placeholder="Ej: Layout Verano 2026"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Descripción</label>
+                                <label className="label">Descripción</label>
                                 <input
                                     type="text"
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="field"
                                     value={layoutForm.description}
                                     onChange={e => setLayoutForm(p => ({ ...p, description: e.target.value }))}
                                     placeholder="Descripción opcional"
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Fecha inicio</label>
+                                    <label className="label">Fecha inicio</label>
                                     <input type="date"
-                                        className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className="field"
                                         value={layoutForm.startDate}
                                         onChange={e => setLayoutForm(p => ({ ...p, startDate: e.target.value }))}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Fecha fin</label>
+                                    <label className="label">Fecha fin</label>
                                     <input type="date"
-                                        className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className="field"
                                         value={layoutForm.endDate}
                                         onChange={e => setLayoutForm(p => ({ ...p, endDate: e.target.value }))}
                                     />
                                 </div>
                             </div>
-                            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                            <label className="flex items-center gap-3 cursor-pointer p-3 rounded-control bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                                 <input type="checkbox" className="w-4 h-4 accent-blue-600"
                                     checked={layoutForm.isActive}
                                     onChange={e => setLayoutForm(p => ({ ...p, isActive: e.target.checked }))}
@@ -625,10 +637,10 @@ export const AdminContentLayout: React.FC = () => {
                             </label>
                         </div>
                         <div className="flex gap-3 mt-6">
-                            <button onClick={() => setShowLayoutModal(false)} className="flex-1 px-4 py-2.5 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm">
+                            <button onClick={() => setShowLayoutModal(false)} className="btn-secondary flex-1">
                                 Cancelar
                             </button>
-                            <button onClick={saveLayout} disabled={saving} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-60 transition-colors text-sm font-semibold">
+                            <button onClick={saveLayout} disabled={saving} className="btn-primary flex-1">
                                 <Save size={15} />
                                 {saving ? 'Guardando…' : 'Guardar'}
                             </button>
@@ -639,19 +651,19 @@ export const AdminContentLayout: React.FC = () => {
 
             {/* ── Widget modal ───────────────────────────────────────────── */}
             {showWidgetModal && (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-100 dark:border-slate-800">
+                <div className="modal-backdrop z-popover">
+                    <div className="card rounded-modal shadow-2xl max-w-md w-full p-6">
                         <div className="flex justify-between items-center mb-5">
                             <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                                 {editingWidget ? 'Editar Widget' : 'Añadir Widget'}
                             </h3>
-                            <button onClick={() => setShowWidgetModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                            <button aria-label="Cerrar" onClick={() => setShowWidgetModal(false)} className="text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
                                 <X size={22} />
                             </button>
                         </div>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tipo de Widget</label>
+                                <label className="label">Tipo de Widget</label>
                                 <div className="grid grid-cols-3 gap-2">
                                     {(Object.keys(WIDGET_META) as DashboardWidgetType[]).map(t => {
                                         const m = WIDGET_META[t];
@@ -660,7 +672,7 @@ export const AdminContentLayout: React.FC = () => {
                                                 key={t}
                                                 type="button"
                                                 onClick={() => setWidgetForm(p => ({ ...p, type: t, label: p.label || m.label }))}
-                                                className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 text-center transition-all text-[11px] font-semibold ${
+                                                className={`flex flex-col items-center gap-1.5 p-2.5 rounded-control border-2 text-center transition-all text-2xs font-semibold ${
                                                     widgetForm.type === t
                                                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
                                                         : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
@@ -677,10 +689,10 @@ export const AdminContentLayout: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nombre visible *</label>
+                                <label className="label">Nombre visible *</label>
                                 <input
                                     type="text" autoFocus
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="field"
                                     value={widgetForm.label}
                                     onChange={e => setWidgetForm(p => ({ ...p, label: e.target.value }))}
                                     placeholder={WIDGET_META[widgetForm.type].label}
@@ -688,13 +700,13 @@ export const AdminContentLayout: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Visible para</label>
-                                <div className="grid grid-cols-2 gap-2">
+                                <label className="label">Visible para</label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     {(Object.keys(SCOPE_META) as DashboardWidgetScope[]).map(s => (
                                         <button
                                             key={s} type="button"
                                             onClick={() => setWidgetForm(p => ({ ...p, scope: s }))}
-                                            className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                                            className={`px-3 py-2 rounded-control border text-sm font-medium transition-all ${
                                                 widgetForm.scope === s
                                                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
                                                     : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300'
@@ -715,10 +727,10 @@ export const AdminContentLayout: React.FC = () => {
                             </label>
                         </div>
                         <div className="flex gap-3 mt-6">
-                            <button onClick={() => setShowWidgetModal(false)} className="flex-1 px-4 py-2.5 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm">
+                            <button onClick={() => setShowWidgetModal(false)} className="btn-secondary flex-1">
                                 Cancelar
                             </button>
-                            <button onClick={saveWidget} disabled={saving} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-60 transition-colors text-sm font-semibold">
+                            <button onClick={saveWidget} disabled={saving} className="btn-primary flex-1">
                                 <Save size={15} />
                                 {saving ? 'Guardando…' : editingWidget ? 'Actualizar' : 'Añadir'}
                             </button>
@@ -726,6 +738,24 @@ export const AdminContentLayout: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <ConfirmModal
+                isOpen={!!pendingDelete}
+                onClose={() => setPendingDelete(null)}
+                onConfirm={async () => {
+                    const target = pendingDelete;
+                    setPendingDelete(null);
+                    if (!target) return;
+                    if (target.kind === 'layout') await removeLayout(target.item);
+                    else await removeWidget(target.item);
+                }}
+                title={pendingDelete?.kind === 'layout' ? 'Eliminar layout' : 'Eliminar widget'}
+                message={pendingDelete?.kind === 'layout'
+                    ? `¿Eliminar "${pendingDelete.item.name}"?`
+                    : `¿Eliminar widget "${pendingDelete?.item.label}"?`}
+                confirmText="Eliminar"
+                type="danger"
+            />
         </div>
     );
 };

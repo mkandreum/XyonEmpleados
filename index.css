@@ -11,6 +11,8 @@
 }
 
 body {
+  font-family: theme('fontFamily.sans');
+  -webkit-font-smoothing: antialiased;
   @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300;
   min-height: 100vh;
 }
@@ -109,6 +111,33 @@ body {
   }
 }
 
+/* Accessibility: visible keyboard focus everywhere */
+:focus-visible {
+  outline: 2px solid rgb(var(--primary-500));
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-offset: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-slide-up {
+    opacity: 1;
+  }
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -120,27 +149,13 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 rounded-full;
+  @apply bg-slate-300 dark:bg-slate-700 rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-400;
+  @apply bg-slate-400 dark:bg-slate-600;
 }
 
-/* Dark sidebar scrollbar specific override if needed, 
-   but usually transparent track + light grey thumb works well on dark too 
-   (it will be a light grey bar on dark blue background).
-   Let's check if we want a darker thumb for the light mode? 
-   Actually slate-300 is visible on slate-900 too.
-   To be perfect for dark backgrounds, we might want a darker "track" or specific styling.
-   But let's start with this clean look.
-*/
-
-/* For elements with dark background, we might want a different scrollbar?
-   Tailwind doesn't support scoped scrollbars easily without plugins or strict CSS selectors.
-   The user complaint "es muy fea" usually refers to the fat defaulting Windows scrollbar.
-   A thin customized one is usually the fix.
-*/
 .dark-scrollbar ::-webkit-scrollbar-thumb {
   @apply bg-slate-600;
 }
@@ -251,4 +266,52 @@ body {
 
 .animate-shake {
   animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+}
+/* ------------------------------------------------------------------
+   Design system primitives (radii: control 12 / card 16 / modal 24)
+   Use these instead of re-typing long class strings.
+------------------------------------------------------------------- */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 min-h-[2.5rem] px-4 py-2 rounded-control text-sm font-semibold
+      transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800;
+  }
+  .btn-secondary {
+    @apply btn bg-white text-slate-700 border border-slate-300 hover:bg-slate-50
+      dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700;
+  }
+  .btn-ghost {
+    @apply btn text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800;
+  }
+  .btn-danger {
+    @apply btn bg-danger text-white hover:bg-red-700;
+  }
+  .field {
+    @apply w-full min-h-[2.5rem] px-3 py-2 rounded-control text-sm border border-slate-300 bg-white text-slate-900
+      placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+      disabled:bg-slate-100 disabled:text-slate-500 transition-colors
+      dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400
+      dark:disabled:bg-slate-800/50 dark:disabled:text-slate-400;
+  }
+  .label {
+    @apply block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1;
+  }
+  .card {
+    @apply bg-white dark:bg-slate-900 rounded-card border border-slate-200 dark:border-slate-800 shadow-soft;
+  }
+  .modal-panel {
+    @apply bg-white dark:bg-slate-900 rounded-modal shadow-float border border-slate-200 dark:border-slate-800 w-full;
+  }
+  .modal-backdrop {
+    @apply fixed inset-0 z-modal flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm animate-fade-in;
+  }
+  .page-title {
+    @apply text-2xl font-bold tracking-tight text-slate-900 dark:text-white;
+  }
+  .page-subtitle {
+    @apply text-sm text-slate-500 dark:text-slate-400;
+  }
 }

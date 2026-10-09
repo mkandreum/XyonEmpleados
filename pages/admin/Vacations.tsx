@@ -6,6 +6,7 @@ import { getAbsoluteUrl } from '../../utils/urlUtils';
 import { openProtectedFile } from '../../utils/fileUtils';
 import toast from 'react-hot-toast';
 import { haptic } from '../../utils/haptics';
+import { vacationStatusLabel } from '../../components/StatusBadge';
 
 interface VacationRequest {
     id: string;
@@ -77,16 +78,6 @@ export const AdminVacations: React.FC = () => {
     };
 
     // Helper functions
-    const getStatusLabel = (status: string) => {
-        switch (status) {
-            case 'PENDING': return 'Pendiente';
-            case 'PENDING_MANAGER': return 'Pendiente Manager';
-            case 'PENDING_ADMIN': return 'Pendiente RRHH';
-            case 'APPROVED': return 'Aprobada';
-            case 'REJECTED': return 'Rechazada';
-            default: return status;
-        }
-    };
 
 
 
@@ -171,7 +162,7 @@ export const AdminVacations: React.FC = () => {
         <div className="space-y-6">
             {/* Header */}
             <div className="flex justify-between items-center animate-slide-up">
-                <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Gestión de Vacaciones</h1>
+                <h1 className="page-title">Gestión de Vacaciones</h1>
             </div>
 
             {/* Filters */}
@@ -179,7 +170,7 @@ export const AdminVacations: React.FC = () => {
                 <select
                     value={selectedDepartment}
                     onChange={(e) => setSelectedDepartment(e.target.value)}
-                    className="px-4 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
+                    className="field px-4"
                 >
                     <option value="all">Todos los departamentos</option>
                     {departments.map(dept => (
@@ -190,9 +181,9 @@ export const AdminVacations: React.FC = () => {
 
             {/* Pending Requests Section */}
             {pendingRequests.length > 0 && (
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border-2 border-amber-200 dark:border-amber-800/50 rounded-lg p-4 md:p-6 transition-colors font-sans animate-slide-up delay-150">
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border-2 border-amber-200 dark:border-amber-800/50 rounded-control p-4 md:p-6 transition-colors font-sans animate-slide-up delay-150">
                     <div className="flex items-center gap-2 mb-4">
-                        <AlertCircle className="text-amber-600 dark:text-amber-400" size={24} />
+                        <AlertCircle className="text-amber-700 dark:text-amber-400" size={24} />
                         <h2 className="text-lg md:text-xl font-bold text-amber-900 dark:text-amber-100">
                             Solicitudes Pendientes ({pendingRequests.length})
                         </h2>
@@ -200,13 +191,13 @@ export const AdminVacations: React.FC = () => {
 
                     <div className="space-y-3">
                         {pendingRequests.map(request => (
-                            <div key={request.id} className="bg-white dark:bg-slate-900 rounded-lg p-3 md:p-4 shadow-sm border border-amber-100 dark:border-amber-800/30 transition-colors">
+                            <div key={request.id} className="bg-white dark:bg-slate-900 rounded-control p-3 md:p-4 shadow-sm border border-amber-100 dark:border-amber-800/30 transition-colors">
                                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                     <div className="flex-1">
                                         <div className="flex flex-wrap items-center gap-2 mb-2">
                                             <span className="text-base font-semibold text-slate-900 dark:text-white">{request.user.name}</span>
                                             <span className={`px-2 py-1 rounded-md text-xs font-semibold ${request.status === 'PENDING_ADMIN' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'}`}>
-                                                {getStatusLabel(request.status)}
+                                                {vacationStatusLabel(request.status)}
                                             </span>
                                         </div>
                                         <div className="mb-2 text-xs text-slate-500 dark:text-slate-400">
@@ -250,7 +241,7 @@ export const AdminVacations: React.FC = () => {
                                         <button
                                             onClick={() => handleStatusUpdate(request.id, 'APPROVED')}
                                             disabled={actionLoadingId === request.id}
-                                            className="flex-1 md:flex-none px-3 md:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                                            className="flex-1 md:flex-none px-3 md:px-4 py-2 bg-green-600 text-white rounded-control hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                                         >
                                             <Check size={16} />
                                             <span className="hidden md:inline">{actionLoadingId === request.id ? 'Procesando...' : 'Aprobar'}</span>
@@ -259,7 +250,7 @@ export const AdminVacations: React.FC = () => {
                                         <button
                                             onClick={() => handleStatusUpdate(request.id, 'REJECTED')}
                                             disabled={actionLoadingId === request.id}
-                                            className="flex-1 md:flex-none px-3 md:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                                            className="btn-danger flex-1 md:flex-none md:px-4"
                                         >
                                             <X size={16} />
                                             <span className="hidden md:inline">{actionLoadingId === request.id ? 'Procesando...' : 'Rechazar'}</span>
@@ -274,13 +265,13 @@ export const AdminVacations: React.FC = () => {
             )}
 
             {/* Historical Section */}
-            <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 transition-colors animate-slide-up delay-200">
+            <div className="bg-white dark:bg-slate-900 rounded-control shadow-sm border border-slate-200 dark:border-slate-800 transition-colors animate-slide-up delay-200">
                 <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                     <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Historial de Solicitudes</h2>
                     <div className="flex gap-2">
                         <button
                             onClick={() => setViewMode('grouped')}
-                            className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm ${viewMode === 'grouped'
+                            className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-control transition-colors text-sm ${viewMode === 'grouped'
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                                 }`}
@@ -290,7 +281,7 @@ export const AdminVacations: React.FC = () => {
                         </button>
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm ${viewMode === 'list'
+                            className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-control transition-colors text-sm ${viewMode === 'list'
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                                 }`}
@@ -307,7 +298,7 @@ export const AdminVacations: React.FC = () => {
                     ) : viewMode === 'grouped' ? (
                         <div className="space-y-2">
                             {groupedHistorical.map(group => (
-                                <div key={group.userId} className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden transition-colors">
+                                <div key={group.userId} className="border border-slate-200 dark:border-slate-800 rounded-control overflow-hidden transition-colors">
                                     <button
                                         onClick={() => toggleUserExpanded(group.userId)}
                                         className="w-full px-3 md:px-4 py-3 bg-slate-50 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-between gap-2"
@@ -319,11 +310,11 @@ export const AdminVacations: React.FC = () => {
                                                 <ChevronRight size={18} className="text-slate-600 dark:text-slate-400 flex-shrink-0" />
                                             )}
                                             <span className="font-semibold text-slate-800 dark:text-white text-sm md:text-base truncate">{group.userName}</span>
-                                            <span className="text-xs md:text-sm text-slate-500 dark:text-slate-500">({group.requests.length})</span>
+                                            <span className="text-xs md:text-sm text-slate-500 dark:text-slate-400">({group.requests.length})</span>
                                             <span className="text-xs md:text-sm text-slate-600 dark:text-slate-400 hidden sm:inline">• {group.department}</span>
                                         </div>
                                         <div className="flex gap-2 md:gap-3 text-xs md:text-sm flex-shrink-0">
-                                            <span className="text-green-600 dark:text-green-400 font-medium">{group.approved} ✓</span>
+                                            <span className="text-green-700 dark:text-green-400 font-medium">{group.approved} ✓</span>
                                             <span className="text-red-600 dark:text-red-400 font-medium">{group.rejected} ✗</span>
                                         </div>
                                     </button>
@@ -361,7 +352,7 @@ export const AdminVacations: React.FC = () => {
                                                                         ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                                                         : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                                                         }`}>
-                                                                        {getStatusLabel(request.status)}
+                                                                        {vacationStatusLabel(request.status)}
                                                                     </span>
                                                                 </td>
                                                                 <td className="px-4 py-2">
@@ -400,25 +391,25 @@ export const AdminVacations: React.FC = () => {
                                                                 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                                                 : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                                                 }`}>
-                                                                {getStatusLabel(request.status)}
+                                                                {vacationStatusLabel(request.status)}
                                                             </span>
                                                         </div>
 
                                                         <div className="space-y-1.5 text-xs">
                                                             <div className="flex items-center justify-between">
-                                                                <span className="text-slate-500 dark:text-slate-500">Fechas:</span>
+                                                                <span className="text-slate-500 dark:text-slate-400">Fechas:</span>
                                                                 <span className="text-slate-700 dark:text-slate-300 font-medium">
                                                                     {formatDate(request.startDate)} - {formatDate(request.endDate)}
                                                                 </span>
                                                             </div>
                                                             <div className="flex items-center justify-between">
-                                                                <span className="text-slate-500 dark:text-slate-500">Duración:</span>
+                                                                <span className="text-slate-500 dark:text-slate-400">Duración:</span>
                                                                 <span className="text-slate-700 dark:text-slate-300 font-medium">
                                                                     {request.days ? `${request.days} días` : `${request.hours} horas`}
                                                                 </span>
                                                             </div>
                                                             <div className="flex items-center justify-between">
-                                                                <span className="text-slate-500 dark:text-slate-500">Tipo:</span>
+                                                                <span className="text-slate-500 dark:text-slate-400">Tipo:</span>
                                                                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${getTypeColor(request.type)}`}>
                                                                     {getTypeLabel(request.type, request.subtype)}
                                                                 </span>
@@ -491,7 +482,7 @@ export const AdminVacations: React.FC = () => {
                                                         ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                                         : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                                         }`}>
-                                                        {getStatusLabel(request.status)}
+                                                        {vacationStatusLabel(request.status)}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3">
@@ -524,35 +515,35 @@ export const AdminVacations: React.FC = () => {
                             {/* Mobile Card View */}
                             <div className="md:hidden space-y-3">
                                 {historicalRequests.map(request => (
-                                    <div key={request.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-3 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                                    <div key={request.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-control p-3 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                                         <div className="flex items-start justify-between mb-2">
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-semibold text-slate-800 dark:text-white text-sm truncate">{request.user.name}</p>
-                                                <p className="text-xs text-slate-500 dark:text-slate-500">{request.user.department}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">{request.user.department}</p>
                                             </div>
                                             <span className={`px-2 py-1 rounded-md text-xs font-medium flex-shrink-0 ml-2 ${request.status === 'APPROVED'
                                                 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                                 : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                                 }`}>
-                                                {getStatusLabel(request.status)}
+                                                {vacationStatusLabel(request.status)}
                                             </span>
                                         </div>
 
                                         <div className="space-y-1.5 text-xs">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-slate-500 dark:text-slate-500">Fechas:</span>
+                                                <span className="text-slate-500 dark:text-slate-400">Fechas:</span>
                                                 <span className="text-slate-700 dark:text-slate-300 font-medium">
                                                     {formatDate(request.startDate)} - {formatDate(request.endDate)}
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between">
-                                                <span className="text-slate-500 dark:text-slate-500">Duración:</span>
+                                                <span className="text-slate-500 dark:text-slate-400">Duración:</span>
                                                 <span className="text-slate-700 dark:text-slate-300 font-medium">
                                                     {request.days ? `${request.days} días` : `${request.hours} horas`}
                                                 </span>
                                             </div>
                                             <div className="flex items-center justify-between">
-                                                <span className="text-slate-500 dark:text-slate-500">Tipo:</span>
+                                                <span className="text-slate-500 dark:text-slate-400">Tipo:</span>
                                                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${getTypeColor(request.type)}`}>
                                                     {getTypeLabel(request.type, request.subtype)}
                                                 </span>

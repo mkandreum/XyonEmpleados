@@ -29,7 +29,7 @@ export const ForgotPassword = () => {
     return (
         <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors">
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white dark:bg-slate-900 py-8 px-4 shadow rounded-lg sm:px-10 border border-slate-200 dark:border-slate-800">
+                <div className="bg-white dark:bg-slate-900 py-8 px-4 shadow rounded-control sm:px-10 border border-slate-200 dark:border-slate-800">
                     <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6">
                         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Recuperar Contraseña</h2>
                         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
@@ -38,24 +38,24 @@ export const ForgotPassword = () => {
                     </div>
 
                     {message && (
-                        <div className="mb-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 p-3 rounded-lg text-sm">
+                        <div className="mb-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 p-3 rounded-control text-sm">
                             {message}
                         </div>
                     )}
                     {error && (
-                        <div className="mb-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-3 rounded-lg text-sm">
+                        <div className="mb-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-3 rounded-control text-sm">
                             {error}
                         </div>
                     )}
 
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            <label htmlFor="email" className="label mb-0">
                                 Correo Electrónico
                             </label>
                             <div className="mt-1 relative rounded-md shadow-sm">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Mail className="h-5 w-5 text-slate-400" />
+                                    <Mail className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                                 </div>
                                 <input
                                     id="email"
@@ -63,7 +63,7 @@ export const ForgotPassword = () => {
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                                    className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-control focus:ring-blue-500 focus:border-blue-500 p-2.5 bg-white dark:bg-slate-900 dark:bg-slate-800 text-slate-900 dark:text-white"
                                     placeholder="tu@email.com"
                                 />
                             </div>
@@ -72,14 +72,14 @@ export const ForgotPassword = () => {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
+                            className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-control shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
                         >
                             {isLoading ? 'Enviando...' : 'Enviar Enlace'}
                         </button>
                     </form>
 
                     <div className="mt-6 text-center">
-                        <Link to="/login" className="flex items-center justify-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500">
+                        <Link to="/login" className="flex items-center justify-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
                             <ArrowLeft size={16} />
                             Volver al Login
                         </Link>

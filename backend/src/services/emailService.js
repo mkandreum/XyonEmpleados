@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const { decryptSMTPPassword } = require('../utils/encryptionUtils');
 
 const getTransporter = async () => {
@@ -43,7 +43,7 @@ const getTransporter = async () => {
                 pass: decryptedPassword,
             },
             tls: {
-                rejectUnauthorized: false // Helps with some self-signed certs or strict firewalls
+                rejectUnauthorized: process.env.SMTP_TLS_INSECURE !== 'true' // verificar certificado; SMTP_TLS_INSECURE=true solo para certs autofirmados
             }
         };
 

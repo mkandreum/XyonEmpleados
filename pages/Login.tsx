@@ -55,7 +55,7 @@ export const LoginPage: React.FC = () => {
   const loginLogoUrl = (settings.loginLogoUrl || settings.logoUrl) as string; // Fallback to logoUrl if loginLogoUrl not set
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
       <div className="w-full sm:mx-auto sm:max-w-md text-center animate-slide-up">
         {loginLogoUrl && !logoError ? (
           <img
@@ -65,30 +65,30 @@ export const LoginPage: React.FC = () => {
             onError={() => setLogoError(true)}
           />
         ) : null}
-        <h2 className="mt-6 text-2xl font-bold tracking-tight text-slate-900">Portal del Empleado</h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <h2 className="mt-6 text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Portal del Empleado</h2>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           Inicia sesión para acceder a tu espacio personal
         </p>
       </div>
 
       <div className="mt-8 w-full sm:mx-auto sm:max-w-md animate-slide-up delay-100">
-        <div className="bg-white py-8 px-6 shadow-2xl rounded-2xl sm:px-10 border border-slate-100 transition-colors">
+        <div className="bg-white dark:bg-slate-900 py-8 px-6 shadow-2xl rounded-card sm:px-10 border border-slate-100 dark:border-slate-800 transition-colors">
 
           {sessionExpired && (
-            <div className="mb-4 flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
-              <Info className="h-5 w-5 flex-shrink-0 text-amber-500" />
+            <div className="mb-4 flex items-center gap-2 rounded-control bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/40 p-3 text-sm text-amber-800 dark:text-amber-200">
+              <Info className="h-5 w-5 flex-shrink-0 text-amber-700" />
               <span>Tu sesión ha expirado. Por favor, inicia sesión de nuevo.</span>
             </div>
           )}
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                 Correo Electrónico
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-slate-400" aria-hidden="true" />
+                  <User className="h-5 w-5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
                 </div>
                 <input
                   id="email"
@@ -101,19 +101,19 @@ export const LoginPage: React.FC = () => {
                     setEmail(e.target.value);
                     setIsError(false);
                   }}
-                  className={`block w-full pl-10 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white text-slate-900 ${isError ? 'border-red-500 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500' : 'border-slate-300'} transition-colors`}
+                  className={`block w-full pl-10 sm:text-sm rounded-control focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white dark:bg-slate-900 text-slate-900 dark:text-white ${isError ? 'border-red-500 text-red-900 dark:text-red-200 placeholder-red-400 focus:ring-red-500 focus:border-red-500' : 'border-slate-300 dark:border-slate-700'} transition-colors`}
                   placeholder="usuario@xyonempleados.com"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                 Contraseña
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-slate-400" aria-hidden="true" />
+                  <Lock className="h-5 w-5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
                 </div>
                 <input
                   id="password"
@@ -126,7 +126,7 @@ export const LoginPage: React.FC = () => {
                     setPassword(e.target.value);
                     setIsError(false);
                   }}
-                  className={`block w-full pl-10 sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white text-slate-900 ${isError ? 'border-red-500 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500' : 'border-slate-300'} ${isShaking ? 'animate-shake' : ''} transition-colors`}
+                  className={`block w-full pl-10 sm:text-sm rounded-control focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white dark:bg-slate-900 text-slate-900 dark:text-white ${isError ? 'border-red-500 text-red-900 dark:text-red-200 placeholder-red-400 focus:ring-red-500 focus:border-red-500' : 'border-slate-300 dark:border-slate-700'} ${isShaking ? 'animate-shake' : ''} transition-colors`}
                   placeholder="••••••••"
                 />
               </div>
@@ -140,15 +140,15 @@ export const LoginPage: React.FC = () => {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded bg-white"
+                  className="h-4 w-4 text-blue-600 dark:text-blue-400 focus:ring-blue-500 border-slate-300 dark:border-slate-700 rounded bg-white dark:bg-slate-900"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-900">
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-900 dark:text-white">
                   Recordarme
                 </label>
               </div>
 
               <div className="text-sm">
-                <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link to="/forgot-password" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
                   ¿Olvidaste tu contraseña?
                 </Link>
               </div>
@@ -158,7 +158,7 @@ export const LoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 transition-all ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-control shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-slate-900 transition-all ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">
@@ -175,15 +175,15 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <div className="mt-6 text-center text-sm">
-          <span className="text-slate-600">¿No tienes cuenta? </span>
-          <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+          <span className="text-slate-600 dark:text-slate-400">¿No tienes cuenta? </span>
+          <Link to="/register" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
             Regístrate aquí
           </Link>
         </div>
 
       </div>
 
-      <p className="mt-6 text-center text-xs text-slate-500 animate-slide-up delay-200">
+      <p className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400 animate-slide-up delay-200">
         &copy; 2026 XyonPlatforms. Todos los derechos reservados.
       </p>
     </div>

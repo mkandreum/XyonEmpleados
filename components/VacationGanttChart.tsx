@@ -3,6 +3,7 @@ import { VacationRequest } from '../types';
 import { managerService } from '../services/api';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getTypeLabel, getTypeColor } from '../utils/vacationUtils';
+import { LoadingState } from './PageState';
 
 interface GanttEntry {
     user: { name: string; id: string };
@@ -83,16 +84,16 @@ export const VacationGanttChart: React.FC = () => {
     };
 
     if (isLoading) {
-        return <div className="p-8 text-center text-slate-500 dark:text-slate-400">Cargando calendario...</div>;
+        return <LoadingState label="Cargando calendario..." />;
     }
 
     return (
         <div className="space-y-4">
             {/* Week Navigator */}
-            <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-                <button
+            <div className="card flex items-center justify-between p-4">
+                <button aria-label="Anterior"
                     onClick={() => setCurrentWeek(prev => prev - 1)}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-control transition-colors"
                 >
                     <ChevronLeft className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                 </button>
@@ -104,16 +105,16 @@ export const VacationGanttChart: React.FC = () => {
                     </span>
                 </div>
 
-                <button
+                <button aria-label="Siguiente"
                     onClick={() => setCurrentWeek(prev => prev + 1)}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-control transition-colors"
                 >
                     <ChevronRight className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                 </button>
             </div>
 
             {/* Gantt Chart */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+            <div className="card overflow-hidden">
                 {/* Mobile warning */}
                 <div className="lg:hidden p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-100 dark:border-blue-800">
                     <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
@@ -182,7 +183,7 @@ export const VacationGanttChart: React.FC = () => {
             </div>
 
             {/* Legend */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+            <div className="card p-4">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Leyenda</h3>
                 <div className="flex flex-wrap gap-4">
                     <div className="flex items-center gap-2">

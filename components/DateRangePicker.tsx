@@ -99,7 +99,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
                 {/* Day headers */}
                 <div className="grid grid-cols-7 gap-0.5 mb-1">
                     {dayNames.map(day => (
-                        <div key={day} className="text-center text-[10px] font-medium text-slate-500 dark:text-slate-400 py-0.5">
+                        <div key={day} className="text-center text-2xs font-medium text-slate-500 dark:text-slate-400 py-0.5">
                             {day}
                         </div>
                     ))}
@@ -130,7 +130,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
                                         : inRange
                                             ? 'bg-blue-100 text-blue-900 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-200 dark:hover:bg-blue-800/60'
                                             : weekend
-                                                ? 'text-slate-400 hover:bg-slate-100 dark:text-slate-600 dark:hover:bg-slate-800'
+                                                ? 'text-slate-500 hover:bg-slate-100 dark:text-slate-600 dark:hover:bg-slate-800'
                                                 : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
                                     }
                 `}
@@ -145,12 +145,12 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
     };
 
     return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 shadow-sm transition-colors">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-control p-3 shadow-sm transition-colors">
             <div className="flex items-center justify-between mb-3">
-                <button
+                <button aria-label="Anterior"
                     type="button"
                     onClick={prevMonth}
-                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-control transition-colors"
                 >
                     <ChevronLeft className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                 </button>
@@ -159,10 +159,10 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
                     {selectingStart ? 'Selecciona fecha de inicio' : 'Selecciona fecha de fin'}
                 </div>
 
-                <button
+                <button aria-label="Siguiente"
                     type="button"
                     onClick={nextMonth}
-                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-control transition-colors"
                 >
                     <ChevronRight className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                 </button>

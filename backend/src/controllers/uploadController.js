@@ -3,7 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 // Ensure uploads directories exist
 const uploadsBase = path.join(__dirname, '../../uploads');
@@ -32,14 +32,16 @@ const storage = multer.diskStorage({
     },
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
+        // Prefijo con el id del usuario: permite verificar la propiedad al vincular/borrar el fichero
+        const owner = String((req.user && req.user.userId) || 'anon').replace(/[^A-Za-z0-9_-]/g, '');
+        cb(null, owner + '-' + uniqueSuffix + path.extname(file.originalname).toLowerCase());
     }
 });
 
 // File filter
 const fileFilter = (req, file, cb) => {
     const allowedTypes = {
-        'logos': /jpeg|jpg|png|gif|svg/,
+        'logos': /jpeg|jpg|png|gif/,
         'payrolls': /pdf/,
         'justifications': /jpeg|jpg|png|pdf/,
         'avatars': /jpeg|jpg|png/,
@@ -54,6 +56,30 @@ const fileFilter = (req, file, cb) => {
         return cb(null, true);
     } else {
         cb(new Error(`Invalid file type for ${fieldType}`));
+    }
+};
+
+// Firmas (magic bytes) para no fiarse del mimetype/extension enviados por el cliente
+const MAGIC = {
+    '.png': [[0x89, 0x50, 0x4e, 0x47]],
+    '.jpg': [[0xff, 0xd8, 0xff]],
+    '.jpeg': [[0xff, 0xd8, 0xff]],
+    '.gif': [[0x47, 0x49, 0x46, 0x38]],
+    '.pdf': [[0x25, 0x50, 0x44, 0x46]]
+};
+const hasValidSignature = (filePath, ext) => {
+    const sigs = MAGIC[ext];
+    if (!sigs) return false;
+    let fd;
+    try {
+        fd = fs.openSync(filePath, 'r');
+        const buf = Buffer.alloc(8);
+        fs.readSync(fd, buf, 0, 8, 0);
+        return sigs.some(sig => sig.every((b, i) => buf[i] === b));
+    } catch (e) {
+        return false;
+    } finally {
+        if (fd !== undefined) fs.closeSync(fd);
     }
 };
 
@@ -75,6 +101,12 @@ exports.handleUpload = (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const ext = path.extname(req.file.filename).toLowerCase();
+        if (!hasValidSignature(req.file.path, ext)) {
+            try { fs.unlinkSync(req.file.path); } catch (e) { /* ignore */ }
+            return res.status(400).json({ error: 'El contenido del archivo no coincide con su tipo' });
         }
 
         let fileUrl;
@@ -100,30 +132,39 @@ exports.handleUpload = (req, res) => {
 };
 
 // Delete file
+// Solo se pueden borrar ficheros dentro de uploads/public o uploads/private.
+// Un usuario normal solo puede borrar ficheros que el mismo subio (prefijo userId-); ADMIN cualquiera.
 exports.deleteFile = (req, res) => {
     try {
         const filepath = req.body.filepath || req.body.fileUrl;
-        if (!filepath) {
+        if (!filepath || typeof filepath !== 'string') {
             return res.status(400).json({ error: 'Filepath or fileUrl required' });
         }
 
-        // Determine if path is public static or API route
-        // API route format: /api/files/payrolls/filename.pdf
-        // Public static format: /uploads/public/logos/filename.png
-
-        let fullPath;
+        let baseDir;
+        let relativePath;
         if (filepath.startsWith('/api/files/')) {
-            const relativePath = filepath.replace('/api/files/', '');
-            fullPath = path.join(privateDir, relativePath);
+            baseDir = privateDir;
+            relativePath = filepath.slice('/api/files/'.length);
         } else if (filepath.startsWith('/uploads/public/')) {
-            const relativePath = filepath.replace('/uploads/public/', '');
-            fullPath = path.join(publicDir, relativePath);
+            baseDir = publicDir;
+            relativePath = filepath.slice('/uploads/public/'.length);
         } else {
-            // Legacy or invalid support
-            fullPath = path.join(__dirname, '../../', filepath);
+            return res.status(400).json({ error: 'Invalid file path' });
         }
 
-        if (fs.existsSync(fullPath)) {
+        const fullPath = path.resolve(baseDir, relativePath);
+        if (!fullPath.startsWith(path.resolve(baseDir) + path.sep)) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const isAdmin = req.user && req.user.role === 'ADMIN';
+        const fileName = path.basename(fullPath);
+        if (!isAdmin && !fileName.startsWith(String(req.user.userId) + '-')) {
+            return res.status(403).json({ error: 'Not allowed to delete this file' });
+        }
+
+        if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
             fs.unlinkSync(fullPath);
             res.json({ success: true, message: 'File deleted' });
         } else {

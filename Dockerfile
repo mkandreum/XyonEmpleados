@@ -2,7 +2,7 @@
 FROM node:20-alpine as frontend-builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 COPY . .
 # Build the Vite app
 RUN npm run build   
@@ -13,7 +13,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Install curl for health checks
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl su-exec
 
 # Copy Prisma schema FIRST (needed by postinstall hook)
 COPY backend/prisma ./prisma
@@ -37,6 +37,9 @@ COPY --from=frontend-builder /app/backend/version.json ./version.json
 # Create uploads directory structure (public for logos/avatars/news, private for payrolls/justifications)
 RUN mkdir -p uploads/public/logos uploads/public/avatars uploads/public/news uploads/private/payrolls uploads/private/justifications
 
+# Runtime user is non-root (node). The compose command chowns the volume then drops privileges via su-exec.
+RUN chown -R node:node /app
+
 # Declare volume for persistent storage
 VOLUME ["/app/uploads"]
 
@@ -44,4 +47,5 @@ VOLUME ["/app/uploads"]
 EXPOSE 3000
 
 # Command to run migrations and start server
-CMD npm run prisma:migrate && node src/server.js
+# Fallback when run without compose: drop privileges to the node user
+CMD su-exec node sh -c "npm run prisma:migrate && node src/server.js"

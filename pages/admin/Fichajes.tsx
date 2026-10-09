@@ -103,27 +103,27 @@ export const AdminFichajes: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-slide-up">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestión de Fichajes</h1>
+                    <h1 className="page-title">Gestión de Fichajes</h1>
                     <p className="text-slate-500 dark:text-slate-400">Administra horarios y visualiza fichajes por departamento</p>
                 </div>
-                <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                <button className="btn-primary">
                     <Download size={18} />
                     <span>Exportar</span>
                 </button>
             </div>
 
             {/* Filters */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors animate-slide-up delay-75">
+            <div className="card p-6 animate-slide-up delay-75">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        <label className="label mb-2">
                             <Users size={16} className="inline mr-1" />
                             Departamento
                         </label>
                         <select
                             value={selectedDepartment}
                             onChange={(e) => setSelectedDepartment(e.target.value)}
-                            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                            className="field"
                         >
                             <option value="">Seleccionar departamento</option>
                             {departments.map(dept => (
@@ -133,14 +133,14 @@ export const AdminFichajes: React.FC = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        <label className="label mb-2">
                             <Calendar size={16} className="inline mr-1" />
                             Vista
                         </label>
                         <select
                             value={selectedView}
                             onChange={(e) => setSelectedView(e.target.value as 'week' | 'month')}
-                            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors"
+                            className="field"
                         >
                             <option value="week">Semana actual</option>
                             <option value="month">Mes actual</option>
@@ -152,7 +152,7 @@ export const AdminFichajes: React.FC = () => {
             {selectedDepartment && (
                 <>
                     {/* Fichajes Table */}
-                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-200">
+                    <div className="card overflow-hidden animate-slide-up delay-200">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-800 transition-colors">
                             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                                 Fichajes del Departamento - {selectedView === 'week' ? 'Semana Actual' : 'Mes Actual'}
@@ -230,7 +230,7 @@ export const AdminFichajes: React.FC = () => {
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         {fichaje.hasWarning && (
-                                                            <div className="flex items-center text-orange-600 dark:text-orange-400 gap-1" title="Aviso enviado por manager">
+                                                            <div className="flex items-center text-orange-700 dark:text-orange-400 gap-1" title="Aviso enviado por manager">
                                                                 <AlertCircle size={16} />
                                                                 <span className="text-xs font-medium">Enviado</span>
                                                             </div>
@@ -269,7 +269,7 @@ export const AdminFichajes: React.FC = () => {
                                 {/* Mobile Card View */}
                                 <div className="md:hidden grid grid-cols-1 gap-4 p-4 bg-slate-50 dark:bg-slate-950/50">
                                     {fichajes.map((fichaje: any, index: number) => (
-                                        <div key={index} className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-4 transition-colors">
+                                        <div key={index} className="bg-white dark:bg-slate-900 rounded-control shadow-sm border border-slate-200 dark:border-slate-800 p-4 transition-colors">
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
                                                     <div className="font-semibold text-slate-900 dark:text-white">{fichaje.userName}</div>
@@ -283,7 +283,7 @@ export const AdminFichajes: React.FC = () => {
                                                 </span>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-4 mb-3">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                                                 <div>
                                                     <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">Entrada</div>
                                                     <div className="font-medium text-slate-900 dark:text-white">{fichaje.entrada}</div>
@@ -300,7 +300,7 @@ export const AdminFichajes: React.FC = () => {
                                                 </div>
                                                 <div className="flex flex-wrap gap-2 justify-end">
                                                     {fichaje.hasWarning && (
-                                                        <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-full border border-orange-100 dark:border-orange-900/30">
+                                                        <span className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 rounded-full border border-orange-100 dark:border-orange-900/30">
                                                             <AlertCircle size={12} />
                                                             Aviso
                                                         </span>

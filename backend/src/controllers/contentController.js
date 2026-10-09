@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const { createNotification } = require('./notificationController');
 
 // News Management
@@ -46,6 +46,9 @@ exports.deleteNews = async (req, res) => {
 exports.createPayroll = async (req, res) => {
     try {
         const { userId, month, year, amount, pdfUrl } = req.body;
+        if (!require('../utils/safeUrl').isOwnedPrivateFileUrl(pdfUrl, 'payrolls', null, 'ADMIN')) {
+            return res.status(400).json({ error: 'pdfUrl invalido' });
+        }
         const payroll = await prisma.payroll.create({
             data: { userId, month, year, amount, pdfUrl, status: 'PAID' }
         });

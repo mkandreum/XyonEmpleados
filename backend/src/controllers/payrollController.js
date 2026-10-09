@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
+const { isOwnedPrivateFileUrl } = require('../utils/safeUrl');
 const { auditPayrollDownload } = require('../services/auditService');
 
 exports.getAllPayrolls = async (req, res) => {
@@ -32,6 +33,9 @@ exports.uploadSignedPayroll = async (req, res) => {
 
         if (!signedPdfUrl) {
             return res.status(400).json({ error: 'signedPdfUrl es requerido' });
+        }
+        if (!isOwnedPrivateFileUrl(signedPdfUrl, 'payrolls', userId, req.user.role)) {
+            return res.status(400).json({ error: 'signedPdfUrl invalido' });
         }
 
         // Verify the payroll belongs to this user

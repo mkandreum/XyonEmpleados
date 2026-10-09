@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
 const { createNotification } = require('./notificationController');
 const { updateUserBalanceLogic } = require('./benefitsController');
@@ -68,7 +68,7 @@ exports.createUser = async (req, res) => {
             return res.status(400).json({ error: 'User already exists' });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, 12);
 
         const user = await prisma.user.create({
             data: {
@@ -107,6 +107,16 @@ exports.updateUser = async (req, res) => {
         const { name, email, role, department, position, joinDate, avatarUrl } = req.body;
         // Note: Password update should probably be a separate secure endpoint or handled carefully
 
+        // No permitir degradar al ultimo admin ni auto-degradarse
+        if (role && role !== 'ADMIN') {
+            const current = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+            if (current && current.role === 'ADMIN') {
+                const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
+                if (adminCount <= 1 || id === req.user.userId) {
+                    return res.status(400).json({ error: 'No se puede quitar el rol ADMIN al ultimo administrador o a uno mismo' });
+                }
+            }
+        }
         const updateData = { name, email, role, department, position };
         if (avatarUrl) updateData.avatarUrl = avatarUrl;
         if (joinDate) {
@@ -185,13 +195,16 @@ exports.importUsers = async (req, res) => {
                     results.errors.push(`${user.email}: Exists`);
                     continue;
                 }
-                const hashedPassword = await bcrypt.hash(user.password || 'default123', 10);
+                const pw = (typeof user.password === 'string' && user.password.length >= 12) ? user.password : require('crypto').randomBytes(18).toString('base64');
+                const role = ['EMPLOYEE', 'MANAGER', 'ADMIN'].includes(user.role) ? user.role : 'EMPLOYEE';
+                if (typeof user.email !== 'string' || typeof user.name !== 'string') throw new Error('Invalid row');
+                const hashedPassword = await bcrypt.hash(pw, 12); // sin password valida: aleatoria (el usuario debe usar "olvide mi contrasena")
                 await prisma.user.create({
                     data: {
                         name: user.name,
                         email: user.email,
                         password: hashedPassword,
-                        role: user.role || 'EMPLOYEE',
+                        role,
                         department: user.department || 'General',
                         position: user.position || 'Employee',
                         joinDate: user.joinDate ? new Date(user.joinDate) : new Date(),
@@ -234,6 +247,9 @@ exports.updateVacationStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body; // 'APPROVED', 'REJECTED'
+        if (!['APPROVED', 'REJECTED'].includes(status)) {
+            return res.status(400).json({ error: 'Estado invalido' });
+        }
 
         const vacation = await prisma.vacationRequest.update({
             where: { id },
@@ -298,6 +314,8 @@ exports.updateVacationStatus = async (req, res) => {
 
 // --- Global Settings ---
 
+const SECRET_MASK = '********';
+
 exports.getSettings = async (req, res) => {
     try {
         const settings = await prisma.globalSettings.findMany();
@@ -306,7 +324,8 @@ exports.getSettings = async (req, res) => {
             acc[curr.key] = curr.value;
             return acc;
         }, {});
-        console.log('📤 Sending settings to frontend:', settingsObj);
+        // Nunca devolver secretos (ni siquiera cifrados): se indica solo si estan configurados
+        if (settingsObj.smtpPass) settingsObj.smtpPass = SECRET_MASK;
         res.json(settingsObj);
     } catch (error) {
         console.error("Get settings error:", error);
@@ -316,12 +335,18 @@ exports.getSettings = async (req, res) => {
 
 exports.updateSettings = async (req, res) => {
     try {
-        const settings = req.body; // Expects object like { logoUrl: '...', companyName: '...', defaultAvatarUrl: '...' }
+        const settings = { ...req.body }; // Expects object like { logoUrl: '...', companyName: '...', defaultAvatarUrl: '...' }
+        // Solo valores string, claves razonables; la mascara de secreto no se persiste
+        for (const k of Object.keys(settings)) {
+            if (!/^[A-Za-z0-9_.-]{1,64}$/.test(k) || typeof settings[k] !== 'string' || settings[k].length > 20000) {
+                return res.status(400).json({ error: `Ajuste invalido: ${k}` });
+            }
+        }
+        if (settings.smtpPass === SECRET_MASK) delete settings.smtpPass;
         const keys = Object.keys(settings);
 
         // Cifrar contraseña SMTP si está presente
         if (settings.smtpPass && settings.smtpPass.trim() !== '') {
-            console.log('🔐 Encrypting SMTP password before saving...');
             settings.smtpPass = encryptSMTPPassword(settings.smtpPass);
         }
 
@@ -393,16 +418,16 @@ exports.deletePayroll = async (req, res) => {
             // Delete primary PDF
             if (payroll.pdfUrl) {
                 const relativePath = payroll.pdfUrl.replace('/api/files/', '');
-                const fullPath = path.join(__dirname, '../../uploads/private', relativePath);
-                if (fs.existsSync(fullPath)) {
+                const fullPath = path.resolve(__dirname, '../../uploads/private', relativePath);
+                if (fullPath.startsWith(path.resolve(__dirname, '../../uploads/private') + path.sep) && fs.existsSync(fullPath)) {
                     fs.unlinkSync(fullPath);
                 }
             }
             // Delete signed PDF if it exists
             if (payroll.signedPdfUrl) {
                 const relativePath = payroll.signedPdfUrl.replace('/api/files/', '');
-                const fullPath = path.join(__dirname, '../../uploads/private', relativePath);
-                if (fs.existsSync(fullPath)) {
+                const fullPath = path.resolve(__dirname, '../../uploads/private', relativePath);
+                if (fullPath.startsWith(path.resolve(__dirname, '../../uploads/private') + path.sep) && fs.existsSync(fullPath)) {
                     fs.unlinkSync(fullPath);
                 }
             }

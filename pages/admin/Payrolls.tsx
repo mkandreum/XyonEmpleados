@@ -85,29 +85,29 @@ export const AdminPayrolls: React.FC = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center animate-slide-up">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestión de Nóminas</h1>
+                    <h1 className="page-title">Gestión de Nóminas</h1>
                     <p className="text-slate-500 dark:text-slate-400">Carga nóminas para los empleados</p>
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-purple-700 shadow-sm transition-colors"
+                    className="bg-purple-600 text-white px-4 py-2 rounded-control flex items-center gap-2 hover:bg-purple-700 shadow-sm transition-colors"
                 >
                     <Upload size={18} />
                     Cargar Nómina
                 </button>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 transition-colors animate-slide-up delay-75">
+            <div className="card p-6 animate-slide-up delay-75">
                 <div className="text-center py-12">
                     <FileText size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Carga de Nóminas</h3>
                     <p className="text-slate-500 dark:text-slate-400 mb-4">Utiliza el botón "Cargar Nómina" para añadir nóminas individuales</p>
-                    <p className="text-sm text-slate-400 dark:text-slate-500">Para carga masiva, contacta con el administrador del sistema</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Para carga masiva, contacta con el administrador del sistema</p>
                 </div>
             </div>
 
             {/* Payrolls List (Desktop) */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden hidden sm:block transition-colors animate-slide-up delay-150">
+            <div className="card overflow-hidden hidden sm:block animate-slide-up delay-150">
                 <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                     <h3 className="font-semibold text-slate-900 dark:text-white">Historial de Nóminas</h3>
                 </div>
@@ -154,7 +154,7 @@ export const AdminPayrolls: React.FC = () => {
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(payroll.id)}
-                                                className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                                                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                                             >
                                                 Eliminar
                                             </button>
@@ -171,7 +171,7 @@ export const AdminPayrolls: React.FC = () => {
             <div className="sm:hidden space-y-4 animate-slide-up delay-150">
                 <h3 className="font-semibold text-slate-900 dark:text-white px-1">Historial de Nóminas</h3>
                 {payrolls.map((payroll) => (
-                    <div key={payroll.id} className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors">
+                    <div key={payroll.id} className="bg-white dark:bg-slate-800 p-4 rounded-card shadow-sm border border-slate-100 dark:border-slate-700 transition-colors">
                         <div className="flex justify-between items-start mb-3">
                             <div>
                                 <h4 className="font-medium text-slate-900 dark:text-white">{payroll.user?.name || 'Desconocido'}</h4>
@@ -199,7 +199,7 @@ export const AdminPayrolls: React.FC = () => {
                             </button>
                             <button
                                 onClick={() => handleDelete(payroll.id)}
-                                className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm"
+                                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm"
                             >
                                 Eliminar
                             </button>
@@ -210,21 +210,21 @@ export const AdminPayrolls: React.FC = () => {
 
             {/* Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-                    <div className="bg-white dark:bg-slate-900 rounded-xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-xl transition-colors" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-backdrop" onClick={() => setShowModal(false)}>
+                    <div className="bg-white dark:bg-slate-900 rounded-modal max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-xl transition-colors" onClick={(e) => e.stopPropagation()}>
                         <div className="border-b border-slate-200 dark:border-slate-800 p-4 flex justify-between items-center">
                             <h2 className="text-xl font-bold text-slate-900 dark:text-white">Cargar Nómina</h2>
-                            <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                            <button aria-label="Cerrar" onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-control transition-colors">
                                 <X size={20} className="text-slate-500 dark:text-slate-400" />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 pb-24 space-y-4">
+                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Empleado</label>
+                                <label className="label">Empleado</label>
                                 <select
                                     value={formData.userId}
                                     onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                                    className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
+                                    className="field"
                                     required
                                 >
                                     <option value="">Seleccionar empleado...</option>
@@ -233,13 +233,13 @@ export const AdminPayrolls: React.FC = () => {
                                     ))}
                                 </select>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mes</label>
+                                    <label className="label">Mes</label>
                                     <select
                                         value={formData.month}
                                         onChange={(e) => setFormData({ ...formData, month: e.target.value })}
-                                        className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
+                                        className="field"
                                     >
                                         {months.map(month => (
                                             <option key={month} value={month}>{month}</option>
@@ -247,29 +247,29 @@ export const AdminPayrolls: React.FC = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Año</label>
+                                    <label className="label">Año</label>
                                     <input
                                         type="number"
                                         value={formData.year}
                                         onChange={(e) => setFormData({ ...formData, year: Number(e.target.value) })}
-                                        className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
+                                        className="field"
                                         required
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Importe Neto (€)</label>
+                                <label className="label">Importe Neto (€)</label>
                                 <input
                                     type="number"
                                     step="0.01"
                                     value={formData.amount}
                                     onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
-                                    className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
+                                    className="field"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Archivo PDF</label>
+                                <label className="label">Archivo PDF</label>
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="file"
@@ -299,15 +299,15 @@ export const AdminPayrolls: React.FC = () => {
                                         required={!formData.pdfUrl}
                                     />
                                     {uploading && <span className="text-sm text-purple-600 dark:text-purple-400">Subiendo...</span>}
-                                    {formData.pdfUrl && <span className="text-sm text-green-600 dark:text-green-400 font-medium whitespace-nowrap">¡PDF Cargado!</span>}
+                                    {formData.pdfUrl && <span className="text-sm text-green-700 dark:text-green-400 font-medium whitespace-nowrap">¡PDF Cargado!</span>}
                                 </div>
                                 <input type="hidden" value={formData.pdfUrl} />
                             </div>
                             <div className="flex justify-end gap-3 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                <button type="button" onClick={() => setShowModal(false)} className="btn-ghost">
                                     Cancelar
                                 </button>
-                                <button type="submit" disabled={uploading || !formData.pdfUrl} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors font-medium">
+                                <button type="submit" disabled={uploading || !formData.pdfUrl} className="px-4 py-2 bg-purple-600 text-white rounded-control hover:bg-purple-700 disabled:opacity-50 transition-colors font-medium">
                                     {uploading ? 'Subiendo...' : 'Crear Nómina'}
                                 </button>
                             </div>

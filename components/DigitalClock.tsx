@@ -32,7 +32,7 @@ export const DigitalClock: React.FC = () => {
 
     return (
         <div className="flex flex-col items-center gap-3">
-            <div className="flex items-center gap-3 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-lg">
+            <div className="flex items-center gap-3 bg-slate-900 text-white px-6 py-4 rounded-control shadow-lg">
                 <Clock size={32} className="text-blue-400" />
                 <div className="font-mono text-4xl font-bold tracking-wider">
                     {formatTime(time)}

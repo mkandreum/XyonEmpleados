@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { Mail, Eye, Save, AlertCircle } from 'lucide-react';
 
 interface EmailTemplateEditorProps {
@@ -37,9 +38,9 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ templa
         setIsSaving(true);
         try {
             await onSave(formData);
-            alert('Plantilla guardada correctamente');
+            toast.success('Plantilla guardada correctamente');
         } catch (error) {
-            alert('Error al guardar la plantilla');
+            toast.error('Error al guardar la plantilla');
         } finally {
             setIsSaving(false);
         }
@@ -56,7 +57,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ templa
             setPreview(result);
             setShowPreview(true);
         } catch (error) {
-            alert('Error al generar vista previa');
+            toast.error('Error al generar vista previa');
         } finally {
             setIsLoadingPreview(false);
         }
@@ -103,7 +104,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ templa
             </div>
 
             {/* Variables disponibles */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-control p-4">
                 <div className="flex items-start gap-2">
                     <AlertCircle className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" size={18} />
                     <div className="flex-1">
@@ -133,21 +134,21 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ templa
             <div className="space-y-4">
                 {/* Asunto */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="label">
                         Asunto del Email
                     </label>
                     <input
                         type="text"
                         value={formData.subject}
                         onChange={(e) => handleChange('subject', e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
+                        className="field"
                         placeholder="Asunto del correo..."
                     />
                 </div>
 
                 {/* Cuerpo HTML */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="label">
                         Contenido HTML
                     </label>
                     <textarea
@@ -155,7 +156,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ templa
                         value={formData.htmlBody}
                         onChange={(e) => handleChange('htmlBody', e.target.value)}
                         rows={15}
-                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white font-mono text-sm"
+                        className="field font-mono text-sm"
                         placeholder="Contenido HTML del email..."
                     />
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -169,7 +170,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ templa
                 <button
                     onClick={handlePreview}
                     disabled={isLoadingPreview}
-                    className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-control hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
                 >
                     <Eye size={18} />
                     {isLoadingPreview ? 'Generando...' : 'Vista Previa'}
@@ -177,7 +178,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ templa
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                    className="btn-primary"
                 >
                     <Save size={18} />
                     {isSaving ? 'Guardando...' : 'Guardar Cambios'}
@@ -186,8 +187,8 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ templa
 
             {/* Preview Modal */}
             {showPreview && preview && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowPreview(false)}>
-                    <div className="bg-white dark:bg-slate-900 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-backdrop" onClick={() => setShowPreview(false)}>
+                    <div className="bg-white dark:bg-slate-900 rounded-modal max-w-3xl w-full max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
                         <div className="p-6 border-b border-slate-200 dark:border-slate-800">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-medium text-slate-900 dark:text-white">Vista Previa del Email</h3>
@@ -204,7 +205,7 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ templa
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Asunto:</p>
                                 <p className="font-medium text-slate-900 dark:text-white">{preview.subject}</p>
                             </div>
-                            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg">
+                            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-control">
                                 <div dangerouslySetInnerHTML={{ __html: preview.htmlBody }} />
                             </div>
                         </div>

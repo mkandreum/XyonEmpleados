@@ -20,3 +20,11 @@ build/
 backend/uploads/*
 !backend/uploads/README.md
 !backend/uploads/*/.gitkeep
+
+# Secrets / env files anywhere in the tree (never bake into images)
+**/.env
+**/.env.*
+!**/.env.example
+backend/uploads/**/*.pdf
+android/
+*.md

@@ -12,20 +12,22 @@ const IV_LENGTH = 16;
  * Obtiene la clave de cifrado desde variables de entorno
  * Si no existe, genera una advertencia (debe configurarse en producción)
  */
+const LEGACY_KEY = () => crypto.createHash('sha256').update('xyon-fallback-key-change-in-production').digest();
+
 const getEncryptionKey = () => {
     const key = process.env.ENCRYPTION_KEY;
-    
-    if (!key) {
-        console.warn('⚠️ WARNING: ENCRYPTION_KEY not set in environment variables');
-        console.warn('⚠️ Using fallback key - THIS IS NOT SECURE FOR PRODUCTION');
-        console.warn('⚠️ Generate a key with: openssl rand -base64 32');
-        
-        // Fallback key solo para desarrollo (NUNCA usar en producción)
-        return crypto.createHash('sha256').update('xyon-fallback-key-change-in-production').digest();
+    if (key) {
+        const buf = Buffer.from(key, 'base64');
+        if (buf.length === 32) return buf;
+        // Clave con longitud incorrecta: derivar 32 bytes de forma determinista
+        return crypto.createHash('sha256').update(key).digest();
     }
-    
-    // Convertir la clave base64 a buffer
-    return Buffer.from(key, 'base64');
+    // Sin ENCRYPTION_KEY: derivar de JWT_SECRET (secreto por despliegue) en vez de una clave publica en el codigo
+    if (process.env.JWT_SECRET) {
+        console.warn('[SECURITY] ENCRYPTION_KEY not set: deriving key from JWT_SECRET. Set ENCRYPTION_KEY (openssl rand -base64 32).');
+        return crypto.createHash('sha256').update('xyon-enc:' + process.env.JWT_SECRET).digest();
+    }
+    throw new Error('ENCRYPTION_KEY or JWT_SECRET must be set');
 };
 
 /**
@@ -70,13 +72,20 @@ const decrypt = (encryptedText) => {
         const iv = Buffer.from(parts[0], 'hex');
         const encrypted = parts[1];
         
-        const key = getEncryptionKey();
-        const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
-        
-        let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-        decrypted += decipher.final('utf8');
-        
-        return decrypted;
+        const tryKey = (key) => {
+            const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+            let out = decipher.update(encrypted, 'hex', 'utf8');
+            out += decipher.final('utf8');
+            return out;
+        };
+        try {
+            return tryKey(getEncryptionKey());
+        } catch (primaryErr) {
+            // Compatibilidad: valores cifrados con la antigua clave por defecto (re-guardar los ajustes SMTP para migrar)
+            const out = tryKey(LEGACY_KEY());
+            console.warn('[SECURITY] Decrypted with legacy key; re-save SMTP settings to re-encrypt.');
+            return out;
+        }
     } catch (error) {
         console.error('Error decrypting data:', error);
         throw error;

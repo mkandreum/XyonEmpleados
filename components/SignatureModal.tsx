@@ -63,15 +63,17 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ isOpen, onClose, onConf
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
-        <button className="absolute top-2 right-2 text-gray-500" onClick={onClose}>&times;</button>
-        <h2 className="text-lg font-semibold mb-4">Firma para descargar reporte</h2>
+    <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div role="dialog" aria-modal="true" aria-label="Firma para descargar reporte" className="modal-panel max-w-md p-6 relative animate-scale-in">
+        <button className="absolute top-3 right-3 p-2 rounded-control text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800" onClick={onClose} aria-label="Cerrar">&times;</button>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-1 pr-8">Firma para descargar el reporte</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Dibuja tu firma en el recuadro.</p>
         <canvas
           ref={canvasRef}
           width={400}
           height={150}
-          className="border rounded w-full mb-4 touch-none bg-gray-50"
+          aria-label="Área de firma"
+          className="border border-slate-300 dark:border-slate-600 rounded-control w-full mb-4 touch-none bg-white"
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
@@ -80,9 +82,9 @@ const SignatureModal: React.FC<SignatureModalProps> = ({ isOpen, onClose, onConf
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
         />
-        <div className="flex justify-between">
-          <button className="px-4 py-2 bg-gray-200 rounded" onClick={handleClear}>Limpiar</button>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={handleConfirm}>Descargar</button>
+        <div className="flex justify-between gap-3">
+          <button className="btn-secondary" onClick={handleClear}>Limpiar</button>
+          <button className="btn-primary" onClick={handleConfirm}>Descargar</button>
         </div>
       </div>
     </div>

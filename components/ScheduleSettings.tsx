@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { scheduleService, adminService } from '../services/api';
 import { shiftService } from '../services/shiftService';
 import { DepartmentSchedule, DayScheduleOverride, DepartmentShift } from '../types';
 import { Clock, Plus, Edit2, CheckCircle, Trash2, Save, X, Calendar, ChevronDown, ChevronUp, Sun } from 'lucide-react';
+import { LoadingState } from './PageState';
 
 const DAY_KEYS = [
     { key: 'scheduleLunes', label: 'Lunes', short: 'L' },
@@ -126,7 +128,7 @@ export const ScheduleSettings: React.FC = () => {
 
     const handleSave = async () => {
         if (!formData.department || !formData.name || !formData.horaEntrada || !formData.horaSalida) {
-            alert('Campos requeridos faltantes');
+            toast.error('Campos requeridos faltantes');
             return;
         }
 
@@ -182,7 +184,7 @@ export const ScheduleSettings: React.FC = () => {
             setEditingShifts([]);
         } catch (error) {
             console.error('Error saving schedule:', error);
-            alert('Error al guardar horario');
+            toast.error('Error al guardar horario');
         }
     };
 
@@ -193,7 +195,7 @@ export const ScheduleSettings: React.FC = () => {
             await loadSchedules();
         } catch (error) {
             console.error('Error deleting schedule:', error);
-            alert('Error al eliminar horario');
+            toast.error('Error al eliminar horario');
         }
     };
 
@@ -260,7 +262,7 @@ export const ScheduleSettings: React.FC = () => {
         };
     };
 
-    if (isLoading) return <div className="p-8 text-center text-slate-500">Cargando horarios...</div>;
+    if (isLoading) return <LoadingState label="Cargando horarios..." />;
 
     return (
         <div className="space-y-6">
@@ -272,7 +274,7 @@ export const ScheduleSettings: React.FC = () => {
                 {!isCreating && !editingId && (
                     <button
                         onClick={handleCreate}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                        className="btn-primary"
                     >
                         <Plus size={18} /> Nuevo Horario
                     </button>
@@ -282,7 +284,7 @@ export const ScheduleSettings: React.FC = () => {
             <div className="grid gap-6">
                 {/* Edit/Create Form */}
                 {(isCreating || editingId) && (
-                    <div className="col-span-full bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl border border-blue-200 dark:border-blue-900/50 shadow-sm animate-slide-up">
+                    <div className="col-span-full bg-slate-50 dark:bg-slate-800/50 p-6 rounded-card border border-blue-200 dark:border-blue-900/50 shadow-sm animate-slide-up">
                         <h4 className="font-semibold text-slate-900 dark:text-white mb-4">
                             {isCreating ? 'Nuevo Horario' : `Editar Horario - ${formData.department} (${formData.name})`}
                         </h4>
@@ -290,12 +292,12 @@ export const ScheduleSettings: React.FC = () => {
                         {/* General Settings */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                <label className="label">
                                     Departamento
                                 </label>
                                 {isCreating ? (
                                     <select
-                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
+                                        className="field"
                                         value={formData.department}
                                         onChange={e => setFormData({ ...formData, department: e.target.value })}
                                     >
@@ -306,18 +308,18 @@ export const ScheduleSettings: React.FC = () => {
                                     </select>
                                 ) : (
                                     <input
-                                        className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg text-slate-900 dark:text-white disabled:opacity-50"
+                                        className="field disabled:opacity-50"
                                         value={formData.department}
                                         disabled
                                     />
                                 )}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                <label className="label">
                                     Nombre del horario
                                 </label>
                                 <input
-                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg text-slate-900 dark:text-white"
+                                    className="field"
                                     value={formData.name || ''}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                     placeholder="Ej: General, Turno Mañana, etc."
@@ -325,7 +327,7 @@ export const ScheduleSettings: React.FC = () => {
                             </div>
 
                             <div className="flex items-end">
-                                <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border w-full transition-all ${formData.flexibleSchedule
+                                <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-control border w-full transition-all ${formData.flexibleSchedule
                                     ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-900'
                                     : 'bg-white border-slate-200 dark:bg-slate-700 dark:border-slate-600'
                                     }`}>
@@ -333,7 +335,7 @@ export const ScheduleSettings: React.FC = () => {
                                         type="checkbox"
                                         checked={formData.flexibleSchedule || false}
                                         onChange={e => setFormData({ ...formData, flexibleSchedule: e.target.checked })}
-                                        className="w-5 h-5 text-green-600 rounded focus:ring-green-500"
+                                        className="w-5 h-5 text-green-700 rounded focus:ring-green-500"
                                     />
                                     <div>
                                         <span className="font-medium text-slate-900 dark:text-white block">Horario Flexible</span>
@@ -343,30 +345,30 @@ export const ScheduleSettings: React.FC = () => {
                             </div>
 
                             <div className={formData.flexibleSchedule ? 'opacity-40 pointer-events-none' : ''}>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Hora Entrada (por defecto)</label>
+                                <label className="label">Hora Entrada (por defecto)</label>
                                 <input
                                     type="time"
-                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg text-slate-900 dark:text-white"
+                                    className="field"
                                     value={formData.horaEntrada}
                                     onChange={e => setFormData({ ...formData, horaEntrada: e.target.value })}
                                 />
                             </div>
 
                             <div className={formData.flexibleSchedule ? 'opacity-40 pointer-events-none' : ''}>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Hora Salida (por defecto)</label>
+                                <label className="label">Hora Salida (por defecto)</label>
                                 <input
                                     type="time"
-                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg text-slate-900 dark:text-white"
+                                    className="field"
                                     value={formData.horaSalida}
                                     onChange={e => setFormData({ ...formData, horaSalida: e.target.value })}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tolerancia (minutos)</label>
+                                <label className="label">Tolerancia (minutos)</label>
                                 <input
                                     type="number"
-                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 rounded-lg text-slate-900 dark:text-white"
+                                    className="field"
                                     value={formData.toleranciaMinutos}
                                     onChange={e => setFormData({ ...formData, toleranciaMinutos: parseInt(e.target.value) || 0 })}
                                 />
@@ -393,7 +395,7 @@ export const ScheduleSettings: React.FC = () => {
                                         flexibleSchedule: false,
                                         activeDays: 'LUNES,MARTES,MIERCOLES,JUEVES,VIERNES'
                                     }])}
-                                    className="px-3 py-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-medium text-sm rounded-lg flex items-center gap-1.5 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                                    className="px-3 py-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-medium text-sm rounded-control flex items-center gap-1.5 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                                 >
                                     <Plus size={16} /> Añadir Turno
                                 </button>
@@ -402,11 +404,11 @@ export const ScheduleSettings: React.FC = () => {
                             {editingShifts.length > 0 && (
                                 <div className="space-y-3">
                                     {editingShifts.map((shift, idx) => (
-                                        <div key={shift.id || idx} className="grid grid-cols-[1fr_1fr_1fr_100px_40px] gap-3 items-end bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative group">
+                                        <div key={shift.id || idx} className="grid grid-cols-[1fr_1fr_1fr_100px_40px] gap-3 items-end bg-white dark:bg-slate-900 p-3 rounded-control border border-slate-200 dark:border-slate-700 shadow-sm relative group">
                                             <div>
-                                                <label className="block text-[11px] font-medium text-slate-500 mb-1">Nombre</label>
+                                                <label className="block text-2xs font-medium text-slate-500 mb-1">Nombre</label>
                                                 <input
-                                                    className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 text-slate-900 dark:text-white"
+                                                    className="field px-2 py-1.5 text-sm"
                                                     value={shift.name || ''}
                                                     onChange={(e) => {
                                                         const copy = [...editingShifts];
@@ -417,10 +419,10 @@ export const ScheduleSettings: React.FC = () => {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-[11px] font-medium text-slate-500 mb-1">Entrada</label>
+                                                <label className="block text-2xs font-medium text-slate-500 mb-1">Entrada</label>
                                                 <input
                                                     type="time"
-                                                    className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 text-slate-900 dark:text-white"
+                                                    className="field px-2 py-1.5 text-sm"
                                                     value={shift.horaEntrada || ''}
                                                     onChange={(e) => {
                                                         const copy = [...editingShifts];
@@ -430,10 +432,10 @@ export const ScheduleSettings: React.FC = () => {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-[11px] font-medium text-slate-500 mb-1">Salida</label>
+                                                <label className="block text-2xs font-medium text-slate-500 mb-1">Salida</label>
                                                 <input
                                                     type="time"
-                                                    className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 text-slate-900 dark:text-white"
+                                                    className="field px-2 py-1.5 text-sm"
                                                     value={shift.horaSalida || ''}
                                                     onChange={(e) => {
                                                         const copy = [...editingShifts];
@@ -443,10 +445,10 @@ export const ScheduleSettings: React.FC = () => {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-[11px] font-medium text-slate-500 mb-1">Tol (m)</label>
+                                                <label className="block text-2xs font-medium text-slate-500 mb-1">Tol (m)</label>
                                                 <input
                                                     type="number"
-                                                    className="w-full px-2 py-1.5 text-sm border border-slate-200 dark:border-slate-700 rounded-lg dark:bg-slate-800 text-slate-900 dark:text-white"
+                                                    className="field px-2 py-1.5 text-sm"
                                                     value={shift.toleranciaMinutos || 0}
                                                     onChange={(e) => {
                                                         const copy = [...editingShifts];
@@ -455,14 +457,14 @@ export const ScheduleSettings: React.FC = () => {
                                                     }}
                                                 />
                                             </div>
-                                            <button
+                                            <button aria-label="Eliminar turno"
                                                 type="button"
                                                 onClick={() => {
                                                     const copy = [...editingShifts];
                                                     copy.splice(idx, 1);
                                                     setEditingShifts(copy);
                                                 }}
-                                                className="h-8 w-8 flex items-center justify-center text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                className="h-8 w-8 flex items-center justify-center text-slate-500 hover:text-red-500 bg-slate-50 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-control transition-colors"
                                                 title="Eliminar turno"
                                             >
                                                 <Trash2 size={14} />
@@ -494,7 +496,7 @@ export const ScheduleSettings: React.FC = () => {
                                         return (
                                             <div
                                                 key={key}
-                                                className={`rounded-xl border p-3 transition-all ${isDayOff
+                                                className={`rounded-control border p-3 transition-all ${isDayOff
                                                     ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 opacity-60'
                                                     : isCustom
                                                         ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
@@ -507,12 +509,12 @@ export const ScheduleSettings: React.FC = () => {
 
                                                 {isDayOff ? (
                                                     <div className="text-center py-4">
-                                                        <span className="text-sm text-slate-400 dark:text-slate-500 font-medium">Libre</span>
+                                                        <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Libre</span>
                                                     </div>
                                                 ) : isCustom ? (
                                                     <div className="space-y-2">
                                                         <div>
-                                                            <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">Entrada</label>
+                                                            <label className="text-2xs text-slate-500 dark:text-slate-400 uppercase">Entrada</label>
                                                             <input
                                                                 type="time"
                                                                 className="w-full px-1.5 py-1 text-xs border border-blue-200 dark:border-blue-700 bg-white dark:bg-slate-800 rounded text-slate-900 dark:text-white"
@@ -521,7 +523,7 @@ export const ScheduleSettings: React.FC = () => {
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">Salida</label>
+                                                            <label className="text-2xs text-slate-500 dark:text-slate-400 uppercase">Salida</label>
                                                             <input
                                                                 type="time"
                                                                 className="w-full px-1.5 py-1 text-xs border border-blue-200 dark:border-blue-700 bg-white dark:bg-slate-800 rounded text-slate-900 dark:text-white"
@@ -544,7 +546,7 @@ export const ScheduleSettings: React.FC = () => {
                                                 <div className="flex gap-1 mt-2">
                                                     <button
                                                         onClick={() => toggleDayOverride(key as DayKey)}
-                                                        className={`flex-1 flex items-center justify-center gap-1 text-[10px] py-1 rounded font-medium transition-colors ${isCustom
+                                                        className={`flex-1 flex items-center justify-center gap-1 text-2xs py-1 rounded font-medium transition-colors ${isCustom
                                                             ? 'bg-blue-600 text-white hover:bg-blue-700'
                                                             : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500'
                                                             }`}
@@ -554,7 +556,7 @@ export const ScheduleSettings: React.FC = () => {
                                                     </button>
                                                     <button
                                                         onClick={() => toggleDayOff(key as DayKey)}
-                                                        className={`flex-1 flex items-center justify-center gap-1 text-[10px] py-1 rounded font-medium transition-colors ${isDayOff
+                                                        className={`flex-1 flex items-center justify-center gap-1 text-2xs py-1 rounded font-medium transition-colors ${isDayOff
                                                             ? 'bg-slate-600 dark:bg-slate-500 text-white'
                                                             : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-500'
                                                             }`}
@@ -578,7 +580,7 @@ export const ScheduleSettings: React.FC = () => {
                                         return (
                                             <div
                                                 key={key}
-                                                className={`rounded-xl border p-4 transition-all ${isDayOff
+                                                className={`rounded-control border p-4 transition-all ${isDayOff
                                                     ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 opacity-60'
                                                     : isCustom
                                                         ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
@@ -610,12 +612,12 @@ export const ScheduleSettings: React.FC = () => {
                                                 </div>
 
                                                 {isCustom && !isDayOff && (
-                                                    <div className="grid grid-cols-2 gap-3 mt-3">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                                                         <div>
                                                             <label className="text-xs text-slate-500 dark:text-slate-400">Entrada</label>
                                                             <input
                                                                 type="time"
-                                                                className="w-full px-2 py-1.5 text-sm border border-blue-200 dark:border-blue-700 bg-white dark:bg-slate-800 rounded-lg text-slate-900 dark:text-white"
+                                                                className="field px-2 py-1.5 text-sm border-blue-200 dark:border-blue-700"
                                                                 value={override?.horaEntrada || formData.horaEntrada || '09:00'}
                                                                 onChange={e => updateDayField(key as DayKey, 'horaEntrada', e.target.value)}
                                                             />
@@ -624,7 +626,7 @@ export const ScheduleSettings: React.FC = () => {
                                                             <label className="text-xs text-slate-500 dark:text-slate-400">Salida</label>
                                                             <input
                                                                 type="time"
-                                                                className="w-full px-2 py-1.5 text-sm border border-blue-200 dark:border-blue-700 bg-white dark:bg-slate-800 rounded-lg text-slate-900 dark:text-white"
+                                                                className="field px-2 py-1.5 text-sm border-blue-200 dark:border-blue-700"
                                                                 value={override?.horaSalida || formData.horaSalida || '18:00'}
                                                                 onChange={e => updateDayField(key as DayKey, 'horaSalida', e.target.value)}
                                                             />
@@ -639,7 +641,7 @@ export const ScheduleSettings: React.FC = () => {
                                                 )}
 
                                                 {isDayOff && (
-                                                    <div className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+                                                    <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                                                         Sin horario — día libre
                                                     </div>
                                                 )}
@@ -651,11 +653,11 @@ export const ScheduleSettings: React.FC = () => {
                         )}
 
                         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-                            <button onClick={handleCancel} className="px-4 py-2 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2">
+                            <button onClick={handleCancel} className="btn-secondary">
                                 <X size={16} />
                                 Cancelar
                             </button>
-                            <button onClick={handleSave} className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-colors flex items-center gap-2">
+                            <button onClick={handleSave} className="btn-primary">
                                 <Save size={16} />
                                 Guardar Cambios
                             </button>
@@ -669,22 +671,22 @@ export const ScheduleSettings: React.FC = () => {
                         const isExpanded = expandedSchedule === schedule.id;
 
                         return (
-                            <div key={schedule.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow relative">
+                            <div key={schedule.id} className="bg-white dark:bg-slate-800 rounded-control border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow relative">
                                 {/* Card Header */}
                                 <div className="p-5">
                                     <div className="flex justify-between items-start mb-4">
                                         <h4 className="font-bold text-lg text-slate-800 dark:text-white">{schedule.department}</h4>
                                         <div className="flex gap-1">
-                                            <button
+                                            <button aria-label="Editar"
                                                 onClick={() => handleEdit(schedule)}
-                                                className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all"
+                                                className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-control transition-all"
                                                 title="Editar"
                                             >
                                                 <Edit2 size={16} />
                                             </button>
-                                            <button
+                                            <button aria-label="Eliminar"
                                                 onClick={() => setDeleteConfirm({ department: schedule.department, name: schedule.name })}
-                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all"
+                                                className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-control transition-all"
                                                 title="Eliminar"
                                             >
                                                 <Trash2 size={16} />
@@ -694,7 +696,7 @@ export const ScheduleSettings: React.FC = () => {
 
                                     {schedule.flexibleSchedule ? (
                                         <div className="space-y-3">
-                                            <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+                                            <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-3 py-2 rounded-control text-sm font-medium flex items-center gap-2">
                                                 <CheckCircle size={16} />
                                                 Horario Flexible
                                             </div>
@@ -736,8 +738,8 @@ export const ScheduleSettings: React.FC = () => {
                                                         return (
                                                             <div
                                                                 key={key}
-                                                                className={`flex-1 text-center py-1 rounded text-[10px] font-bold ${eff.isDayOff
-                                                                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500'
+                                                                className={`flex-1 text-center py-1 rounded text-2xs font-bold ${eff.isDayOff
+                                                                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
                                                                     : eff.isOverride
                                                                         ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                                                                         : 'bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400'
@@ -759,9 +761,9 @@ export const ScheduleSettings: React.FC = () => {
                                                                 <div key={key} className="flex justify-between items-center text-xs py-1">
                                                                     <span className="text-slate-600 dark:text-slate-400 font-medium">{label}</span>
                                                                     {eff.isDayOff ? (
-                                                                        <span className="text-slate-400 dark:text-slate-500 italic">Libre</span>
+                                                                        <span className="text-slate-500 dark:text-slate-400 italic">Libre</span>
                                                                     ) : eff.isFlexible ? (
-                                                                        <span className="text-green-600 dark:text-green-400 font-medium">Flexible</span>
+                                                                        <span className="text-green-700 dark:text-green-400 font-medium">Flexible</span>
                                                                     ) : (
                                                                         <span className={`font-mono ${eff.isOverride ? 'text-blue-600 dark:text-blue-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
                                                                             {eff.entry} - {eff.exit}
@@ -782,7 +784,7 @@ export const ScheduleSettings: React.FC = () => {
                     })}
 
                     {schedules.length === 0 && !isCreating && (
-                        <div className="col-span-full py-12 text-center text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                        <div className="col-span-full py-12 text-center text-slate-500 bg-slate-50 dark:bg-slate-800/30 rounded-control border border-dashed border-slate-200 dark:border-slate-700">
                             <p>No hay horarios configurados.</p>
                         </div>
                     )}
@@ -790,8 +792,8 @@ export const ScheduleSettings: React.FC = () => {
             </div>
 
             {deleteConfirm && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-sm w-full p-6 border border-slate-100 dark:border-slate-800">
+                <div className="modal-backdrop">
+                    <div className="card rounded-modal shadow-xl max-w-sm w-full p-6">
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Eliminar horario</h3>
                         <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
                             ¿Estás seguro de que deseas eliminar el horario <strong>{deleteConfirm.name}</strong> de <strong>{deleteConfirm.department}</strong>? Los empleados de este departamento no tendrán horario asignado.
@@ -799,13 +801,13 @@ export const ScheduleSettings: React.FC = () => {
                         <div className="flex justify-end gap-3">
                             <button
                                 onClick={() => setDeleteConfirm(null)}
-                                className="px-4 py-2 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                                className="btn-secondary"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={() => handleDelete(deleteConfirm.department, deleteConfirm.name)}
-                                className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                                className="btn-danger"
                             >
                                 Eliminar
                             </button>

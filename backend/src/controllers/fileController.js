@@ -44,7 +44,7 @@ exports.getFile = async (req, res) => {
         }
 
         // Security: prevent directory traversal
-        if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+        if (typeof filename !== 'string' || filename.includes(String.fromCharCode(0)) || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
             return res.status(403).json({ error: 'Access denied' });
         }
 
@@ -61,8 +61,7 @@ exports.getFile = async (req, res) => {
             return res.sendFile(filePath);
         }
 
-        const { PrismaClient } = require('@prisma/client');
-        const prisma = new PrismaClient();
+        const prisma = require('../lib/prisma');
 
         let hasAccess = false;
 
@@ -72,36 +71,33 @@ exports.getFile = async (req, res) => {
         const legacyPrivateUrl = `/uploads/private/${type}/${filename}`;
 
         if (type === 'payrolls') {
-            const payroll = await prisma.payroll.findFirst({
+            const payrolls = await prisma.payroll.findMany({
                 where: {
                     OR: [
                         { pdfUrl: newUrl },
                         { pdfUrl: legacyUrl },
                         { pdfUrl: legacyPrivateUrl },
-                        { pdfUrl: { contains: filename } },
                         { signedPdfUrl: newUrl },
                         { signedPdfUrl: legacyUrl },
-                        { signedPdfUrl: legacyPrivateUrl },
-                        { signedPdfUrl: { contains: filename } }
+                        { signedPdfUrl: legacyPrivateUrl }
                     ]
                 }
             });
 
-            if (payroll && payroll.userId === userId) {
+            if (payrolls.some(p => p.userId === userId)) {
                 hasAccess = true;
             }
         } else if (type === 'justifications') {
-            const vacation = await prisma.vacationRequest.findFirst({
+            const vacations = await prisma.vacationRequest.findMany({
                 where: {
                     OR: [
                         { justificationUrl: newUrl },
                         { justificationUrl: legacyUrl },
-                        { justificationUrl: legacyPrivateUrl },
-                        { justificationUrl: { contains: filename } }
+                        { justificationUrl: legacyPrivateUrl }
                     ]
                 }
             });
-            if (vacation) {
+            for (const vacation of vacations) {
                 if (vacation.userId === userId) hasAccess = true;
 
                 // Managers can view justifications of their team
@@ -115,6 +111,8 @@ exports.getFile = async (req, res) => {
         }
 
         if (hasAccess) {
+            res.setHeader('X-Content-Type-Options', 'nosniff');
+            res.setHeader('Cache-Control', 'private, no-store');
             return res.sendFile(filePath);
         } else {
             console.warn(`⛔ Access denied for user ${userId} to file ${filename}`);

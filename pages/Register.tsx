@@ -80,20 +80,20 @@ export const RegisterPage: React.FC = () => {
             </div>
 
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white dark:bg-slate-900 py-8 px-4 shadow-xl rounded-xl sm:px-10 border border-slate-100 dark:border-slate-800 transition-colors">
+                <div className="card py-8 px-4 shadow-xl sm:px-10">
 
                     {error && (
-                        <div className="mb-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-3 rounded-lg text-sm">
+                        <div className="mb-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-3 rounded-control text-sm">
                             {error}
                         </div>
                     )}
 
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Nombre Completo</label>
+                            <label htmlFor="name" className="label mb-0">Nombre Completo</label>
                             <div className="mt-1 relative rounded-md shadow-sm">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <User className="h-5 w-5 text-slate-400" />
+                                    <User className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                                 </div>
                                 <input
                                     id="name"
@@ -102,17 +102,17 @@ export const RegisterPage: React.FC = () => {
                                     required
                                     value={formData.name}
                                     onChange={handleChange}
-                                    className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors"
+                                    className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-control focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white dark:bg-slate-900 dark:bg-slate-800 text-slate-900 dark:text-white transition-colors"
                                     placeholder="Tu nombre"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Correo Electrónico</label>
+                            <label htmlFor="email" className="label mb-0">Correo Electrónico</label>
                             <div className="mt-1 relative rounded-md shadow-sm">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Mail className="h-5 w-5 text-slate-400" />
+                                    <Mail className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                                 </div>
                                 <input
                                     id="email"
@@ -121,14 +121,14 @@ export const RegisterPage: React.FC = () => {
                                     required
                                     value={formData.email}
                                     onChange={handleChange}
-                                    className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors"
+                                    className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-control focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white dark:bg-slate-900 dark:bg-slate-800 text-slate-900 dark:text-white transition-colors"
                                     placeholder="tu@email.com"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Contraseña</label>
+                            <label htmlFor="password" className="label mb-0">Contraseña</label>
                             <div className="mt-1 relative rounded-md shadow-sm">
                                 <input
                                     id="password"
@@ -137,7 +137,7 @@ export const RegisterPage: React.FC = () => {
                                     required
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors"
+                                    className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-control focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white dark:bg-slate-900 dark:bg-slate-800 text-slate-900 dark:text-white transition-colors"
                                     placeholder="••••••••"
                                 />
                             </div>
@@ -145,14 +145,14 @@ export const RegisterPage: React.FC = () => {
 
                         <div className="space-y-4">
                             <div>
-                                <label htmlFor="department" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Departamento</label>
+                                <label htmlFor="department" className="label mb-0">Departamento</label>
                                 <div className="mt-1 relative rounded-md shadow-sm">
                                     <select
                                         id="department"
                                         name="department"
                                         value={formData.department}
                                         onChange={handleChange}
-                                        className="block w-full sm:text-sm border-slate-300 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors"
+                                        className="field sm:text-sm"
                                         required
                                     >
                                         {departmentOptions.map((dept) => (
@@ -160,14 +160,14 @@ export const RegisterPage: React.FC = () => {
                                         ))}
                                     </select>
                                 </div>
-                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">Solo puedes elegir departamentos creados por el admin.</p>
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Solo puedes elegir departamentos creados por el admin.</p>
                             </div>
 
                             <div>
-                                <label htmlFor="position" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Cargo</label>
+                                <label htmlFor="position" className="label mb-0">Cargo</label>
                                 <div className="mt-1 relative rounded-md shadow-sm">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <Briefcase className="h-5 w-5 text-slate-400" />
+                                        <Briefcase className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                                     </div>
                                     <input
                                         id="position"
@@ -176,7 +176,7 @@ export const RegisterPage: React.FC = () => {
                                         required
                                         value={formData.position}
                                         onChange={handleChange}
-                                        className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors"
+                                        className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-control focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white dark:bg-slate-900 dark:bg-slate-800 text-slate-900 dark:text-white transition-colors"
                                         placeholder="Ej. Developer"
                                     />
                                 </div>
@@ -184,7 +184,7 @@ export const RegisterPage: React.FC = () => {
                         </div>
 
                         <div>
-                            <label htmlFor="invitationCode" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Código de Invitación</label>
+                            <label htmlFor="invitationCode" className="label mb-0">Código de Invitación</label>
                             <div className="mt-1 relative rounded-md shadow-sm">
                                 <input
                                     id="invitationCode"
@@ -193,18 +193,18 @@ export const RegisterPage: React.FC = () => {
                                     required
                                     value={(formData as any).invitationCode}
                                     onChange={handleChange}
-                                    className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white dark:bg-slate-800 text-slate-900 dark:text-white transition-colors uppercase tracking-widest font-mono"
+                                    className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-control focus:ring-blue-500 focus:border-blue-500 p-2.5 border bg-white dark:bg-slate-900 dark:bg-slate-800 text-slate-900 dark:text-white transition-colors uppercase tracking-widest font-mono"
                                     placeholder="CÓDIGO"
                                 />
                             </div>
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">Solicítalo a tu administrador.</p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Solicítalo a tu administrador.</p>
                         </div>
 
                         <div>
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-slate-900 dark:bg-blue-600 hover:bg-slate-800 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 dark:focus:ring-blue-500 transition-all ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-control shadow-sm text-sm font-medium text-white bg-slate-900 dark:bg-blue-600 hover:bg-slate-800 dark:hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 dark:focus:ring-blue-500 transition-all ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                             >
                                 {isLoading ? 'Registrando...' : 'Crear Cuenta'}
                             </button>
@@ -213,7 +213,7 @@ export const RegisterPage: React.FC = () => {
 
                     <div className="mt-6 text-center text-sm">
                         <span className="text-slate-600 dark:text-slate-400">¿Ya tienes cuenta? </span>
-                        <Link to="/login" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500">
+                        <Link to="/login" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
                             Inicia Sesión
                         </Link>
                     </div>

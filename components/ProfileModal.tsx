@@ -104,15 +104,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
     return (
         <>
             {/* Main Profile Modal */}
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
-                <div className="bg-white dark:bg-slate-900 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-slate-800 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-backdrop" onClick={onClose}>
+                <div className="bg-white dark:bg-slate-900 rounded-modal max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 dark:border-slate-800 animate-scale-in" onClick={(e) => e.stopPropagation()}>
                     {/* Header */}
                     <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-6 flex justify-between items-center z-10">
                         <div>
                             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Mi Perfil</h2>
                             <p className="text-sm text-slate-500 dark:text-slate-400">Gestiona tu información personal</p>
                         </div>
-                        <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                        <button aria-label="Cerrar" onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-control transition-colors">
                             <X size={20} className="text-slate-500 dark:text-slate-400" />
                         </button>
                     </div>
@@ -141,12 +141,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
                                                     setFormData({ ...formData, avatarUrl: response.url });
                                                 } catch (error) {
                                                     console.error("Upload error:", error);
-                                                    alert("Error al subir el avatar");
+                                                    toast.error("Error al subir el avatar");
                                                 } finally {
                                                     setLoading(false);
                                                 }
                                             }}
-                                            className="text-sm text-slate-600 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-400"
+                                            className="text-sm text-slate-600 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-control file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-400"
                                         />
                                     </div>
                                 )}
@@ -157,7 +157,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
 
                         {/* Info Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4">
+                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-control p-4">
                                 <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1">
                                     <Mail size={16} />
                                     <span className="text-xs font-medium">Email</span>
@@ -165,7 +165,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
                                 <p className="text-sm font-medium text-slate-900 dark:text-white">{user.email}</p>
                             </div>
 
-                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4">
+                            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-control p-4">
                                 <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-1">
                                     <User size={16} />
                                     <span className="text-xs font-medium">Departamento</span>
@@ -186,7 +186,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                     disabled={!isEditing}
-                                    className="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white disabled:bg-slate-100 dark:disabled:bg-slate-800/50 disabled:text-slate-500 dark:disabled:text-slate-400 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                                    className="w-full rounded-control border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white disabled:bg-slate-100 dark:disabled:bg-slate-800/50 disabled:text-slate-500 dark:disabled:text-slate-400 focus:border-blue-500 focus:ring-blue-500 transition-colors"
                                     placeholder="Ej: +34 600 000 000"
                                 />
                             </div>
@@ -201,7 +201,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
                                     value={formData.address}
                                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                                     disabled={!isEditing}
-                                    className="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white disabled:bg-slate-100 dark:disabled:bg-slate-800/50 disabled:text-slate-500 dark:disabled:text-slate-400 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                                    className="w-full rounded-control border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white disabled:bg-slate-100 dark:disabled:bg-slate-800/50 disabled:text-slate-500 dark:disabled:text-slate-400 focus:border-blue-500 focus:ring-blue-500 transition-colors"
                                     placeholder="Ej: Calle Principal 123"
                                 />
                             </div>
@@ -216,7 +216,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
                                     value={formData.emergencyContact}
                                     onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
                                     disabled={!isEditing}
-                                    className="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white disabled:bg-slate-100 dark:disabled:bg-slate-800/50 disabled:text-slate-500 dark:disabled:text-slate-400 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                                    className="w-full rounded-control border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white disabled:bg-slate-100 dark:disabled:bg-slate-800/50 disabled:text-slate-500 dark:disabled:text-slate-400 focus:border-blue-500 focus:ring-blue-500 transition-colors"
                                     placeholder="Ej: María García - 600 111 222"
                                 />
                             </div>
@@ -277,13 +277,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
                                 <>
                                     <button
                                         onClick={() => setIsEditing(true)}
-                                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-control hover:bg-blue-700 transition-colors font-medium"
                                     >
                                         Editar Perfil
                                     </button>
                                     <button
                                         onClick={() => setShowPasswordModal(true)}
-                                        className="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-medium"
+                                        className="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-control hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-medium"
                                     >
                                         Cambiar Contraseña
                                     </button>
@@ -292,14 +292,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
                                 <>
                                     <button
                                         onClick={() => setIsEditing(false)}
-                                        className="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-medium"
+                                        className="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-control hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-medium"
                                         disabled={loading}
                                     >
                                         Cancelar
                                     </button>
                                     <button
                                         onClick={handleSave}
-                                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
+                                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-control hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
                                         disabled={loading}
                                     >
                                         {loading ? 'Guardando...' : 'Guardar Cambios'}
@@ -313,43 +313,43 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
 
             {/* Password Change Modal */}
             {showPasswordModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowPasswordModal(false)}>
-                    <div className="bg-white dark:bg-slate-900 rounded-xl max-w-md w-full p-6 pb-24 shadow-2xl border border-slate-200 dark:border-slate-800 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-backdrop z-popover" onClick={() => setShowPasswordModal(false)}>
+                    <div className="card rounded-modal max-w-md w-full p-6 shadow-2xl animate-scale-in" onClick={(e) => e.stopPropagation()}>
                         <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Cambiar Contraseña</h2>
                         <form onSubmit={handleChangePassword} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                <label className="label mb-2">
                                     Contraseña Actual
                                 </label>
                                 <input
                                     type="password"
                                     value={passwordData.currentPassword}
                                     onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                    className="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
+                                    className="w-full rounded-control border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                <label className="label mb-2">
                                     Nueva Contraseña
                                 </label>
                                 <input
                                     type="password"
                                     value={passwordData.newPassword}
                                     onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                    className="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
+                                    className="w-full rounded-control border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                <label className="label mb-2">
                                     Confirmar Nueva Contraseña
                                 </label>
                                 <input
                                     type="password"
                                     value={passwordData.confirmPassword}
                                     onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                    className="w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
+                                    className="w-full rounded-control border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
                                     required
                                 />
                             </div>
@@ -357,13 +357,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, use
                                 <button
                                     type="button"
                                     onClick={() => setShowPasswordModal(false)}
-                                    className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                    className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-control hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-control hover:bg-blue-700 transition-colors"
                                 >
                                     Cambiar Contraseña
                                 </button>

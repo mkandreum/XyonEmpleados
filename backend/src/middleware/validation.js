@@ -3,7 +3,7 @@ const Joi = require('joi');
 // Validation middleware factory
 const validate = (schema) => {
     return (req, res, next) => {
-        const { error } = schema.validate(req.body, { abortEarly: false });
+        const { error } = schema.validate(req.body, { abortEarly: false, allowUnknown: true });
         if (error) {
             const errors = error.details.map(detail => detail.message);
             return res.status(400).json({
@@ -89,6 +89,31 @@ const vacationRequestSchema = Joi.object({
     justificationUrl: Joi.string().max(500).optional().allow('', null)
 });
 
+const strongPassword = Joi.string().min(12).max(128)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/)
+    .messages({ 'string.pattern.base': 'Password must contain uppercase, lowercase, number and special character' });
+
+const adminCreateUserSchema = Joi.object({
+    name: Joi.string().min(2).max(100).required(),
+    email: Joi.string().email().max(254).required(),
+    password: strongPassword.required(),
+    role: Joi.string().valid('EMPLOYEE', 'MANAGER', 'ADMIN').optional(),
+    department: Joi.string().max(100).optional().allow(''),
+    position: Joi.string().max(100).optional().allow(''),
+    joinDate: Joi.date().iso().optional().allow(null, ''),
+    avatarUrl: Joi.string().max(500).pattern(/^(\/uploads\/public\/|https:\/\/)/).optional().allow('', null)
+});
+
+const adminUpdateUserSchema = Joi.object({
+    name: Joi.string().min(2).max(100).optional(),
+    email: Joi.string().email().max(254).optional(),
+    role: Joi.string().valid('EMPLOYEE', 'MANAGER', 'ADMIN').optional(),
+    department: Joi.string().max(100).optional().allow(''),
+    position: Joi.string().max(100).optional().allow(''),
+    joinDate: Joi.date().iso().optional().allow(null, ''),
+    avatarUrl: Joi.string().max(500).pattern(/^(\/uploads\/public\/|https:\/\/)/).optional().allow('', null)
+}).unknown(true);
+
 // Export validation middleware
 module.exports = {
     validate,
@@ -96,5 +121,7 @@ module.exports = {
     registerSchema,
     changePasswordSchema,
     updateProfileSchema,
-    vacationRequestSchema
+    vacationRequestSchema,
+    adminCreateUserSchema,
+    adminUpdateUserSchema
 };

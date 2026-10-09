@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Clock, Calendar, AlertCircle } from 'lucide-react';
 import { fichajeAdjustmentService } from '../services/api';
 import { Fichaje } from '../types';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface AdjustFichajeModalProps {
     fichaje: Fichaje;
@@ -15,6 +16,8 @@ export const AdjustFichajeModal: React.FC<AdjustFichajeModalProps> = ({ fichaje,
     const [reason, setReason] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEscapeKey(!loading, onClose);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,29 +45,26 @@ export const AdjustFichajeModal: React.FC<AdjustFichajeModalProps> = ({ fichaje,
     };
 
     return (
-        <>
-            {/* Backdrop - covers everything */}
-            <div className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm" onClick={onClose} />
-            {/* Modal Content - centered above backdrop */}
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
-                <div className="pointer-events-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800">
+        <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+            <div role="dialog" aria-modal="true" aria-label="Solicitar ajuste de fichaje" className="modal-panel max-w-md max-h-[90vh] overflow-y-auto animate-scale-in">
                     <div className="p-6">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                <Clock className="text-blue-500" size={24} />
+                                <Clock className="text-blue-600" size={24} />
                                 Solicitar Ajuste
                             </h3>
                             <button
                                 onClick={onClose}
-                                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 transition-colors"
+                                aria-label="Cerrar"
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 transition-colors"
                             >
                                 <X size={20} />
                             </button>
                         </div>
 
-                        <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-xl">
+                        <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-control">
                             <div className="flex gap-3">
-                                <AlertCircle className="text-amber-500 shrink-0" size={18} />
+                                <AlertCircle className="text-amber-700 shrink-0" size={18} />
                                 <div className="text-sm">
                                     <p className="font-semibold text-amber-800 dark:text-amber-400">Información Actual</p>
                                     <p className="text-amber-700 dark:text-amber-500/80">
@@ -76,7 +76,7 @@ export const AdjustFichajeModal: React.FC<AdjustFichajeModalProps> = ({ fichaje,
 
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-2">
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-2">
                                     <Calendar size={14} /> Fecha solicitada
                                 </label>
                                 <input
@@ -84,12 +84,12 @@ export const AdjustFichajeModal: React.FC<AdjustFichajeModalProps> = ({ fichaje,
                                     required
                                     value={requestedDate}
                                     onChange={(e) => setRequestedDate(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                    className="field px-4 py-2.5"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-2">
+                                <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-2">
                                     <Clock size={14} /> Hora solicitada
                                 </label>
                                 <input
@@ -97,7 +97,7 @@ export const AdjustFichajeModal: React.FC<AdjustFichajeModalProps> = ({ fichaje,
                                     required
                                     value={requestedTime}
                                     onChange={(e) => setRequestedTime(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                    className="field px-4 py-2.5"
                                 />
                             </div>
 
@@ -112,13 +112,13 @@ export const AdjustFichajeModal: React.FC<AdjustFichajeModalProps> = ({ fichaje,
                                     value={reason}
                                     onChange={(e) => setReason(e.target.value)}
                                     rows={3}
-                                    className="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+                                    className="field px-4 py-2.5 resize-none"
                                 />
                             </div>
 
                             {error && (
-                                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl">
-                                    <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
+                                <div role="alert" className="p-3 bg-danger-soft dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-control">
+                                    <p className="text-xs text-danger-ink dark:text-red-300">{error}</p>
                                 </div>
                             )}
 
@@ -126,14 +126,14 @@ export const AdjustFichajeModal: React.FC<AdjustFichajeModalProps> = ({ fichaje,
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                    className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-control hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="flex-1 px-4 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
+                                    className="flex-1 px-4 py-2.5 bg-blue-600 text-white font-semibold rounded-control hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
                                 >
                                     {loading ? (
                                         <>
@@ -147,8 +147,7 @@ export const AdjustFichajeModal: React.FC<AdjustFichajeModalProps> = ({ fichaje,
                             </div>
                         </form>
                     </div>
-                </div>
             </div>
-        </>
+        </div>
     );
 };

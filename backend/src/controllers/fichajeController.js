@@ -1,5 +1,5 @@
 const { PrismaClient, FichajeTipo } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const {
     calculateWorkedHours,
     isLateArrival,
@@ -328,9 +328,15 @@ exports.getWeek = async (req, res) => {
         const requestUserId = req.user.userId;
         const userRole = req.user.role;
 
-        // Solo admins y managers pueden ver fichajes de otros usuarios
-        if (userId !== requestUserId && userRole !== 'ADMIN' && userRole !== 'MANAGER') {
-            return res.status(403).json({ error: 'No autorizado' });
+        // Admins: todos. Managers: solo su departamento. Resto: solo el propio.
+        if (userId !== requestUserId && userRole !== 'ADMIN') {
+            if (userRole !== 'MANAGER') {
+                return res.status(403).json({ error: 'No autorizado' });
+            }
+            const target = await prisma.user.findUnique({ where: { id: userId }, select: { department: true } });
+            if (!target || target.department !== req.user.department) {
+                return res.status(403).json({ error: 'No autorizado' });
+            }
         }
 
         // Obtener inicio y fin de la semana actual
@@ -388,9 +394,15 @@ exports.getMonth = async (req, res) => {
         const requestUserId = req.user.userId;
         const userRole = req.user.role;
 
-        // Solo admins y managers pueden ver fichajes de otros usuarios
-        if (userId !== requestUserId && userRole !== 'ADMIN' && userRole !== 'MANAGER') {
-            return res.status(403).json({ error: 'No autorizado' });
+        // Admins: todos. Managers: solo su departamento. Resto: solo el propio.
+        if (userId !== requestUserId && userRole !== 'ADMIN') {
+            if (userRole !== 'MANAGER') {
+                return res.status(403).json({ error: 'No autorizado' });
+            }
+            const target = await prisma.user.findUnique({ where: { id: userId }, select: { department: true } });
+            if (!target || target.department !== req.user.department) {
+                return res.status(403).json({ error: 'No autorizado' });
+            }
         }
 
         // Obtener inicio y fin del mes actual

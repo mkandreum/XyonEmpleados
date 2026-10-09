@@ -42,7 +42,7 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
                         />
                     ) : (
                         <div className="flex flex-col">
-                            <h1 className="text-3xl font-bold tracking-tight text-slate-800 dark:text-white">
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                                 {companyName}<span className="text-blue-600 dark:text-blue-400">Portal</span>
                             </h1>
                         </div>
@@ -56,8 +56,9 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
                             console.log('[UnifiedLayout] Mode selector clicked. Current isDark:', isDark);
                             toggleTheme();
                         }}
-                        className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-control transition-colors"
                         title={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+                        aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
                     >
                         {isDark ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
@@ -68,6 +69,9 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
                     <div className="relative">
                         <button
                             onClick={() => setShowProfileMenu(!showProfileMenu)}
+                            aria-label="Menú de usuario"
+                            aria-haspopup="menu"
+                            aria-expanded={showProfileMenu}
                             className="flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 p-1 rounded-full transition-colors"
                         >
                             <img
@@ -79,7 +83,7 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
 
                         {/* Dropdown Menu */}
                         {showProfileMenu && (
-                            <div className="absolute top-12 right-0 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 animate-fade-in z-50">
+                            <div className="absolute top-12 right-0 w-56 bg-white dark:bg-slate-900 rounded-control shadow-float border border-slate-200 dark:border-slate-800 py-2 animate-fade-in z-50">
                                 <div className="px-4 py-3 border-b border-slate-50 dark:border-slate-800">
                                     <p className="text-sm font-semibold text-slate-900 dark:text-white">{user?.name}</p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
@@ -96,7 +100,7 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
                                 </button>
                                 <button
                                     onClick={handleLogout}
-                                    className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                    className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-danger dark:text-red-400 hover:bg-danger-soft dark:hover:bg-red-900/20 transition-colors"
                                 >
                                     <LogOut size={16} />
                                     Cerrar Sesión

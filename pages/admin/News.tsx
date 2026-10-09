@@ -96,7 +96,7 @@ export const AdminNews: React.FC = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center animate-slide-up">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Gestión de Noticias</h1>
+                    <h1 className="page-title">Gestión de Noticias</h1>
                     <p className="text-slate-500 dark:text-slate-400">Crea y gestiona las noticias del portal</p>
                 </div>
                 <button
@@ -105,15 +105,15 @@ export const AdminNews: React.FC = () => {
                         setFormData({ title: '', summary: '', content: '', category: 'CORPORATE', imageUrl: '' });
                         setShowModal(true);
                     }}
-                    className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-purple-700 shadow-sm transition-colors"
+                    className="bg-purple-600 text-white px-4 py-2 rounded-control flex items-center gap-2 hover:bg-purple-700 shadow-sm transition-colors"
                 >
                     <Plus size={18} />
                     Nueva Noticia
                 </button>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-75">
-                <table className="w-full">
+            <div className="card overflow-hidden animate-slide-up delay-75">
+                <div className="overflow-x-auto"><table className="w-full">
                     <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Título</th>
@@ -134,10 +134,10 @@ export const AdminNews: React.FC = () => {
                                     <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{item.category}</td>
                                     <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{new Date(item.date).toLocaleDateString('es-ES')}</td>
                                     <td className="px-6 py-4 text-right text-sm space-x-2">
-                                        <button onClick={() => openEditModal(item)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors">
+                                        <button aria-label="Editar" onClick={() => openEditModal(item)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors">
                                             <Edit size={16} />
                                         </button>
-                                        <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-2 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors">
+                                        <button aria-label="Eliminar" onClick={() => handleDelete(item.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-2 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors">
                                             <Trash2 size={16} />
                                         </button>
                                     </td>
@@ -145,56 +145,56 @@ export const AdminNews: React.FC = () => {
                             ))
                         )}
                     </tbody>
-                </table>
+                </table></div>
             </div>
 
             {/* Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-                    <div className="bg-white dark:bg-slate-900 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800 shadow-xl transition-colors" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-backdrop" onClick={() => setShowModal(false)}>
+                    <div className="bg-white dark:bg-slate-900 rounded-modal max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800 shadow-xl transition-colors" onClick={(e) => e.stopPropagation()}>
                         <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-4 flex justify-between items-center z-10">
                             <h2 className="text-xl font-bold text-slate-900 dark:text-white">{editingNews ? 'Editar Noticia' : 'Nueva Noticia'}</h2>
-                            <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                            <button aria-label="Cerrar" onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-control transition-colors">
                                 <X size={20} className="text-slate-500 dark:text-slate-400" />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 pb-24 space-y-4">
+                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Título</label>
+                                <label className="label">Título</label>
                                 <input
                                     type="text"
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
+                                    className="field"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Resumen</label>
+                                <label className="label">Resumen</label>
                                 <textarea
                                     value={formData.summary}
                                     onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
-                                    className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
+                                    className="field"
                                     rows={2}
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Contenido</label>
+                                <label className="label">Contenido</label>
                                 <textarea
                                     value={formData.content}
                                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                                    className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
+                                    className="field"
                                     rows={6}
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Categoría</label>
+                                <label className="label">Categoría</label>
                                 <select
                                     value={formData.category}
                                     onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-                                    className="w-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg p-2 focus:ring-2 focus:ring-purple-500 focus:outline-none text-slate-900 dark:text-white"
+                                    className="field"
                                 >
                                     <option value="CORPORATE">Corporativa</option>
                                     <option value="EVENT">Evento</option>
@@ -203,7 +203,7 @@ export const AdminNews: React.FC = () => {
                             </div>
                             {/* ... File Input styles are handled by global input styles mostly, but wrapper needs care ... */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Imagen de Noticia</label>
+                                <label className="label">Imagen de Noticia</label>
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="file"
@@ -237,10 +237,10 @@ export const AdminNews: React.FC = () => {
                                 <input type="hidden" value={formData.imageUrl} />
                             </div>
                             <div className="flex justify-end gap-3 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                <button type="button" onClick={() => setShowModal(false)} className="btn-ghost">
                                     Cancelar
                                 </button>
-                                <button type="submit" disabled={uploading} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors">
+                                <button type="submit" disabled={uploading} className="px-4 py-2 bg-purple-600 text-white rounded-control hover:bg-purple-700 disabled:opacity-50 transition-colors">
                                     {editingNews ? 'Actualizar' : 'Crear'}
                                 </button>
                             </div>

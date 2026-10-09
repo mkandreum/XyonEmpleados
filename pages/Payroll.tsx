@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { payrollService, uploadService } from '../services/api';
 import { Download, FileText, Calendar, DollarSign, TrendingUp, CheckSquare, Square, Upload, CheckCircle, Loader2 } from 'lucide-react';
 import { useModal } from '../hooks/useModal';
 import { Modal } from '../components/Modal';
+import { StatCard } from '../components/StatCard';
 import { openProtectedFile } from '../utils/fileUtils';
+import { LoadingState, EmptyState } from '../components/PageState';
 
 interface Payroll {
   id: string;
@@ -15,68 +17,142 @@ interface Payroll {
   status: string;
 }
 
+const formatAmount = (amount: number) => `${amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€`;
+
+const PayrollStatus: React.FC<{ status: string }> = ({ status }) => (
+  <span className={`px-2 py-1 text-xs font-medium rounded-full ${status === 'PAID'
+    ? 'bg-success-soft dark:bg-green-900/30 text-success-ink dark:text-green-300'
+    : 'bg-warning-soft dark:bg-amber-900/30 text-warning-ink dark:text-amber-300'}`}>
+    {status === 'PAID' ? 'Pagado' : 'Pendiente'}
+  </span>
+);
+
+const PayrollPeriod: React.FC<{ payroll: Payroll }> = ({ payroll }) => (
+  <div className="flex items-center gap-3">
+    <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-control" aria-hidden="true">
+      <FileText size={18} />
+    </div>
+    <div>
+      <div className="text-sm font-medium text-slate-900 dark:text-white">{payroll.month} {payroll.year}</div>
+      <div className="text-xs text-slate-500 dark:text-slate-400">Nómina mensual</div>
+    </div>
+  </div>
+);
+
+const SelectToggle: React.FC<{ checked: boolean; label: string; onToggle: () => void }> = ({ checked, label, onToggle }) => (
+  <button
+    onClick={onToggle}
+    role="checkbox"
+    aria-checked={checked}
+    aria-label={label}
+    className="p-1 rounded text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
+  >
+    {checked ? <CheckSquare size={20} className="text-blue-600 dark:text-blue-400" /> : <Square size={20} />}
+  </button>
+);
+
+interface SignedActionProps {
+  payroll: Payroll;
+  uploading: boolean;
+  onUpload: (id: string) => void;
+  onOpen: (url: string) => void;
+  /** `chip` = bordered pill for mobile cards; `link` = plain text action for the table. */
+  variant: 'chip' | 'link';
+}
+
+/** "View signed" if the signed PDF exists, otherwise an upload action. */
+const SignedAction: React.FC<SignedActionProps> = ({ payroll, uploading, onUpload, onOpen, variant }) => {
+  const chip = variant === 'chip';
+  if (payroll.signedPdfUrl) {
+    const url = payroll.signedPdfUrl;
+    return chip ? (
+      <button onClick={() => onOpen(url)} className="inline-flex items-center gap-1.5 px-3 py-2 bg-success-soft dark:bg-emerald-900/20 border border-green-200 dark:border-emerald-800 rounded-control text-success-ink dark:text-emerald-400 text-sm font-medium">
+        <CheckCircle size={14} aria-hidden="true" />
+        Firmada
+      </button>
+    ) : (
+      <div className="flex items-center gap-2">
+        <CheckCircle size={16} className="text-success" aria-hidden="true" />
+        <button onClick={() => onOpen(url)} className="text-success-ink dark:text-emerald-400 text-sm font-medium hover:underline">
+          Ver firmada
+        </button>
+      </div>
+    );
+  }
+  return (
+    <button
+      onClick={() => onUpload(payroll.id)}
+      disabled={uploading}
+      className={chip
+        ? 'inline-flex items-center gap-1.5 px-3 py-2 bg-warning-soft dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-control text-warning-ink dark:text-amber-400 text-sm font-medium transition-colors disabled:opacity-50'
+        : 'inline-flex items-center gap-1.5 text-warning-ink dark:text-amber-400 hover:underline font-medium text-sm disabled:opacity-50'}
+    >
+      {uploading ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Upload size={14} aria-hidden="true" />}
+      {chip ? 'Firmar' : 'Subir firmada'}
+    </button>
+  );
+};
+
 export const PayrollPage: React.FC = () => {
   const [payrolls, setPayrolls] = useState<Payroll[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPayrolls, setSelectedPayrolls] = useState<Set<string>>(new Set());
   const [uploadingId, setUploadingId] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadTargetId, setUploadTargetId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { modalState, showAlert, closeModal } = useModal();
 
-  useEffect(() => {
-    fetchPayrolls();
-  }, []);
-
-  const fetchPayrolls = async () => {
+  const fetchPayrolls = useCallback(async () => {
     try {
-      const data = await payrollService.getAll();
-      setPayrolls(data);
+      setPayrolls(await payrollService.getAll());
     } catch (error) {
       console.error('Error fetching payrolls:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => { fetchPayrolls(); }, [fetchPayrolls]);
 
   const togglePayroll = (id: string) => {
-    const newSelected = new Set(selectedPayrolls);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedPayrolls(newSelected);
+    const next = new Set(selectedPayrolls);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedPayrolls(next);
   };
 
-  const toggleAll = () => {
-    if (selectedPayrolls.size === payrolls.length) {
-      setSelectedPayrolls(new Set());
-    } else {
-      setSelectedPayrolls(new Set(payrolls.map(p => p.id)));
-    }
-  };
+  const allSelected = payrolls.length > 0 && selectedPayrolls.size === payrolls.length;
+  const toggleAll = () => setSelectedPayrolls(allSelected ? new Set() : new Set(payrolls.map(p => p.id)));
 
   const downloadSelected = () => {
     if (selectedPayrolls.size === 0) {
       showAlert('Selecciona al menos una nómina para descargar', 'warning');
       return;
     }
-
-    const ids = Array.from(selectedPayrolls);
-    ids.forEach((id, index) => {
+    // Stagger the opens so the browser does not block them as popups.
+    Array.from(selectedPayrolls).forEach((id, index) => {
       const payroll = payrolls.find(p => p.id === id);
-      if (payroll?.pdfUrl) {
-        setTimeout(async () => {
-          try {
-            await openProtectedFile(payroll.pdfUrl);
-          } catch (error) {
-            console.error('Error opening payroll:', error);
-          }
-        }, 300 * index);
-      }
+      if (!payroll?.pdfUrl) return;
+      setTimeout(async () => {
+        try {
+          await openProtectedFile(payroll.pdfUrl);
+        } catch (error) {
+          console.error('Error opening payroll:', error);
+        }
+      }, 300 * index);
     });
   };
+
+  const openFile = async (url: string, errorMessage: string) => {
+    try {
+      await openProtectedFile(url);
+    } catch (error) {
+      console.error('Error opening payroll:', error);
+      showAlert(errorMessage, 'error');
+    }
+  };
+  const openPayroll = (payroll: Payroll) => openFile(payroll.pdfUrl, 'No se pudo abrir la nómina');
+  const openSigned = (url: string) => openFile(url, 'No se pudo abrir');
 
   const triggerSignedUpload = (payrollId: string) => {
     setUploadTargetId(payrollId);
@@ -95,11 +171,8 @@ export const PayrollPage: React.FC = () => {
 
     setUploadingId(uploadTargetId);
     try {
-      // Upload the file
       const uploadResult = await uploadService.uploadPayroll(file);
-      // Set the signed URL on the payroll
       await payrollService.uploadSigned(uploadTargetId, uploadResult.url);
-      // Refresh payrolls list
       await fetchPayrolls();
       showAlert('Nómina firmada subida correctamente', 'success');
     } catch (error) {
@@ -112,281 +185,135 @@ export const PayrollPage: React.FC = () => {
     }
   };
 
-  const downloadPayrollPdf = async (payroll: Payroll) => {
-    try {
-      await openProtectedFile(payroll.pdfUrl);
-    } catch (error) {
-      console.error('Error opening payroll:', error);
-      showAlert('No se pudo abrir la nómina', 'error');
-    }
-  };
+  if (loading) return <LoadingState label="Cargando..." fullPage />;
 
   const lastPayroll = payrolls[0];
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
-  const nextPayrollDate = new Date(currentYear, currentMonth + 1, 0);
-
-  if (loading) return <div className="flex items-center justify-center h-screen"><div className="text-slate-500">Cargando...</div></div>;
+  const now = new Date();
+  const nextPayrollDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const headerCell = 'px-6 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400';
 
   return (
     <div className="space-y-6">
       <div className="animate-slide-up">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Mis Nóminas</h1>
-        <p className="text-slate-500 dark:text-slate-400">Consulta y descarga tus recibos de nómina</p>
+        <h1 className="page-title">Mis nóminas</h1>
+        <p className="page-subtitle">Consulta y descarga tus recibos de nómina</p>
       </div>
 
-      {/* Summary Cards */}
       {lastPayroll && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors animate-slide-up delay-75">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg">
-                <DollarSign size={24} />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Última Nómina</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{lastPayroll.amount.toLocaleString('es-ES')}€</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500">{lastPayroll.month} {lastPayroll.year}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors animate-slide-up delay-150">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg">
-                <Calendar size={24} />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Próxima Nómina</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-white">
-                  {nextPayrollDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors animate-slide-up delay-200">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg">
-                <TrendingUp size={24} />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Nóminas Disponibles</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{payrolls.length}</p>
-              </div>
-            </div>
-          </div>
+          <StatCard
+            icon={DollarSign}
+            iconClass="bg-success-soft dark:bg-green-900/20 text-success dark:text-green-400"
+            label="Última nómina"
+            value={`${lastPayroll.amount.toLocaleString('es-ES')}€`}
+            caption={`${lastPayroll.month} ${lastPayroll.year}`}
+            delay="delay-75"
+          />
+          <StatCard
+            icon={Calendar}
+            iconClass="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+            label="Próxima nómina"
+            value={<span className="text-lg">{nextPayrollDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}</span>}
+            delay="delay-150"
+          />
+          <StatCard
+            icon={TrendingUp}
+            iconClass="bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400"
+            label="Nóminas disponibles"
+            value={payrolls.length}
+            delay="delay-200"
+          />
         </div>
       )}
 
-      {/* Payroll List */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors animate-slide-up delay-300">
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-colors">
-          <h2 className="font-semibold text-slate-900 dark:text-white">Historial de Nóminas</h2>
-          <button
-            onClick={downloadSelected}
-            disabled={selectedPayrolls.size === 0}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <Download size={18} />
+      <div className="card overflow-hidden animate-slide-up delay-300">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h2 className="font-semibold text-slate-900 dark:text-white">Historial de nóminas</h2>
+          <button onClick={downloadSelected} disabled={selectedPayrolls.size === 0} className="btn-primary w-full sm:w-auto">
+            <Download size={18} aria-hidden="true" />
             Descargar ({selectedPayrolls.size})
           </button>
         </div>
 
-        {/* Desktop View */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-            <thead className="bg-slate-50 dark:bg-slate-800 transition-colors">
-              <tr>
-                <th className="px-6 py-3 text-left">
-                  <button
-                    onClick={toggleAll}
-                    className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase hover:text-slate-700 dark:hover:text-slate-300"
-                  >
-                    {selectedPayrolls.size === payrolls.length && payrolls.length > 0 ? (
-                      <CheckSquare size={18} className="text-blue-600 dark:text-blue-400" />
-                    ) : (
-                      <Square size={18} />
-                    )}
-                    Seleccionar
-                  </button>
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Período</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Importe Neto</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Estado</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Acciones</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Firmada</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
-              {payrolls.length > 0 ? (
-                payrolls.map((payroll) => (
-                  <tr key={payroll.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
+        {payrolls.length === 0 ? (
+          <EmptyState icon={<FileText size={32} />} title="No hay nóminas disponibles" hint="Cuando RRHH publique una nómina, aparecerá aquí." />
+        ) : (
+          <>
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+                <thead className="bg-slate-50 dark:bg-slate-800">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left">
                       <button
-                        onClick={() => togglePayroll(payroll.id)}
-                        className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
+                        onClick={toggleAll}
+                        role="checkbox"
+                        aria-checked={allSelected}
+                        className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                       >
-                        {selectedPayrolls.has(payroll.id) ? (
-                          <CheckSquare size={20} className="text-blue-600 dark:text-blue-400" />
-                        ) : (
-                          <Square size={20} />
-                        )}
+                        {allSelected ? <CheckSquare size={18} className="text-blue-600 dark:text-blue-400" /> : <Square size={18} />}
+                        Seleccionar
                       </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg">
-                          <FileText size={18} />
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-slate-900 dark:text-white">{payroll.month} {payroll.year}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">Nómina mensual</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-semibold text-slate-900 dark:text-white">{payroll.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${payroll.status === 'PAID'
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                        : 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'
-                        }`}>
-                        {payroll.status === 'PAID' ? 'Pagado' : 'Pendiente'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => downloadPayrollPdf(payroll)}
-                        className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium text-sm"
-                      >
-                        <Download size={16} />
-                        Descargar
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {payroll.signedPdfUrl ? (
-                        <div className="flex items-center gap-2">
-                          <CheckCircle size={16} className="text-emerald-500" />
-                          <button
-                            onClick={async () => { try { await openProtectedFile(payroll.signedPdfUrl!); } catch { showAlert('No se pudo abrir', 'error'); } }}
-                            className="text-emerald-600 dark:text-emerald-400 text-sm font-medium hover:underline"
-                          >
-                            Ver firmada
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => triggerSignedUpload(payroll.id)}
-                          disabled={uploadingId === payroll.id}
-                          className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium text-sm disabled:opacity-50"
-                        >
-                          {uploadingId === payroll.id ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                          Subir firmada
-                        </button>
-                      )}
-                    </td>
+                    </th>
+                    <th scope="col" className={headerCell}>Período</th>
+                    <th scope="col" className={headerCell}>Importe neto</th>
+                    <th scope="col" className={headerCell}>Estado</th>
+                    <th scope="col" className={headerCell}>Acciones</th>
+                    <th scope="col" className={headerCell}>Firmada</th>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
-                    No hay nóminas disponibles
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800">
+                  {payrolls.map((payroll) => (
+                    <tr key={payroll.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <SelectToggle checked={selectedPayrolls.has(payroll.id)} label={`Seleccionar nómina de ${payroll.month} ${payroll.year}`} onToggle={() => togglePayroll(payroll.id)} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap"><PayrollPeriod payroll={payroll} /></td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900 dark:text-white">{formatAmount(payroll.amount)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap"><PayrollStatus status={payroll.status} /></td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button onClick={() => openPayroll(payroll)} className="inline-flex items-center gap-2 text-blue-700 dark:text-blue-400 hover:underline font-medium text-sm">
+                          <Download size={16} aria-hidden="true" />
+                          Descargar
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <SignedAction payroll={payroll} uploading={uploadingId === payroll.id} onUpload={triggerSignedUpload} onOpen={openSigned} variant="link" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-        {/* Mobile View */}
-        <div className="md:hidden">
-          {payrolls.length > 0 ? (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            <ul className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
               {payrolls.map((payroll) => (
-                <div key={payroll.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => togglePayroll(payroll.id)}
-                        className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
-                      >
-                        {selectedPayrolls.has(payroll.id) ? (
-                          <CheckSquare size={20} className="text-blue-600 dark:text-blue-400" />
-                        ) : (
-                          <Square size={20} />
-                        )}
-                      </button>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg">
-                          <FileText size={18} />
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-slate-900 dark:text-white">{payroll.month} {payroll.year}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400">Nómina mensual</div>
-                        </div>
-                      </div>
+                <li key={payroll.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <SelectToggle checked={selectedPayrolls.has(payroll.id)} label={`Seleccionar nómina de ${payroll.month} ${payroll.year}`} onToggle={() => togglePayroll(payroll.id)} />
+                      <PayrollPeriod payroll={payroll} />
                     </div>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${payroll.status === 'PAID'
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                      : 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'
-                      }`}>
-                      {payroll.status === 'PAID' ? 'Pagado' : 'Pendiente'}
-                    </span>
+                    <PayrollStatus status={payroll.status} />
                   </div>
 
-                  <div className="flex items-center justify-between pl-8">
-                    <div className="text-base font-bold text-slate-900 dark:text-white">
-                      {payroll.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€
-                    </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 pl-8">
+                    <div className="text-base font-bold text-slate-900 dark:text-white">{formatAmount(payroll.amount)}</div>
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => downloadPayrollPdf(payroll)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                      >
-                        <Download size={14} />
+                      <button onClick={() => openPayroll(payroll)} className="btn-secondary gap-1.5">
+                        <Download size={14} aria-hidden="true" />
                         PDF
                       </button>
-                      {payroll.signedPdfUrl ? (
-                        <button
-                          onClick={async () => { try { await openProtectedFile(payroll.signedPdfUrl!); } catch { showAlert('No se pudo abrir', 'error'); } }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg text-emerald-700 dark:text-emerald-400 text-sm font-medium transition-colors"
-                        >
-                          <CheckCircle size={14} />
-                          Firmada
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => triggerSignedUpload(payroll.id)}
-                          disabled={uploadingId === payroll.id}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-amber-700 dark:text-amber-400 text-sm font-medium transition-colors disabled:opacity-50"
-                        >
-                          {uploadingId === payroll.id ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                          Firmar
-                        </button>
-                      )}
+                      <SignedAction payroll={payroll} uploading={uploadingId === payroll.id} onUpload={triggerSignedUpload} onOpen={openSigned} variant="chip" />
                     </div>
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
-          ) : (
-            <div className="p-8 text-center text-slate-500 dark:text-slate-400">
-              No hay nóminas disponibles
-            </div>
-          )}
-        </div>
+            </ul>
+          </>
+        )}
       </div>
-      {/* Hidden file input for signed payroll upload */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        accept=".pdf"
-        onChange={handleSignedFileSelected}
-        className="hidden"
-      />
-      {/* Global Modal */}
+
+      <input type="file" ref={fileInputRef} accept=".pdf" onChange={handleSignedFileSelected} className="hidden" aria-hidden="true" tabIndex={-1} />
       <Modal
         isOpen={modalState.isOpen}
         onClose={closeModal}

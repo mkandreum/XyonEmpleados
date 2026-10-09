@@ -48,7 +48,7 @@ const limiter = rateLimit({
     max: 1000, // Increased to 1000 to prevent false positives on dashboard load
     standardHeaders: true,
     legacyHeaders: false,
-    message: 'Too many requests from this IP, please try again after 15 minutes'
+    message: { error: 'Too many requests from this IP, please try again after 15 minutes' }
 });
 
 // Rate Limiting - Strict for Authentication
@@ -58,11 +58,21 @@ const authLimiter = rateLimit({
     skipSuccessfulRequests: true, // Don't count successful logins
     standardHeaders: true,
     legacyHeaders: false,
-    message: 'Too many login attempts. Please try again in 15 minutes'
+    message: { error: 'Too many login attempts. Please try again in 15 minutes' }
 });
 
-// Export authLimiter for use in routes
+// Rate Limiting - forgot/reset password (cuenta tambien las peticiones correctas: evita spam de emails)
+const passwordResetLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests. Please try again later.' }
+});
+
+// Export limiters for use in routes
 module.exports.authLimiter = authLimiter;
+module.exports.passwordResetLimiter = passwordResetLimiter;
 
 // Apply rate limiter to all requests
 app.use(limiter);
@@ -73,9 +83,10 @@ const corsOptions = {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
 
-        // If FRONTEND_URL is set, use it
+        // FRONTEND_URL puede ser una lista separada por comas
         if (process.env.FRONTEND_URL) {
-            if (origin === process.env.FRONTEND_URL) {
+            const allowed = process.env.FRONTEND_URL.split(',').map(o => o.trim().replace(/\/$/, ''));
+            if (allowed.includes(origin)) {
                 callback(null, true);
             } else {
                 callback(new Error('Not allowed by CORS'));
@@ -86,14 +97,15 @@ const corsOptions = {
             callback(null, true);
         }
     },
-    credentials: true,
+    credentials: false,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    // El API usa Bearer token (no cookies): credentials no es necesario
     maxAge: 86400 // 24 hours
 };
 app.use(cors(corsOptions));
-app.use(express.json({ limit: '10kb' })); // Body limit to prevent DoS
-app.use(morgan('dev'));
+app.use(express.json({ limit: '100kb' })); // Body limit to prevent DoS
+app.use(morgan(isDevelopment ? 'dev' : 'combined'));
 
 // Serve uploaded files statically
 // Serve ONLY public files statically (logos, avatars)
@@ -101,6 +113,13 @@ app.use('/uploads/public', express.static(path.join(__dirname, '../uploads/publi
     maxAge: '1d', // Cache for 1 day
     etag: true,
     lastModified: true,
+    dotfiles: 'deny',
+    index: false,
+    setHeaders: (res) => {
+        // Evita ejecucion de contenido subido (p.ej. SVG/HTML antiguos) en el origen de la app
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox");
+    }
 }));
 
 // Serve a SW-killer: unregisters itself and deletes all caches
@@ -192,9 +211,28 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
+// Error handler global: no filtrar detalles internos
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+    if (err && err.message === 'Not allowed by CORS') {
+        return res.status(403).json({ error: 'Origin not allowed' });
+    }
+    if (err && (err.name === 'MulterError' || /^Invalid file type/.test(err.message || ''))) {
+        return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'File too large (max 10MB)' : 'Invalid upload' });
+    }
+    if (err && err.type === 'entity.too.large') {
+        return res.status(413).json({ error: 'Payload too large' });
+    }
+    if (err && err.type === 'entity.parse.failed') {
+        return res.status(400).json({ error: 'Invalid JSON' });
+    }
+    console.error('Unhandled error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+});
+
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
-const prisma = new PrismaClient();
+const prisma = require('./lib/prisma');
 const { createDefaultTemplates } = require('./services/emailTemplateService');
 
 async function ensureAdminExists() {

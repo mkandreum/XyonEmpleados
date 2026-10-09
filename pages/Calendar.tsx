@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import SignatureModal from '../components/SignatureModal';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, X, Download, FileText, CheckCircle2, AlertTriangle, Clock, MapPin, Search } from 'lucide-react';
 import { fichajeService, vacationService, fichajeAdjustmentService, scheduleService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -9,8 +7,10 @@ import { FichajeDayStats, VacationRequest, VacationStatus, Fichaje, FichajeAdjus
 import { useSettings } from '../hooks/useSettings';
 import { AdjustFichajeModal } from '../components/AdjustFichajeModal';
 import { TeamCalendarView } from '../components/TeamCalendarView';
+import { DayDetailPanel } from '../components/DayDetailPanel';
 import { userShiftAssignmentService } from '../services/userShiftAssignmentService';
 import { toast } from 'react-hot-toast';
+import { downloadAttendanceReport } from '../utils/attendanceReport';
 
 function toISODate(date: Date) {
   return date.toISOString().split('T')[0];
@@ -56,7 +56,6 @@ export const CalendarPage: React.FC = () => {
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
-  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [adjustments, setAdjustments] = useState<FichajeAdjustment[]>([]);
   const [adjustingFichaje, setAdjustingFichaje] = useState<Fichaje | null>(null);
   // Employee shift assignments for cuadrante
@@ -154,80 +153,17 @@ export const CalendarPage: React.FC = () => {
   const handleSignatureConfirm = async (signature: string) => {
     setShowSignatureModal(false);
     setDownloading(true);
-    setSignatureDataUrl(signature);
     try {
-      const month = currentMonth.getMonth() + 1;
-      const year = currentMonth.getFullYear();
-      const doc = new jsPDF();
-
-      doc.setFontSize(18);
-      doc.text('Reporte de Asistencia', 14, 18);
-      doc.setFontSize(12);
-      doc.text(`${user?.name || ''} - ${monthLabel}`, 14, 28);
-
-      if (settings?.logoUrl) {
-        try {
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.src = settings.logoUrl;
-          await new Promise((resolve) => { img.onload = resolve; });
-          doc.addImage(img, 'PNG', 160, 10, 35, 18);
-        } catch { }
-      }
-
-      const daysInMonth = new Date(year, month, 0).getDate();
-      const tableData = [];
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const stats = fichajeDays[dateStr];
-        let entrada = '';
-        let salida = '';
-        let horas = '';
-        let incidencia = '';
-        let ausencia = '';
-
-        const vac = vacations.find(v => {
-          const start = new Date(v.startDate);
-          const end = new Date(v.endDate);
-          const current = new Date(dateStr);
-          return current >= start && current <= end && v.status === 'APPROVED';
-        });
-
-        if (vac) {
-          ausencia = vac.type === 'VACATION' ? 'Vacaciones' : 'Ausencia';
-        }
-
-        if (stats) {
-          if (stats.fichajes && stats.fichajes.length > 0) {
-            const ent = stats.fichajes.find(f => f.tipo === 'ENTRADA');
-            const sal = stats.fichajes.filter(f => f.tipo === 'SALIDA').pop();
-            if (ent) entrada = new Date(ent.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            if (sal) salida = new Date(sal.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          }
-          horas = stats.horasTrabajadas.toString();
-          if (stats.isLate) incidencia = 'Entrada tarde';
-          if (stats.isEarlyDeparture) incidencia += (incidencia ? ', ' : '') + 'Salida temprana';
-          if (!stats.isComplete) incidencia += (incidencia ? ', ' : '') + 'Incompleto';
-        }
-
-        tableData.push([d, entrada, salida, horas, incidencia, ausencia]);
-      }
-
-      autoTable(doc, {
-        head: [['Día', 'Entrada', 'Salida', 'Horas', 'Incidencia', 'Ausencia']],
-        body: tableData,
-        startY: 35,
-        theme: 'grid',
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [51, 65, 85] }
+      await downloadAttendanceReport({
+        employeeName: user?.name || '',
+        monthLabel,
+        month: currentMonth.getMonth() + 1,
+        year: currentMonth.getFullYear(),
+        fichajeDays,
+        vacations,
+        logoUrl: settings?.logoUrl,
+        signature,
       });
-
-      const finalY = (doc as any).lastAutoTable.cursor.y;
-      doc.setFontSize(10);
-      doc.text('Firma del empleado:', 140, finalY + 20);
-      doc.addImage(signature, 'PNG', 140, finalY + 22, 40, 20);
-
-      doc.save(`reporte-asistencia-${year}-${month}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
     } finally {
@@ -342,7 +278,7 @@ export const CalendarPage: React.FC = () => {
           />
 
           <button
-            className={`relative z-10 px-6 py-1.5 font-semibold text-sm transition-colors focus:outline-none flex-1 text-center w-[120px] ${view === 'calendario' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+            className={`relative z-10 px-6 py-1.5 font-semibold text-sm transition-colors flex-1 text-center w-[120px] ${view === 'calendario' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
             onClick={() => setView('calendario')}
           >
             Calendario
@@ -351,7 +287,7 @@ export const CalendarPage: React.FC = () => {
           {/* Cuadrante only for employees */}
           {!isManagerOrAdmin && (
             <button
-              className={`relative z-10 px-6 py-1.5 font-semibold text-sm transition-colors focus:outline-none flex-1 text-center w-[120px] ${view === 'cuadrante' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+              className={`relative z-10 px-6 py-1.5 font-semibold text-sm transition-colors flex-1 text-center w-[120px] ${view === 'cuadrante' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               onClick={() => setView('cuadrante')}
             >
               Cuadrante
@@ -361,7 +297,7 @@ export const CalendarPage: React.FC = () => {
           {/* Equipo solo para Managers/Admins */}
           {isManagerOrAdmin && (
             <button
-              className={`relative z-10 px-6 py-1.5 font-semibold text-sm transition-colors focus:outline-none flex-1 text-center w-[120px] ${view === 'equipo' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+              className={`relative z-10 px-6 py-1.5 font-semibold text-sm transition-colors flex-1 text-center w-[120px] ${view === 'equipo' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               onClick={() => setView('equipo')}
             >
               C. Equipo
@@ -375,7 +311,7 @@ export const CalendarPage: React.FC = () => {
         <>
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <h1 className="page-title flex items-center gap-2">
                 <CalendarIcon className="text-blue-600" />
                 Calendario de Asistencia
               </h1>
@@ -384,7 +320,7 @@ export const CalendarPage: React.FC = () => {
             <button
               onClick={handleDownloadClick}
               disabled={downloading}
-              className="bg-slate-900 dark:bg-slate-800 text-white px-4 py-2.5 rounded-xl hover:bg-slate-800 transition-all flex items-center gap-2 font-medium shadow-sm disabled:opacity-50"
+              className="bg-slate-900 dark:bg-slate-800 text-white px-4 py-2.5 rounded-control hover:bg-slate-800 transition-all flex items-center gap-2 font-medium shadow-sm disabled:opacity-50"
             >
               {downloading ? <Clock className="animate-spin" size={18} /> : <Download size={18} />}
               {downloading ? 'Generando...' : 'Descargar Reporte'}
@@ -397,15 +333,15 @@ export const CalendarPage: React.FC = () => {
             onConfirm={handleSignatureConfirm}
           />
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm shadow-slate-200/50 dark:shadow-none">
+          <div className="card overflow-hidden shadow-slate-200/50 dark:shadow-none">
             {/* Header con mes */}
             <div className="p-4 md:p-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
               <h2 className="text-xl font-bold text-slate-800 dark:text-white capitalize">{monthLabel}</h2>
               <div className="flex gap-2">
-                <button onClick={prevMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
+                <button aria-label="Anterior" onClick={prevMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-control transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
                   <ChevronLeft size={20} />
                 </button>
-                <button onClick={nextMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
+                <button aria-label="Siguiente" onClick={nextMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-control transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
                   <ChevronRight size={20} />
                 </button>
               </div>
@@ -414,7 +350,7 @@ export const CalendarPage: React.FC = () => {
             {/* Labels de días */}
             <div className="grid grid-cols-7 border-b border-slate-50 dark:border-slate-800/50">
               {weekdayLabels.map(l => (
-                <div key={l} className="py-3 text-center text-xs font-bold text-slate-400 uppercase tracking-widest">{l}</div>
+                <div key={l} className="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">{l}</div>
               ))}
             </div>
 
@@ -422,8 +358,8 @@ export const CalendarPage: React.FC = () => {
             {loading ? (
               <div className="h-[400px] flex items-center justify-center bg-slate-50/30 dark:bg-slate-900/10">
                 <div className="flex flex-col items-center gap-2">
-                  <Clock className="animate-spin text-blue-500" size={32} />
-                  <p className="text-sm font-medium text-slate-400">Cargando mensualidad...</p>
+                  <Clock className="animate-spin text-blue-600" size={32} />
+                  <p className="text-sm font-medium text-slate-500">Cargando mensualidad...</p>
                 </div>
               </div>
             ) : (
@@ -439,14 +375,14 @@ export const CalendarPage: React.FC = () => {
                     <button
                       key={i}
                       onClick={() => setSelectedDay(d)}
-                      className={`relative flex flex-col items-center justify-center aspect-square rounded-xl sm:rounded-2xl transition-all duration-200 p-1 mx-0.5 my-0.5
+                      className={`relative flex flex-col items-center justify-center aspect-square rounded-control sm:rounded-card transition-all duration-200 p-1 mx-0.5 my-0.5
                     ${!isCurrentMonth ? 'opacity-20' : 'opacity-100'}
                     ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/20 z-10' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}
                     ${isWeekend && !badge ? 'bg-slate-50/50 dark:bg-slate-900/20' : ''}
                   `}
                     >
                       {/* Numero del día con indicador 'Hoy' */}
-                      <span className={`text-xs sm:text-sm font-medium leading-none mb-1 ${isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : isCurrentMonth ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}`}>
+                      <span className={`text-xs sm:text-sm font-medium leading-none mb-1 ${isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : isCurrentMonth ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500'}`}>
                         {d.getDate()}
                         {isToday && <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-blue-600 rounded-full" />}
                       </span>
@@ -455,7 +391,7 @@ export const CalendarPage: React.FC = () => {
                       {badge && (
                         <>
                           <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${badge.color} shadow-sm`} />
-                          <span className={`hidden sm:inline-block mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium ${badge.textColor} ${badge.color} leading-none whitespace-nowrap`}>
+                          <span className={`hidden sm:inline-block mt-1 px-1.5 py-0.5 rounded-full text-2xs font-medium ${badge.textColor} ${badge.color} leading-none whitespace-nowrap`}>
                             {badge.detail || badge.shortLabel}
                           </span>
                         </>
@@ -472,12 +408,16 @@ export const CalendarPage: React.FC = () => {
             )}
           </div>
 
-          {/* ...existing code... */}
-          {/* Selected day detail panel */}
           {selectedDay && (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 animate-in slide-in-from-bottom-2">
-              {/* ...existing code... */}
-            </div>
+            <DayDetailPanel
+              date={selectedDay}
+              badgeLabel={selectedBadge?.label}
+              badgeDetail={selectedBadge?.detail}
+              stats={fichajeDays[toISODate(selectedDay)]}
+              adjustments={adjustments}
+              onAdjust={setAdjustingFichaje}
+              onClose={() => setSelectedDay(null)}
+            />
           )}
 
           {adjustingFichaje && (
@@ -494,7 +434,7 @@ export const CalendarPage: React.FC = () => {
           {/* Legend & Help Section */}
           <div className="space-y-4">
             {/* Expanded Legend */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4">
+            <div className="card p-4">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
                 <span className="text-lg">📖</span> Leyenda del Calendario
               </h3>
@@ -527,7 +467,7 @@ export const CalendarPage: React.FC = () => {
             </div>
 
             {/* How to Read Section */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl shadow-sm p-4">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-card shadow-sm p-4">
               <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-3 flex items-center gap-2">
                 <span className="text-lg">💡</span> Cómo Leer el Calendario
               </h3>
@@ -540,30 +480,30 @@ export const CalendarPage: React.FC = () => {
             </div>
 
             {/* Monthly Summary */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4">
+            <div className="card p-4">
               <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
                 <span className="text-lg">📊</span> Resumen del Mes
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3">
-                  <div className="text-emerald-600 dark:text-emerald-400 text-2xl font-bold">
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-control p-3">
+                  <div className="text-emerald-700 dark:text-emerald-400 text-2xl font-bold">
                     {Object.values(fichajeDays).filter(s => s.isComplete && !s.isLate && !s.isEarlyDeparture).length}
                   </div>
                   <div className="text-emerald-700 dark:text-emerald-300 text-xs font-medium mt-1">Días OK</div>
                 </div>
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-                  <div className="text-amber-600 dark:text-amber-400 text-2xl font-bold">
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-control p-3">
+                  <div className="text-amber-700 dark:text-amber-400 text-2xl font-bold">
                     {Object.values(fichajeDays).filter(s => s.isLate || s.isEarlyDeparture).length}
                   </div>
                   <div className="text-amber-700 dark:text-amber-300 text-xs font-medium mt-1">Incidencias</div>
                 </div>
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-control p-3">
                   <div className="text-blue-600 dark:text-blue-400 text-2xl font-bold">
                     {vacations.filter(v => v.status === 'APPROVED' && new Date(v.startDate).getMonth() === currentMonth.getMonth()).length}
                   </div>
                   <div className="text-blue-700 dark:text-blue-300 text-xs font-medium mt-1">Vacaciones</div>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3">
+                <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-control p-3">
                   <div className="text-slate-600 dark:text-slate-400 text-2xl font-bold">
                     {Object.values(fichajeDays).reduce((acc, s) => acc + s.horasTrabajadas, 0).toFixed(1)}
                   </div>
@@ -709,7 +649,7 @@ const EmployeeCuadranteView: React.FC<EmployeeCuadranteProps> = ({
   return (
     <div className="space-y-4">
       {/* Color Legend Bar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4">
+      <div className="card p-4">
         <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
           <CalendarIcon size={16} className="text-blue-600" />
           Mi Cuadrante de Horarios
@@ -722,27 +662,27 @@ const EmployeeCuadranteView: React.FC<EmployeeCuadranteProps> = ({
             const exit = shiftAssign?.shift?.horaSalida || schedule?.horaSalida || '';
 
             return (
-              <div key={name} className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${color.border} ${color.bgLight} transition-all`}>
+              <div key={name} className={`flex items-center gap-2 px-3 py-2 rounded-control border ${color.border} ${color.bgLight} transition-all`}>
                 <span className={`w-3 h-3 rounded-full ${color.bg} shadow-sm shrink-0`} />
                 <div className="min-w-0">
                   <span className={`text-xs font-bold ${color.text} block`}>{name}</span>
                   {entry && exit && (
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">{entry} - {exit}</span>
+                    <span className="text-2xs text-slate-500 dark:text-slate-400 font-mono">{entry} - {exit}</span>
                   )}
                 </div>
               </div>
             );
           })}
           {/* Vacation/Absence legend */}
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-control border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
             <span className="w-3 h-3 rounded-full bg-green-500 shadow-sm shrink-0" />
             <span className="text-xs font-bold text-green-700 dark:text-green-300">Vacaciones</span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-control border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
             <span className="w-3 h-3 rounded-full bg-amber-500 shadow-sm shrink-0" />
             <span className="text-xs font-bold text-amber-700 dark:text-amber-300">Ausencia</span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-control border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
             <span className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600 shadow-sm shrink-0" />
             <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Libre</span>
           </div>
@@ -750,15 +690,15 @@ const EmployeeCuadranteView: React.FC<EmployeeCuadranteProps> = ({
       </div>
 
       {/* Calendar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+      <div className="card overflow-hidden">
         {/* Month Header */}
         <div className="p-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
           <h2 className="text-lg font-bold text-slate-800 dark:text-white capitalize">{monthLabel}</h2>
           <div className="flex gap-2">
-            <button onClick={prevMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
+            <button aria-label="Anterior" onClick={prevMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-control transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
               <ChevronLeft size={18} />
             </button>
-            <button onClick={nextMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
+            <button aria-label="Siguiente" onClick={nextMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-control transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
               <ChevronRight size={18} />
             </button>
           </div>
@@ -767,14 +707,14 @@ const EmployeeCuadranteView: React.FC<EmployeeCuadranteProps> = ({
         {/* Weekday labels */}
         <div className="grid grid-cols-7 border-b border-slate-50 dark:border-slate-800/50">
           {weekdayLabels.map(l => (
-            <div key={l} className="py-2 text-center text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest">{l}</div>
+            <div key={l} className="py-2 text-center text-2xs sm:text-xs font-bold text-slate-500 uppercase tracking-widest">{l}</div>
           ))}
         </div>
 
         {/* Calendar Grid */}
         {loading ? (
           <div className="h-[320px] flex items-center justify-center">
-            <Clock className="animate-spin text-blue-500" size={28} />
+            <Clock className="animate-spin text-blue-600" size={28} />
           </div>
         ) : (
           <div className="grid grid-cols-7">
@@ -792,13 +732,13 @@ const EmployeeCuadranteView: React.FC<EmployeeCuadranteProps> = ({
                   onClick={() => setSelectedDay(d)}
                   className={`relative flex flex-col items-center justify-center aspect-square transition-all duration-200 p-0.5
                     ${!isCurrentMonth ? 'opacity-20' : ''}
-                    ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50/60 dark:bg-blue-900/30 z-10 rounded-xl' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}
+                    ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50/60 dark:bg-blue-900/30 z-10 rounded-control' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}
                     ${isWeekend && !shift && !vac ? 'bg-slate-50/40 dark:bg-slate-900/30' : ''}
                   `}
                 >
                   {/* Day number */}
                   <span className={`text-xs font-semibold leading-none mb-0.5 
-                    ${isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : isCurrentMonth ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}
+                    ${isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : isCurrentMonth ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500'}
                   `}>
                     {d.getDate()}
                     {isToday && <span className="absolute top-0.5 right-0.5 w-1 h-1 bg-blue-600 rounded-full" />}
@@ -814,7 +754,7 @@ const EmployeeCuadranteView: React.FC<EmployeeCuadranteProps> = ({
                   ) : null}
 
                   {/* Desktop: show schedule name */}
-                  <span className="hidden sm:block text-[8px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-full px-0.5">
+                  <span className="hidden sm:block text-2xs font-medium text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-full px-0.5">
                     {vac ? (vac.type === 'VACATION' ? 'Vac' : 'Aus') : shift?.name || ''}
                   </span>
                 </button>
@@ -826,19 +766,19 @@ const EmployeeCuadranteView: React.FC<EmployeeCuadranteProps> = ({
 
       {/* Selected Day Detail */}
       {selectedDay && isCurrentMonth(selectedDay) && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-4 animate-in slide-in-from-bottom-2">
+        <div className="card p-4 animate-in slide-in-from-bottom-2">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-slate-800 dark:text-white">
               {selectedDay.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
             </h3>
-            <button onClick={() => setSelectedDay(null)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
-              <X size={16} className="text-slate-400" />
+            <button aria-label="Cerrar" onClick={() => setSelectedDay(null)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-control">
+              <X size={16} className="text-slate-500" />
             </button>
           </div>
 
           <div className="space-y-2">
             {selectedShift && (
-              <div className={`flex items-center gap-3 p-3 rounded-xl ${selectedShift.color.bgLight} border ${selectedShift.color.border}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-control ${selectedShift.color.bgLight} border ${selectedShift.color.border}`}>
                 <span className={`w-4 h-4 rounded-full ${selectedShift.color.bg} shadow-sm shrink-0`} />
                 <div>
                   <span className={`text-sm font-bold ${selectedShift.color.text}`}>{selectedShift.name}</span>
@@ -848,7 +788,7 @@ const EmployeeCuadranteView: React.FC<EmployeeCuadranteProps> = ({
             )}
 
             {selectedVac && (
-              <div className={`flex items-center gap-3 p-3 rounded-xl ${selectedVac.type === 'VACATION' ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-control ${selectedVac.type === 'VACATION' ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'}`}>
                 <span className={`w-4 h-4 rounded-full ${selectedVac.type === 'VACATION' ? 'bg-green-500' : 'bg-amber-500'} shadow-sm shrink-0`} />
                 <span className={`text-sm font-bold ${selectedVac.type === 'VACATION' ? 'text-green-700 dark:text-green-300' : 'text-amber-700 dark:text-amber-300'}`}>
                   {selectedVac.type === 'VACATION' ? 'Vacaciones' : selectedVac.type === 'SICK_LEAVE' ? 'Horas Médicas' : selectedVac.type === 'MEDICAL_LEAVE' ? 'Baja Médica' : selectedVac.type === 'PERSONAL' ? 'Asuntos Propios' : 'Ausencia'}
@@ -857,7 +797,7 @@ const EmployeeCuadranteView: React.FC<EmployeeCuadranteProps> = ({
             )}
 
             {selectedStats && selectedStats.fichajes.length > 0 && (
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+              <div className="p-3 rounded-control bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
                 <span className="text-xs font-bold text-slate-600 dark:text-slate-300 block mb-2">Fichajes del día</span>
                 <div className="flex flex-wrap gap-2">
                   {selectedStats.fichajes.map((f, idx) => (
@@ -873,8 +813,8 @@ const EmployeeCuadranteView: React.FC<EmployeeCuadranteProps> = ({
             )}
 
             {!selectedShift && !selectedVac && (!selectedStats || selectedStats.fichajes.length === 0) && (
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center">
-                <span className="text-xs text-slate-400">Sin horario ni registros para este día</span>
+              <div className="p-3 rounded-control bg-slate-50 dark:bg-slate-800/50 text-center">
+                <span className="text-xs text-slate-500">Sin horario ni registros para este día</span>
               </div>
             )}
           </div>

@@ -7,23 +7,47 @@ if (!JWT_SECRET) {
     process.exit(1);
 }
 
+const prisma = require('../lib/prisma');
+
+if (JWT_SECRET.length < 32) {
+    console.warn('[SECURITY] JWT_SECRET is shorter than 32 chars. Use: openssl rand -base64 64');
+}
+
+/**
+ * Verifica el JWT (solo HS256) y recarga rol/departamento desde la BD,
+ * de modo que cambios de rol o usuarios eliminados surtan efecto de inmediato.
+ * req.user mantiene la forma { userId, role, department } (compatible con clientes).
+ */
 exports.authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const parts = authHeader ? authHeader.split(' ') : [];
+    const token = parts.length === 2 && /^Bearer$/i.test(parts[0]) ? parts[1] : null;
 
     if (!token) {
         return res.status(401).json({ error: 'No token provided', code: 'NO_TOKEN' });
     }
 
-    jwt.verify(token, JWT_SECRET, (err, user) => {
+    jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }, async (err, payload) => {
         if (err) {
             if (err.name === 'TokenExpiredError') {
                 return res.status(403).json({ error: 'Token expired', code: 'TOKEN_EXPIRED' });
             }
             return res.status(403).json({ error: 'Invalid token', code: 'INVALID_TOKEN' });
         }
-        req.user = user;
-        next();
+        try {
+            const dbUser = await prisma.user.findUnique({
+                where: { id: String(payload.userId) },
+                select: { id: true, role: true, department: true }
+            });
+            if (!dbUser) {
+                return res.status(401).json({ error: 'User no longer exists', code: 'INVALID_TOKEN' });
+            }
+            req.user = { userId: dbUser.id, role: dbUser.role, department: dbUser.department };
+            next();
+        } catch (e) {
+            console.error('Auth user lookup failed:', e);
+            res.status(500).json({ error: 'Authentication error' });
+        }
     });
 };
 

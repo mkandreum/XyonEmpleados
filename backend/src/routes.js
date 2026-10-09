@@ -21,10 +21,16 @@ const pushController = require('./controllers/pushController');
 const userShiftAssignmentController = require('./controllers/userShiftAssignmentController');
 const dashboardLayoutController = require('./controllers/dashboardLayoutController');
 const { isAdmin, isManagerOrAdmin, validateManagerDepartment } = require('./middleware/auth');
-const { validate, loginSchema, registerSchema, changePasswordSchema, updateProfileSchema, vacationRequestSchema } = require('./middleware/validation');
+const { validate, loginSchema, registerSchema, changePasswordSchema, updateProfileSchema, vacationRequestSchema, adminCreateUserSchema, adminUpdateUserSchema } = require('./middleware/validation');
 
 // Import auth rate limiter from server
-const { authLimiter } = require('./server');
+const { authLimiter, passwordResetLimiter } = require('./server');
+
+// Los usuarios no admin solo pueden consultar datos de su propio departamento
+const sameDepartmentOrAdmin = (req, res, next) => {
+    if (req.user.role === 'ADMIN' || req.params.department === req.user.department) return next();
+    return res.status(403).json({ error: 'No autorizado para este departamento', code: 'DEPARTMENT_FORBIDDEN' });
+};
 
 
 // ========================================
@@ -55,14 +61,13 @@ router.get('/version', (req, res) => {
 // Public Routes (NO AUTH REQUIRED)
 router.post('/auth/register', authLimiter, validate(registerSchema), authController.register);
 router.post('/auth/login', authLimiter, validate(loginSchema), authController.login);
-router.post('/auth/forgot-password', authLimiter, authController.forgotPassword);
-router.post('/auth/reset-password', authLimiter, authController.resetPassword);
+router.post('/auth/forgot-password', passwordResetLimiter, authController.forgotPassword);
+router.post('/auth/reset-password', passwordResetLimiter, authController.resetPassword);
 
 // Public endpoint for logo only (secure alternative to exposing all settings)
 router.get('/public/logo', async (req, res) => {
     try {
-        const { PrismaClient } = require('@prisma/client');
-        const prisma = new PrismaClient();
+        const prisma = require('./lib/prisma');
 
         const logoSetting = await prisma.globalSettings.findUnique({
             where: { key: 'logoUrl' }
@@ -131,15 +136,15 @@ router.get('/files/:type/:filename', fileController.getFile);
 
 // Benefits Routes
 router.get('/benefits/user', benefitsController.getUserBenefitsBalance);
-router.get('/benefits/department/:department', benefitsController.getBenefitsByDepartment);
+router.get('/benefits/department/:department', sameDepartmentOrAdmin, benefitsController.getBenefitsByDepartment);
 router.get('/admin/benefits', isAdmin, benefitsController.getDepartmentBenefits);
 router.post('/admin/benefits', isAdmin, benefitsController.upsertDepartmentBenefits);
 router.put('/admin/benefits/balance', isAdmin, benefitsController.updateUserBalance);
 
 // Admin Routes
 router.get('/admin/users', isAdmin, adminController.getUsers);
-router.post('/admin/users', isAdmin, adminController.createUser);
-router.put('/admin/users/:id', isAdmin, adminController.updateUser);
+router.post('/admin/users', isAdmin, validate(adminCreateUserSchema), adminController.createUser);
+router.put('/admin/users/:id', isAdmin, validate(adminUpdateUserSchema), adminController.updateUser);
 router.delete('/admin/users/:id', isAdmin, adminController.deleteUser);
 router.post('/admin/users/bulk', isAdmin, adminController.importUsers);
 router.get('/admin/vacations', isAdmin, adminController.getAllVacations);
@@ -193,8 +198,7 @@ router.patch('/vacations/:id/justification', vacationController.updateJustificat
 router.get('/manager/team-vacations', isManagerOrAdmin, vacationController.getTeamVacations);
 router.get('/manager/team-members', isManagerOrAdmin, async (req, res) => {
     try {
-        const { PrismaClient } = require('@prisma/client');
-        const prisma = new PrismaClient();
+        const prisma = require('./lib/prisma');
         const department = req.user.department;
         const members = await prisma.user.findMany({
             where: { department, role: { not: 'ADMIN' } },
@@ -230,8 +234,8 @@ router.get('/fichajes/department/:dept/week', isManagerOrAdmin, validateManagerD
 
 // Department Schedules Routes
 router.get('/department-schedules', isAdmin, scheduleController.getAllSchedules);
-router.get('/department-schedules/:department/resolved', scheduleController.getResolvedSchedule);
-router.get('/department-schedules/:department', scheduleController.getSchedule);
+router.get('/department-schedules/:department/resolved', sameDepartmentOrAdmin, scheduleController.getResolvedSchedule);
+router.get('/department-schedules/:department', sameDepartmentOrAdmin, scheduleController.getSchedule);
 router.post('/department-schedules', isAdmin, scheduleController.upsertSchedule);
 router.delete('/department-schedules/:department', isAdmin, scheduleController.deleteSchedule);
 
@@ -243,8 +247,8 @@ router.post('/late-notifications/:id/justify', lateNotificationController.justif
 router.put('/late-notifications/:id/read', lateNotificationController.markAsRead);
 
 // Fichaje Adjustment Routes
-router.post('/fichaje-adjustments', authenticateToken, fichajeAdjustmentController.create);
-router.get('/fichaje-adjustments', authenticateToken, fichajeAdjustmentController.getMyRequests);
+router.post('/fichaje-adjustments', fichajeAdjustmentController.create);
+router.get('/fichaje-adjustments', fichajeAdjustmentController.getMyRequests);
 router.get('/fichaje-adjustments/pending', isManagerOrAdmin, fichajeAdjustmentController.getPending);
 router.get('/fichaje-adjustments/all', isManagerOrAdmin, fichajeAdjustmentController.getAll);
 router.patch('/fichaje-adjustments/:id/approve', isManagerOrAdmin, fichajeAdjustmentController.approve);
@@ -252,13 +256,12 @@ router.patch('/fichaje-adjustments/:id/reject', isManagerOrAdmin, fichajeAdjustm
 
 // User Shift Assignment Routes
 router.post('/user-shift-assignments', isManagerOrAdmin, userShiftAssignmentController.assignShift);
-router.get('/user-shift-assignments', authenticateToken, userShiftAssignmentController.getUserShifts);
+router.get('/user-shift-assignments', userShiftAssignmentController.getUserShifts);
 
 // DepartmentShift routes (admin manages shifts, managers/employees can read)
-router.get('/department-shifts/:department', authenticateToken, async (req, res) => {
+router.get('/department-shifts/:department', async (req, res) => {
     try {
-        const { PrismaClient } = require('@prisma/client');
-        const prisma = new PrismaClient();
+        const prisma = require('./lib/prisma');
         const shifts = await prisma.departmentShift.findMany({ where: { department: req.params.department } });
         res.json(shifts);
     } catch (e) { res.status(500).json({ error: 'Error fetching shifts' }); }
@@ -267,8 +270,7 @@ router.get('/department-shifts/:department', authenticateToken, async (req, res)
 // Create a new DepartmentShift (admin only)
 router.post('/department-shifts', isAdmin, async (req, res) => {
     try {
-        const { PrismaClient } = require('@prisma/client');
-        const prisma = new PrismaClient();
+        const prisma = require('./lib/prisma');
         const { department, name, activeDays, horaEntrada, horaSalida, horaEntradaTarde, horaSalidaMañana, toleranciaMinutos, flexibleSchedule, scheduleOverrides } = req.body;
         if (!department || !name || !horaEntrada || !horaSalida) {
             return res.status(400).json({ error: 'Departamento, nombre, hora de entrada y salida son obligatorios' });
@@ -297,8 +299,7 @@ router.post('/department-shifts', isAdmin, async (req, res) => {
 // Update a DepartmentShift (admin only)
 router.put('/department-shifts/:id', isAdmin, async (req, res) => {
     try {
-        const { PrismaClient } = require('@prisma/client');
-        const prisma = new PrismaClient();
+        const prisma = require('./lib/prisma');
         const { name, activeDays, horaEntrada, horaSalida, horaEntradaTarde, horaSalidaMañana, toleranciaMinutos, flexibleSchedule, scheduleOverrides } = req.body;
         const shift = await prisma.departmentShift.update({
             where: { id: req.params.id },
@@ -324,8 +325,7 @@ router.put('/department-shifts/:id', isAdmin, async (req, res) => {
 // Delete a DepartmentShift (admin only)
 router.delete('/department-shifts/:id', isAdmin, async (req, res) => {
     try {
-        const { PrismaClient } = require('@prisma/client');
-        const prisma = new PrismaClient();
+        const prisma = require('./lib/prisma');
         await prisma.departmentShift.delete({ where: { id: req.params.id } });
         res.json({ success: true, message: 'Turno eliminado' });
     } catch (e) {
@@ -336,7 +336,7 @@ router.delete('/department-shifts/:id', isAdmin, async (req, res) => {
 
 // ─── Dashboard Layout CMS ────────────────────────────────────────────────────
 // NOTE: /widgets/:widgetId routes before /:id to avoid route parameter conflicts
-router.get('/dashboard-layouts/active', authenticateToken, dashboardLayoutController.getActiveLayout);
+router.get('/dashboard-layouts/active', dashboardLayoutController.getActiveLayout);
 router.get('/dashboard-layouts', isAdmin, dashboardLayoutController.getLayouts);
 router.post('/dashboard-layouts', isAdmin, dashboardLayoutController.createLayout);
 router.put('/dashboard-layouts/widgets/:widgetId', isAdmin, dashboardLayoutController.updateWidget);

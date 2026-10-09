@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
+const { isOwnedPrivateFileUrl } = require('../utils/safeUrl');
 const { createNotification } = require('./notificationController');
 const { sendTemplateEmail } = require('../services/emailService');
 const { notifyDepartmentManagers, notifyAllAdmins } = require('../services/notificationService');
@@ -22,6 +23,9 @@ exports.getAllVacations = async (req, res) => {
 exports.createVacation = async (req, res) => {
     try {
         const { startDate, endDate, days, hours, type, justificationUrl } = req.body;
+        if (justificationUrl && !isOwnedPrivateFileUrl(justificationUrl, 'justifications', req.user.userId, req.user.role)) {
+            return res.status(400).json({ error: 'justificationUrl invalido' });
+        }
 
         // Fetch user to determine initial status
         const user = await prisma.user.findUnique({
@@ -97,6 +101,9 @@ exports.updateJustification = async (req, res) => {
 
         if (!justificationUrl) {
             return res.status(400).json({ error: 'Justification URL is required' });
+        }
+        if (!isOwnedPrivateFileUrl(justificationUrl, 'justifications', req.user.userId, req.user.role)) {
+            return res.status(400).json({ error: 'justificationUrl invalido' });
         }
 
         const request = await prisma.vacationRequest.findUnique({
@@ -206,6 +213,13 @@ exports.managerApproveVacation = async (req, res) => {
             return res.status(403).json({ error: 'Request is not in your department' });
         }
 
+        if (request.status !== 'PENDING_MANAGER') {
+            return res.status(409).json({ error: 'La solicitud no esta pendiente de manager' });
+        }
+        if (request.userId === req.user.userId) {
+            return res.status(403).json({ error: 'No puedes aprobar tu propia solicitud' });
+        }
+
         // Update to PENDING_ADMIN
         const updated = await prisma.vacationRequest.update({
             where: { id },
@@ -260,6 +274,10 @@ exports.managerRejectVacation = async (req, res) => {
 
         if (!request || request.user.department !== manager.department) {
             return res.status(403).json({ error: 'Request not found or not in your department' });
+        }
+
+        if (request.status !== 'PENDING_MANAGER') {
+            return res.status(409).json({ error: 'La solicitud no esta pendiente de manager' });
         }
 
         const updated = await prisma.vacationRequest.update({

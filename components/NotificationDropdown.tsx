@@ -122,7 +122,7 @@ export const NotificationDropdown: React.FC = () => {
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <button
+            <button aria-label="Notificaciones"
                 onClick={() => setIsOpen(!isOpen)}
                 className="relative p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
                 title="Notificaciones"
@@ -134,13 +134,13 @@ export const NotificationDropdown: React.FC = () => {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden z-50 animate-fadeIn">
+                <div className="card absolute right-0 mt-2 w-80 shadow-xl overflow-hidden z-50 animate-fadeIn">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
                         <div className="flex items-center gap-2">
                             <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Notificaciones</h3>
-                            <button
+                            <button aria-label="Actualizar"
                                 onClick={(e) => { e.stopPropagation(); fetchNotifications(); }}
-                                className="text-slate-400 hover:text-blue-500 transition-colors"
+                                className="text-slate-500 hover:text-blue-500 transition-colors"
                                 title="Actualizar"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" /><path d="M16 16h5v5" /></svg>
@@ -171,9 +171,9 @@ export const NotificationDropdown: React.FC = () => {
                                     const isJustification = text.includes('justificación');
 
                                     let icon = <Bell size={20} />;
-                                    if (isApproved) icon = <Check size={20} className="text-green-600" />;
+                                    if (isApproved) icon = <Check size={20} className="text-green-700" />;
                                     else if (isRejected) icon = <X size={20} className="text-red-600" />;
-                                    else if (isWarning) icon = <AlertCircle size={20} className="text-amber-600" />;
+                                    else if (isWarning) icon = <AlertCircle size={20} className="text-amber-700" />;
                                     else if (isJustification) icon = <FileText size={20} className="text-blue-600" />;
 
                                     return (
@@ -198,23 +198,23 @@ export const NotificationDropdown: React.FC = () => {
                                                     <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">
                                                         {notification.message}
                                                     </p>
-                                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 block">
+                                                    <span className="text-2xs text-slate-500 dark:text-slate-400 mt-2 block">
                                                         {new Date(notification.date).toLocaleDateString()} {new Date(notification.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </span>
                                                 </div>
                                                 <div className="flex flex-col gap-1 flex-shrink-0">
                                                     {!notification.read && (
-                                                        <button
+                                                        <button aria-label="Marcar como leída"
                                                             onClick={(e) => handleMarkAsRead(notification.id, e)}
-                                                            className="text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 p-1 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all"
+                                                            className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all"
                                                             title="Marcar como leída"
                                                         >
                                                             <Check size={14} />
                                                         </button>
                                                     )}
-                                                    <button
+                                                    <button aria-label="Eliminar"
                                                         onClick={(e) => handleDelete(notification.id, e)}
-                                                        className="text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 p-1 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all"
+                                                        className="text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 p-1 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all"
                                                         title="Eliminar"
                                                     >
                                                         <X size={14} />

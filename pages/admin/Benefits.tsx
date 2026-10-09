@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { benefitsService } from '../../services/api';
 import { DepartmentBenefits } from '../../types';
 import { Save, Edit2 } from 'lucide-react';
+import { LoadingState } from '../../components/PageState';
 
 const DEPARTMENTS = ['IT', 'RRHH', 'Ventas', 'Marketing', 'Operaciones', 'Finanzas'];
 
@@ -55,9 +57,9 @@ export const AdminBenefits: React.FC = () => {
             await benefitsService.upsertDepartmentBenefits(formData);
             fetchBenefits();
             setEditingDept(null);
-            alert('Beneficios actualizados correctamente');
+            toast.success('Beneficios actualizados correctamente');
         } catch (error) {
-            alert('Error al guardar beneficios');
+            toast.error('Error al guardar beneficios');
         }
     };
 
@@ -71,18 +73,18 @@ export const AdminBenefits: React.FC = () => {
         };
     };
 
-    if (loading) return <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-950 transition-colors"><div className="text-slate-500 dark:text-slate-400">Cargando...</div></div>;
+    if (loading) return <LoadingState label="Cargando..." fullPage />;
 
     return (
         <div className="space-y-6">
             <div className="animate-slide-up">
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Beneficios por Departamento</h1>
+                <h1 className="page-title">Beneficios por Departamento</h1>
                 <p className="text-slate-500 dark:text-slate-400">Configura los días y horas disponibles para cada departamento</p>
             </div>
 
             {/* Desktop Table */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden hidden sm:block transition-colors animate-slide-up delay-75">
-                <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+            <div className="card overflow-hidden hidden sm:block animate-slide-up delay-75">
+                <div className="overflow-x-auto"><table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
                     <thead className="bg-slate-50 dark:bg-slate-800">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Departamento</th>
@@ -154,14 +156,14 @@ export const AdminBenefits: React.FC = () => {
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={handleSave}
-                                                    className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm transition-colors"
+                                                    className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded-control hover:bg-green-700 text-sm transition-colors"
                                                 >
                                                     <Save size={14} />
                                                     Guardar
                                                 </button>
                                                 <button
                                                     onClick={() => setEditingDept(null)}
-                                                    className="px-3 py-1 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-sm transition-colors"
+                                                    className="px-3 py-1 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-control text-sm transition-colors"
                                                 >
                                                     Cancelar
                                                 </button>
@@ -169,7 +171,7 @@ export const AdminBenefits: React.FC = () => {
                                         ) : (
                                             <button
                                                 onClick={() => handleEdit(dept)}
-                                                className="flex items-center gap-1 px-3 py-1 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-sm transition-colors"
+                                                className="flex items-center gap-1 px-3 py-1 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-control text-sm transition-colors"
                                             >
                                                 <Edit2 size={14} />
                                                 Editar
@@ -180,7 +182,7 @@ export const AdminBenefits: React.FC = () => {
                             );
                         })}
                     </tbody>
-                </table>
+                </table></div>
             </div>
 
             {/* Mobile View (Cards) */}
@@ -191,12 +193,12 @@ export const AdminBenefits: React.FC = () => {
 
                     if (isEditing) {
                         return (
-                            <div key={dept} className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-xl shadow-sm space-y-3 transition-colors">
+                            <div key={dept} className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-control shadow-sm space-y-3 transition-colors">
                                 <div className="flex justify-between items-center border-b border-blue-100 dark:border-blue-800 pb-2">
                                     <h3 className="font-bold text-blue-900 dark:text-blue-400">{dept}</h3>
                                     <span className="text-xs text-blue-600 dark:text-blue-500 font-medium">Editando...</span>
                                 </div>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                         <label className="text-xs text-blue-800 dark:text-blue-300 block mb-1">Vacaciones</label>
                                         <input type="number" className="w-full text-sm p-1 rounded border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
@@ -227,36 +229,36 @@ export const AdminBenefits: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="flex gap-2 pt-2">
-                                    <button onClick={handleSave} className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">Guardar</button>
-                                    <button onClick={() => setEditingDept(null)} className="flex-1 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 py-2 rounded-lg text-sm font-medium border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Cancelar</button>
+                                    <button onClick={handleSave} className="btn-primary flex-1">Guardar</button>
+                                    <button onClick={() => setEditingDept(null)} className="flex-1 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 py-2 rounded-control text-sm font-medium border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Cancelar</button>
                                 </div>
                             </div>
                         )
                     }
 
                     return (
-                        <div key={dept} className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+                        <div key={dept} className="card p-4">
                             <div className="flex justify-between items-center mb-3 border-b border-slate-50 dark:border-slate-800 pb-2">
                                 <h3 className="font-bold text-slate-900 dark:text-white">{dept}</h3>
-                                <button onClick={() => handleEdit(dept)} className="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-1.5 rounded-lg transition-colors">
+                                <button aria-label="Editar" onClick={() => handleEdit(dept)} className="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-1.5 rounded-control transition-colors">
                                     <Edit2 size={16} />
                                 </button>
                             </div>
                             <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-sm">
                                 <div>
-                                    <span className="block text-xs text-slate-400 dark:text-slate-500">Vacaciones</span>
+                                    <span className="block text-xs text-slate-500 dark:text-slate-400">Vacaciones</span>
                                     <span className="font-medium text-slate-700 dark:text-slate-300">{deptBenefits.vacationDays} días</span>
                                 </div>
                                 <div>
-                                    <span className="block text-xs text-slate-400 dark:text-slate-500">H. Exceso</span>
+                                    <span className="block text-xs text-slate-500 dark:text-slate-400">H. Exceso</span>
                                     <span className="font-medium text-slate-700 dark:text-slate-300">{deptBenefits.overtimeHoursBank} h</span>
                                 </div>
                                 <div>
-                                    <span className="block text-xs text-slate-400 dark:text-slate-500">H. Médicas</span>
+                                    <span className="block text-xs text-slate-500 dark:text-slate-400">H. Médicas</span>
                                     <span className="font-medium text-slate-700 dark:text-slate-300">{deptBenefits.sickLeaveHours} h</span>
                                 </div>
                                 <div>
-                                    <span className="block text-xs text-slate-400 dark:text-slate-500">H. Retribuidas</span>
+                                    <span className="block text-xs text-slate-500 dark:text-slate-400">H. Retribuidas</span>
                                     <span className="font-medium text-slate-700 dark:text-slate-300">{deptBenefits.paidAbsenceHours} h</span>
                                 </div>
                             </div>
@@ -265,7 +267,7 @@ export const AdminBenefits: React.FC = () => {
                 })}
             </div>
 
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 transition-colors animate-slide-up delay-150">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-control p-4 transition-colors animate-slide-up delay-150">
                 <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-400 mb-2">ℹ️ Información</h3>
                 <ul className="text-sm text-blue-800 dark:text-blue-300/80 space-y-1">
                     <li>• Los beneficios se aplican a todos los empleados del departamento</li>
