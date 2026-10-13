@@ -3,7 +3,9 @@ const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
 const { createNotification } = require('./notificationController');
 const { updateUserBalanceLogic } = require('./benefitsController');
-const { sendTemplateEmail } = require('../services/emailService');
+const { sendTemplateEmail, sendPasswordResetEmail } = require('../services/emailService');
+const { logAudit, AUDIT_ACTIONS } = require('../services/auditService');
+const Joi = require('joi');
 const { encryptSMTPPassword } = require('../utils/encryptionUtils');
 
 const ensureDepartmentSetting = async (department) => {
@@ -47,6 +49,7 @@ exports.getUsers = async (req, res) => {
                 role: true,
                 department: true,
                 position: true,
+                active: true,
                 createdAt: true,
                 // Exclude sensitive data specifically, though select does this by inclusion
             },
@@ -104,7 +107,7 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, email, role, department, position, joinDate, avatarUrl } = req.body;
+        const { name, email, role, department, position, joinDate, avatarUrl, active } = req.body;
         // Note: Password update should probably be a separate secure endpoint or handled carefully
 
         // No permitir degradar al ultimo admin ni auto-degradarse
@@ -118,6 +121,16 @@ exports.updateUser = async (req, res) => {
             }
         }
         const updateData = { name, email, role, department, position };
+        if (typeof active === 'boolean') {
+            if (!active) {
+                if (id === req.user.userId) return res.status(400).json({ error: 'No puedes desactivar tu propia cuenta' });
+                const cur = await prisma.user.findUnique({ where: { id }, select: { role: true, active: true } });
+                if (cur && cur.role === 'ADMIN' && cur.active && (await prisma.user.count({ where: { role: 'ADMIN', active: true } })) <= 1) {
+                    return res.status(400).json({ error: 'No puedes desactivar al ultimo administrador activo' });
+                }
+            }
+            updateData.active = active;
+        }
         if (avatarUrl) updateData.avatarUrl = avatarUrl;
         if (joinDate) {
             updateData.joinDate = new Date(joinDate);
@@ -179,47 +192,211 @@ exports.deleteUser = async (req, res) => {
     }
 };
 
-exports.importUsers = async (req, res) => {
+// --- Activar / desactivar usuarios ---
+
+/**
+ * PATCH|PUT /api/admin/users/:id/active  { active: boolean }
+ * Un usuario inactivo no puede iniciar sesion y sus tokens dejan de valer (el middleware relee la BD),
+ * se excluye de recordatorios/avisos, pero se conserva todo su historial.
+ */
+exports.setUserActive = async (req, res) => {
     try {
-        const users = req.body;
-        if (!Array.isArray(users)) {
-            return res.status(400).json({ error: 'Input must be an array' });
+        const { id } = req.params;
+        const { active } = req.body || {};
+        if (typeof active !== 'boolean') {
+            return res.status(400).json({ error: 'El campo "active" (boolean) es obligatorio' });
         }
+        const target = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true, active: true, name: true } });
+        if (!target) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-        const results = { success: 0, failed: 0, errors: [] };
-
-        for (const user of users) {
-            try {
-                if (await prisma.user.findUnique({ where: { email: user.email } })) {
-                    results.failed++;
-                    results.errors.push(`${user.email}: Exists`);
-                    continue;
+        if (!active) {
+            if (id === req.user.userId) {
+                return res.status(400).json({ error: 'No puedes desactivar tu propia cuenta' });
+            }
+            if (target.role === 'ADMIN' && target.active) {
+                const activeAdmins = await prisma.user.count({ where: { role: 'ADMIN', active: true } });
+                if (activeAdmins <= 1) {
+                    return res.status(400).json({ error: 'No puedes desactivar al ultimo administrador activo' });
                 }
-                const pw = (typeof user.password === 'string' && user.password.length >= 12) ? user.password : require('crypto').randomBytes(18).toString('base64');
-                const role = ['EMPLOYEE', 'MANAGER', 'ADMIN'].includes(user.role) ? user.role : 'EMPLOYEE';
-                if (typeof user.email !== 'string' || typeof user.name !== 'string') throw new Error('Invalid row');
-                const hashedPassword = await bcrypt.hash(pw, 12); // sin password valida: aleatoria (el usuario debe usar "olvide mi contrasena")
-                await prisma.user.create({
-                    data: {
-                        name: user.name,
-                        email: user.email,
-                        password: hashedPassword,
-                        role,
-                        department: user.department || 'General',
-                        position: user.position || 'Employee',
-                        joinDate: user.joinDate ? new Date(user.joinDate) : new Date(),
-                        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}`
-                    }
-                });
-                results.success++;
-            } catch (err) {
-                results.failed++;
-                results.errors.push(`${user.email}: ${err.message}`);
             }
         }
-        res.json({ message: 'Import completed', results });
+
+        const user = await prisma.user.update({
+            where: { id },
+            data: { active },
+            select: { id: true, name: true, email: true, role: true, department: true, position: true, active: true, createdAt: true }
+        });
+        await logAudit(req.user.userId, AUDIT_ACTIONS.USER_UPDATED, 'USER', id, { change: active ? 'REACTIVATED' : 'DEACTIVATED' }, req);
+        res.json(user);
     } catch (error) {
-        console.error("Bulk import error:", error);
+        console.error('Set user active error:', error);
+        res.status(500).json({ error: 'Failed to update user status' });
+    }
+};
+
+// --- Importacion masiva segura ---
+
+const IMPORT_MAX_ROWS = 300;
+const importRowSchema = Joi.object({
+    name: Joi.string().trim().min(2).max(100).required(),
+    email: Joi.string().trim().lowercase().email().max(254).required(),
+    role: Joi.string().trim().uppercase().valid('EMPLOYEE', 'MANAGER', 'ADMIN').optional(),
+    department: Joi.string().trim().max(100).optional().allow(''),
+    position: Joi.string().trim().max(100).optional().allow(''),
+    joinDate: Joi.date().iso().optional().allow(null, '')
+}).unknown(true); // columnas extra (p. ej. password) se ignoran: nunca se usan contrasenas del fichero
+
+// Parser CSV minimo (separador , o ; ; comillas dobles; primera fila = cabecera)
+function parseCsv(text) {
+    const rows = [];
+    let row = [], field = '', inQuotes = false;
+    const firstLine = text.split(/\r?\n/, 1)[0] || '';
+    const sep = (firstLine.match(/;/g) || []).length > (firstLine.match(/,/g) || []).length ? ';' : ',';
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (inQuotes) {
+            if (c === '"' && text[i + 1] === '"') { field += '"'; i++; }
+            else if (c === '"') inQuotes = false;
+            else field += c;
+        } else if (c === '"') inQuotes = true;
+        else if (c === sep) { row.push(field); field = ''; }
+        else if (c === '\n' || c === '\r') {
+            if (c === '\r' && text[i + 1] === '\n') i++;
+            row.push(field); field = '';
+            if (row.some(v => v.trim() !== '')) rows.push(row);
+            row = [];
+        } else field += c;
+    }
+    row.push(field);
+    if (row.some(v => v.trim() !== '')) rows.push(row);
+    if (rows.length < 2) return [];
+    const header = rows[0].map(h => h.replace(/^﻿/, '').trim());
+    return rows.slice(1).map(r => Object.fromEntries(header.map((h, i) => [h, (r[i] || '').trim()])));
+}
+
+/**
+ * Nucleo comun: valida filas, crea usuarios con contrasena aleatoria NO revelada y envia enlace de alta.
+ * @returns {Promise<{results: Array, summary: Object}>}
+ */
+async function processUserImport(rows, { dryRun, sendInvites }) {
+    const results = [];
+    const seen = new Set();
+    for (let i = 0; i < rows.length; i++) {
+        const raw = rows[i];
+        const entry = { row: i + 1, email: raw && typeof raw.email === 'string' ? raw.email : null, status: 'ERROR', error: null, inviteSent: false };
+        results.push(entry);
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) { entry.error = 'Fila invalida'; continue; }
+        const { value, error } = importRowSchema.validate(raw, { abortEarly: true, stripUnknown: true });
+        if (error) { entry.error = error.details[0].message; continue; }
+        entry.email = value.email;
+        if (seen.has(value.email)) { entry.error = 'Email duplicado en el fichero'; continue; }
+        seen.add(value.email);
+        if (await prisma.user.findUnique({ where: { email: value.email }, select: { id: true } })) {
+            entry.status = 'SKIPPED'; entry.error = 'El usuario ya existe'; continue;
+        }
+        if (dryRun) { entry.status = 'WOULD_CREATE'; continue; }
+
+        try {
+            // Contrasena aleatoria que nadie conoce: el usuario fija la suya con el enlace de alta
+            const hashedPassword = await bcrypt.hash(crypto.randomBytes(24).toString('base64'), 12);
+            const resetToken = crypto.randomBytes(32).toString('hex');
+            const user = await prisma.user.create({
+                data: {
+                    name: value.name,
+                    email: value.email,
+                    password: hashedPassword,
+                    role: value.role || 'EMPLOYEE',
+                    department: value.department || 'General',
+                    position: value.position || 'Employee',
+                    joinDate: value.joinDate ? new Date(value.joinDate) : new Date(),
+                    avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(value.name)}`,
+                    resetToken: await bcrypt.hash(resetToken, 10),
+                    resetTokenExpiry: new Date(Date.now() + 72 * 3600 * 1000)
+                }
+            });
+            await ensureDepartmentSetting(user.department);
+            entry.status = 'CREATED';
+            entry.userId = user.id;
+            if (sendInvites) {
+                try {
+                    const frontendUrl = (process.env.FRONTEND_URL || 'https://portalempleado.xyoncloud.win').split(',')[0].trim();
+                    const link = `${frontendUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
+                    entry.inviteSent = (await sendPasswordResetEmail(user.email, link, { invite: true })) === true;
+                } catch (mailErr) {
+                    console.error('Invite email failed:', mailErr.message);
+                }
+            }
+        } catch (err) {
+            console.error('Import row failed:', err);
+            entry.status = 'ERROR'; entry.error = 'No se pudo crear el usuario';
+        }
+    }
+    const count = (s) => results.filter(r => r.status === s).length;
+    return {
+        results,
+        summary: {
+            total: results.length,
+            created: count('CREATED'),
+            wouldCreate: count('WOULD_CREATE'),
+            skipped: count('SKIPPED'),
+            errors: count('ERROR'),
+            invitesSent: results.filter(r => r.inviteSent).length
+        }
+    };
+}
+
+function extractImportRows(body) {
+    const rows = Array.isArray(body) ? body : (body && (body.users || (typeof body.csv === 'string' ? parseCsv(body.csv) : null)));
+    if (!Array.isArray(rows)) return { error: 'Se esperaba un array de usuarios, {users:[...]} o {csv:"..."}' };
+    if (rows.length === 0) return { error: 'No hay filas que importar' };
+    if (rows.length > IMPORT_MAX_ROWS) return { error: `Maximo ${IMPORT_MAX_ROWS} filas por importacion` };
+    return { rows };
+}
+
+/**
+ * POST /api/admin/users/import  { users:[{name,email,role?,department?,position?,joinDate?}] | csv:"...", dryRun?:bool, sendInvites?:bool (def. true) }
+ * Solo ADMIN. Respuesta: { dryRun, summary, results:[{row,email,status,error,inviteSent}] }
+ */
+exports.importUsersSafe = async (req, res) => {
+    try {
+        const { rows, error } = extractImportRows(req.body);
+        if (error) return res.status(400).json({ error });
+        const opts = Array.isArray(req.body) ? {} : req.body;
+        const dryRun = opts.dryRun === true;
+        const sendInvites = opts.sendInvites !== false;
+        const { results, summary } = await processUserImport(rows, { dryRun, sendInvites });
+        if (!dryRun) {
+            await logAudit(req.user.userId, AUDIT_ACTIONS.USER_CREATED, 'USER', 'bulk-import', { created: summary.created, total: summary.total }, req);
+        }
+        res.json({ dryRun, summary, results });
+    } catch (error) {
+        console.error('Bulk import error:', error);
+        res.status(500).json({ error: 'Failed to import users' });
+    }
+};
+
+/**
+ * POST /api/admin/users/bulk (compatibilidad con el frontend web): mismo nucleo seguro,
+ * respuesta con la forma anterior { message, results:{success,failed,errors[]} } mas el detalle por fila.
+ */
+exports.importUsers = async (req, res) => {
+    try {
+        const { rows, error } = extractImportRows(req.body);
+        if (error) return res.status(400).json({ error });
+        const { results, summary } = await processUserImport(rows, { dryRun: false, sendInvites: true });
+        await logAudit(req.user.userId, AUDIT_ACTIONS.USER_CREATED, 'USER', 'bulk-import', { created: summary.created, total: summary.total }, req);
+        res.json({
+            message: 'Import completed',
+            results: {
+                success: summary.created,
+                failed: summary.total - summary.created,
+                errors: results.filter(r => r.status !== 'CREATED').map(r => `${r.email}: ${r.error}`),
+                rows: results,
+                invitesSent: summary.invitesSent
+            }
+        });
+    } catch (error) {
+        console.error('Bulk import error:', error);
         res.status(500).json({ error: 'Failed to import users' });
     }
 };

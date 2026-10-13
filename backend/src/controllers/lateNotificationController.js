@@ -42,6 +42,11 @@ exports.createLateNotification = async (req, res) => {
             });
         }
 
+        // Usuarios desactivados no reciben avisos
+        if (fichaje.user.active === false) {
+            return res.status(400).json({ error: 'El usuario esta desactivado' });
+        }
+
         // Verificar si ya existe una notificación para este fichaje
         const existing = await prisma.lateArrivalNotification.findFirst({
             where: { fichajeId }

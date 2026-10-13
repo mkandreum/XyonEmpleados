@@ -29,6 +29,13 @@ const AUDIT_ACTIONS = {
     FICHAJE_ADJUSTMENT_APPROVED: 'FICHAJE_ADJUSTMENT_APPROVED',
     FICHAJE_ADJUSTMENT_REJECTED: 'FICHAJE_ADJUSTMENT_REJECTED',
     FICHAJE_DELETED: 'FICHAJE_DELETED',
+    FICHAJE_MANUAL_CREATED: 'FICHAJE_MANUAL_CREATED',
+    FICHAJE_MANUAL_UPDATED: 'FICHAJE_MANUAL_UPDATED',
+    FICHAJE_MANUAL_DELETED: 'FICHAJE_MANUAL_DELETED',
+
+    // Schedules
+    SCHEDULE_OVERRIDE_SET: 'SCHEDULE_OVERRIDE_SET',
+    SCHEDULE_OVERRIDE_DELETED: 'SCHEDULE_OVERRIDE_DELETED',
     
     // Settings
     SETTINGS_CHANGED: 'SETTINGS_CHANGED',
@@ -79,8 +86,10 @@ const logAudit = async (userId, action, resourceType, resourceId, metadata = {},
         };
 
         await prisma.globalSettings.create({
-            key: auditKey,
-            value: JSON.stringify(auditRecord)
+            data: {
+                key: auditKey,
+                value: JSON.stringify(auditRecord)
+            }
         });
 
         console.log(`📝 [AUDIT] ${action} by user ${userId} on ${resourceType}:${resourceId}`);

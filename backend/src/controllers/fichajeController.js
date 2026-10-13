@@ -12,6 +12,7 @@ const {
 } = require('../utils/fichajeUtils');
 const { selectClosestShift } = require('../services/shiftAssignmentService');
 const { validateFichajeLocation } = require('../utils/gpsUtils');
+const { loadOverrideMap, applyOverrideToShift } = require('../services/scheduleOverrideService');
 
 // Custom error class for validation errors
 class ValidationError extends Error {
@@ -137,10 +138,24 @@ exports.createFichaje = async (req, res) => {
         let shiftWarning = null;
         
         try {
-            const shifts = await prisma.departmentShift.findMany({
+            let shifts = await prisma.departmentShift.findMany({
                 where: { department: result.department }
             });
-            
+
+            // Excepcion de horario del dia (usuario/departamento): ajusta o anula los turnos de hoy
+            const todayStr = new Date(result.fichaje.timestamp).toISOString().slice(0, 10);
+            const todayOverride = (await loadOverrideMap(result.department, userId, todayStr, todayStr)).get(todayStr);
+            if (todayOverride) {
+                shifts = shifts.map(sh => applyOverrideToShift(sh, todayOverride)).filter(Boolean);
+                if (todayOverride.dayOff) {
+                    shiftWarning = 'Hoy tienes un dia libre configurado por la empresa.';
+                } else if (shifts.length === 0 && todayOverride.horaEntrada && todayOverride.horaSalida) {
+                    shifts = [{ id: 'override', department: result.department, name: 'Horario especial', activeDays: 'LUNES,MARTES,MIERCOLES,JUEVES,VIERNES,SABADO,DOMINGO',
+                        horaEntrada: todayOverride.horaEntrada, horaSalida: todayOverride.horaSalida, horaEntradaTarde: null, horaSalidaMañana: null,
+                        toleranciaMinutos: todayOverride.toleranciaMinutos != null ? todayOverride.toleranciaMinutos : 10, flexibleSchedule: false }];
+                }
+            }
+
             if (shifts && shifts.length > 0) {
                 console.log(`[fichajeController] Found ${shifts.length} shifts for department ${result.department}`);
                 assignedShift = selectClosestShift(shifts, new Date(result.fichaje.timestamp));
@@ -375,7 +390,9 @@ exports.getWeek = async (req, res) => {
             where: { department: user.department }
         });
 
-        const grouped = groupFichajesByDay(fichajes, shifts);
+        const overrideMap = await loadOverrideMap(user.department, userId,
+            startOfWeek.toISOString().slice(0, 10), endOfWeek.toISOString().slice(0, 10));
+        const grouped = groupFichajesByDay(fichajes, shifts, overrideMap);
 
         res.json(grouped);
     } catch (error) {
@@ -436,7 +453,9 @@ exports.getMonth = async (req, res) => {
             where: { department: user.department }
         });
 
-        const grouped = groupFichajesByDay(fichajes, shifts);
+        const overrideMap = await loadOverrideMap(user.department, userId,
+            startOfMonth.toISOString().slice(0, 10), endOfMonth.toISOString().slice(0, 10));
+        const grouped = groupFichajesByDay(fichajes, shifts, overrideMap);
 
         res.json(grouped);
     } catch (error) {
@@ -446,70 +465,36 @@ exports.getMonth = async (req, res) => {
 };
 
 /**
- * GET /api/fichajes/report
- * Genera un CSV de reporte mensual de asistencia
- * Query params: month (1-12), year (YYYY), userId (optional, admin only)
+ * Construye las lineas CSV del reporte mensual de un usuario (compartido por reporte individual y de departamento)
  */
-exports.getAttendanceReport = async (req, res) => {
-    try {
-        const requestUserId = req.user.userId;
-        const userRole = req.user.role;
-        const { month, year, userId } = req.query;
+async function buildUserReportLines(user, reportMonth, reportYear) {
+    const targetUserId = user.id;
+    const shifts = await prisma.departmentShift.findMany({ where: { department: user.department } });
 
-        const reportMonth = month ? parseInt(month) : new Date().getMonth() + 1;
-        const reportYear = year ? parseInt(year) : new Date().getFullYear();
+    const startOfMonth = new Date(reportYear, reportMonth - 1, 1);
+    const endOfMonth = new Date(reportYear, reportMonth, 0, 23, 59, 59, 999);
 
-        // Only admins can view other users' reports
-        const targetUserId = (userRole === 'ADMIN' && userId) ? userId : requestUserId;
+    const fichajes = await prisma.fichaje.findMany({
+        where: { userId: targetUserId, timestamp: { gte: startOfMonth, lte: endOfMonth } },
+        orderBy: { timestamp: 'asc' }
+    });
+    const vacations = await prisma.vacationRequest.findMany({
+        where: {
+            userId: targetUserId,
+            OR: [{ startDate: { lte: endOfMonth }, endDate: { gte: startOfMonth } }]
+        }
+    });
 
-        // Get user info
-        const user = await prisma.user.findUnique({
-            where: { id: targetUserId },
-            select: { id: true, name: true, email: true, department: true, position: true }
-        });
+    const overrideMap = await loadOverrideMap(user.department, targetUserId,
+        startOfMonth.toISOString().slice(0, 10), endOfMonth.toISOString().slice(0, 10));
+    const grouped = groupFichajesByDay(fichajes, shifts, overrideMap);
+    const fichajeMap = {};
+    grouped.forEach(day => { fichajeMap[day.date] = day; });
 
-        if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
-
-        // Get shifts (DepartmentShift) - unified model
-        const shifts = await prisma.departmentShift.findMany({
-            where: { department: user.department }
-        });
-
-        // Date range for the month
-        const startOfMonth = new Date(reportYear, reportMonth - 1, 1);
-        const endOfMonth = new Date(reportYear, reportMonth, 0, 23, 59, 59, 999);
-
-        // Get fichajes
-        const fichajes = await prisma.fichaje.findMany({
-            where: {
-                userId: targetUserId,
-                timestamp: { gte: startOfMonth, lte: endOfMonth }
-            },
-            orderBy: { timestamp: 'asc' }
-        });
-
-        // Get vacations/absences
-        const vacations = await prisma.vacationRequest.findMany({
-            where: {
-                userId: targetUserId,
-                OR: [
-                    { startDate: { lte: endOfMonth }, endDate: { gte: startOfMonth } }
-                ]
-            }
-        });
-
-        // Group fichajes by day
-        const grouped = groupFichajesByDay(fichajes, shifts);
-        const fichajeMap = {};
-        grouped.forEach(day => { fichajeMap[day.date] = day; });
-
-        // Build CSV
-        const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-        const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const dayNames = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
         const lines = [];
-        // BOM for Excel UTF-8
-        const BOM = '\uFEFF';
 
         // Header info
         lines.push(`Reporte de Asistencia - ${monthNames[reportMonth - 1]} ${reportYear}`);
@@ -609,11 +594,71 @@ exports.getAttendanceReport = async (req, res) => {
         lines.push(`Días ausente;${daysAbsent}`);
         lines.push(`Llegadas tarde;${daysLate}`);
         lines.push(`Total horas;${totalHours.toFixed(2)}`);
+    return lines;
+}
 
+/**
+ * GET /api/fichajes/report
+ * Genera un CSV de reporte mensual de asistencia
+ * Query params: month (1-12), year (YYYY), userId (opcional), department (opcional, reporte de todo el departamento)
+ *  - ADMIN: cualquier usuario o departamento.
+ *  - MANAGER: solo usuarios/departamento propios (403 si se pide otro departamento/usuario ajeno).
+ *  - EMPLOYEE: siempre el propio (userId/department se ignoran).
+ */
+exports.getAttendanceReport = async (req, res) => {
+    try {
+        const requestUserId = req.user.userId;
+        const userRole = req.user.role;
+        const { month, year, userId, department } = req.query;
+
+        const reportMonth = month ? parseInt(month) : new Date().getMonth() + 1;
+        const reportYear = year ? parseInt(year) : new Date().getFullYear();
+        if (!(reportMonth >= 1 && reportMonth <= 12) || !(reportYear >= 2000 && reportYear <= 2100)) {
+            return res.status(400).json({ error: 'month/year invalidos' });
+        }
+
+        const select = { id: true, name: true, email: true, department: true, position: true };
+        let targets = [];
+        let fileLabel;
+
+        if (department && (userRole === 'ADMIN' || userRole === 'MANAGER')) {
+            if (userRole === 'MANAGER' && department !== req.user.department) {
+                return res.status(403).json({ error: 'No autorizado para este departamento', code: 'DEPARTMENT_FORBIDDEN' });
+            }
+            targets = await prisma.user.findMany({ where: { department: String(department) }, select, orderBy: { name: 'asc' } });
+            if (targets.length === 0) return res.status(404).json({ error: 'Departamento sin usuarios' });
+            fileLabel = 'dept-' + String(department);
+        } else {
+            let targetUserId = requestUserId;
+            if (userId && userId !== requestUserId) {
+                if (userRole === 'ADMIN') {
+                    targetUserId = String(userId);
+                } else if (userRole === 'MANAGER') {
+                    const t = await prisma.user.findUnique({ where: { id: String(userId) }, select: { department: true } });
+                    if (!t || t.department !== req.user.department) {
+                        return res.status(403).json({ error: 'No autorizado', code: 'DEPARTMENT_FORBIDDEN' });
+                    }
+                    targetUserId = String(userId);
+                } // EMPLOYEE: se ignora userId (comportamiento previo)
+            }
+            const user = await prisma.user.findUnique({ where: { id: targetUserId }, select });
+            if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+            targets = [user];
+            fileLabel = user.name;
+        }
+
+        const lines = [];
+        for (let i = 0; i < targets.length; i++) {
+            if (i > 0) { lines.push(''); lines.push(''); }
+            lines.push(...await buildUserReportLines(targets[i], reportMonth, reportYear));
+        }
+
+        const BOM = '\uFEFF'; // Excel UTF-8
         const csv = BOM + lines.join('\r\n');
+        const safeLabel = String(fileLabel).replace(/[^A-Za-z0-9_-]+/g, '_');
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename="reporte-asistencia-${user.name.replace(/\s+/g, '_')}-${reportYear}-${String(reportMonth).padStart(2, '0')}.csv"`);
+        res.setHeader('Content-Disposition', `attachment; filename="reporte-asistencia-${safeLabel}-${reportYear}-${String(reportMonth).padStart(2, '0')}.csv"`);
         res.send(csv);
     } catch (error) {
         console.error('Error generating attendance report:', error);
@@ -660,7 +705,8 @@ exports.getDepartmentWeek = async (req, res) => {
                 id: true,
                 name: true,
                 email: true,
-                position: true
+                position: true,
+                active: true
             }
         });
 
@@ -698,9 +744,15 @@ exports.getDepartmentWeek = async (req, res) => {
         });
 
         // Agrupar por usuario
+        const deptOverrides = await prisma.scheduleOverride.findMany({
+            where: { department: dept, date: { gte: startOfWeek.toISOString().slice(0, 10), lte: endOfWeek.toISOString().slice(0, 10) } }
+        });
         const userFichajes = users.map(user => {
             const userFichajesData = fichajes.filter(f => f.userId === user.id);
-            const grouped = groupFichajesByDay(userFichajesData, shifts);
+            const overrideMap = new Map();
+            deptOverrides.filter(o => o.userKey === '').forEach(o => overrideMap.set(o.date, o));
+            deptOverrides.filter(o => o.userKey === user.id).forEach(o => overrideMap.set(o.date, o));
+            const grouped = groupFichajesByDay(userFichajesData, shifts, overrideMap);
 
             return {
                 user,

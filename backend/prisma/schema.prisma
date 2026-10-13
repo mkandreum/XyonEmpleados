@@ -56,6 +56,7 @@ model User {
   address     String?
   emergencyContact String?
   shiftReminderEmail Boolean @default(true) // Email reminder 30 min before shift
+  active      Boolean  @default(true) // false = deshabilitado: sin login y excluido de avisos/recordatorios
   joinDate    DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -71,6 +72,7 @@ model User {
   fichajeAdjustmentsRequested FichajeAdjustment[] @relation("UserAdjustments")
   fichajeAdjustmentsManaged   FichajeAdjustment[] @relation("ManagerAdjustments")
   shiftAssignments UserShiftAssignment[]
+  scheduleOverrides ScheduleOverride[]
 }
 
 model UserShiftAssignment {
@@ -85,6 +87,28 @@ model UserShiftAssignment {
 
   @@unique([userId, date])
   @@index([shiftId])
+}
+
+// Excepcion de horario para un dia concreto, por usuario (userId) o por departamento (userId null)
+model ScheduleOverride {
+  id           String   @id @default(uuid())
+  department   String
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userKey      String   @default("") // userId o "" (departamento): hace fiable el unique con NULL
+  date         String   // "YYYY-MM-DD"
+  dayOff       Boolean  @default(false)
+  horaEntrada  String?
+  horaSalida   String?
+  toleranciaMinutos Int?
+  note         String?
+  createdById  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([department, userKey, date])
+  @@index([department, date])
+  @@index([userId, date])
 }
 
 model Payroll {

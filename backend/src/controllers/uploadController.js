@@ -34,50 +34,63 @@ const storage = multer.diskStorage({
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         // Prefijo con el id del usuario: permite verificar la propiedad al vincular/borrar el fichero
         const owner = String((req.user && req.user.userId) || 'anon').replace(/[^A-Za-z0-9_-]/g, '');
-        cb(null, owner + '-' + uniqueSuffix + path.extname(file.originalname).toLowerCase());
+        // Sin extension: se anade tras validar el contenido (handleUpload)
+        cb(null, owner + '-' + uniqueSuffix);
     }
 });
 
-// File filter
+// Extensiones permitidas por campo (la extension final se deriva del contenido real, no del nombre)
+const allowedExts = {
+    'logos': ['.jpg', '.png', '.gif'],
+    'payrolls': ['.pdf'],
+    'justifications': ['.jpg', '.png', '.pdf'],
+    'avatars': ['.jpg', '.png'],
+    'news': ['.jpg', '.png', '.gif']
+};
+const mimeToExt = {
+    'image/jpeg': '.jpg', 'image/jpg': '.jpg', 'image/png': '.png',
+    'image/gif': '.gif', 'application/pdf': '.pdf'
+};
+
+// File filter: el mimetype debe ser permitido (o octet-stream, caso de clientes moviles sin tipo);
+// si el nombre trae extension, debe ser una permitida. La extension definitiva se fija tras validar los magic bytes.
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = {
-        'logos': /jpeg|jpg|png|gif/,
-        'payrolls': /pdf/,
-        'justifications': /jpeg|jpg|png|pdf/,
-        'avatars': /jpeg|jpg|png/,
-        'news': /jpeg|jpg|png|gif/
-    };
+    const allowed = allowedExts[file.fieldname];
+    if (!allowed) return cb(new Error(`Invalid file type for ${file.fieldname}`));
 
-    const fieldType = file.fieldname;
-    const isExtValid = allowedTypes[fieldType]?.test(path.extname(file.originalname).toLowerCase());
-    const isMimeValid = allowedTypes[fieldType]?.test(file.mimetype);
+    const mime = String(file.mimetype || '').toLowerCase();
+    const mimeExt = mimeToExt[mime];
+    const mimeOk = mimeExt ? allowed.includes(mimeExt) : mime === 'application/octet-stream';
 
-    if (isExtValid && isMimeValid) {
-        return cb(null, true);
-    } else {
-        cb(new Error(`Invalid file type for ${fieldType}`));
-    }
+    let ext = path.extname(file.originalname || '').toLowerCase();
+    if (ext === '.jpeg') ext = '.jpg';
+    const extOk = ext === '' || allowed.includes(ext);
+
+    if (mimeOk && extOk) return cb(null, true);
+    cb(new Error(`Invalid file type for ${file.fieldname}`));
 };
 
 // Firmas (magic bytes) para no fiarse del mimetype/extension enviados por el cliente
 const MAGIC = {
     '.png': [[0x89, 0x50, 0x4e, 0x47]],
     '.jpg': [[0xff, 0xd8, 0xff]],
-    '.jpeg': [[0xff, 0xd8, 0xff]],
     '.gif': [[0x47, 0x49, 0x46, 0x38]],
     '.pdf': [[0x25, 0x50, 0x44, 0x46]]
 };
-const hasValidSignature = (filePath, ext) => {
-    const sigs = MAGIC[ext];
-    if (!sigs) return false;
+// Devuelve la extension (de las permitidas) cuyo magic coincide con el contenido, o null
+const detectExtension = (filePath, allowed) => {
     let fd;
     try {
         fd = fs.openSync(filePath, 'r');
         const buf = Buffer.alloc(8);
         fs.readSync(fd, buf, 0, 8, 0);
-        return sigs.some(sig => sig.every((b, i) => buf[i] === b));
+        for (const ext of allowed) {
+            const sigs = MAGIC[ext];
+            if (sigs && sigs.some(sig => sig.every((b, i) => buf[i] === b))) return ext;
+        }
+        return null;
     } catch (e) {
-        return false;
+        return null;
     } finally {
         if (fd !== undefined) fs.closeSync(fd);
     }
@@ -103,11 +116,16 @@ exports.handleUpload = (req, res) => {
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
-        const ext = path.extname(req.file.filename).toLowerCase();
-        if (!hasValidSignature(req.file.path, ext)) {
+        const ext = detectExtension(req.file.path, allowedExts[req.file.fieldname] || []);
+        if (!ext) {
             try { fs.unlinkSync(req.file.path); } catch (e) { /* ignore */ }
             return res.status(400).json({ error: 'El contenido del archivo no coincide con su tipo' });
         }
+        // Extension derivada del contenido validado (nunca del nombre enviado por el cliente)
+        const finalPath = req.file.path + ext;
+        fs.renameSync(req.file.path, finalPath);
+        req.file.filename = req.file.filename + ext;
+        req.file.path = finalPath;
 
         let fileUrl;
         if (isPublicType(req.file.fieldname)) {

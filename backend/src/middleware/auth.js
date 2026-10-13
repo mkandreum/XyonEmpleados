@@ -37,10 +37,13 @@ exports.authenticateToken = (req, res, next) => {
         try {
             const dbUser = await prisma.user.findUnique({
                 where: { id: String(payload.userId) },
-                select: { id: true, role: true, department: true }
+                select: { id: true, role: true, department: true, active: true }
             });
             if (!dbUser) {
                 return res.status(401).json({ error: 'User no longer exists', code: 'INVALID_TOKEN' });
+            }
+            if (dbUser.active === false) {
+                return res.status(401).json({ error: 'Account disabled', code: 'ACCOUNT_DISABLED' });
             }
             req.user = { userId: dbUser.id, role: dbUser.role, department: dbUser.department };
             next();

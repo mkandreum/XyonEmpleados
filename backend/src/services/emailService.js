@@ -67,7 +67,8 @@ const getTransporter = async () => {
     }
 };
 
-const sendPasswordResetEmail = async (email, resetLink) => {
+const sendPasswordResetEmail = async (email, resetLink, opts = {}) => {
+    const isInvite = !!opts.invite;
     const transporter = await getTransporter();
     if (!transporter) return false;
 
@@ -79,18 +80,18 @@ const sendPasswordResetEmail = async (email, resetLink) => {
         await transporter.sendMail({
             from,
             to: email,
-            subject: 'Restablecer Contraseña - Xyon Portal',
+            subject: isInvite ? 'Tu cuenta en Xyon Portal - Establece tu contraseña' : 'Restablecer Contraseña - Xyon Portal',
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2>Restablecer Contraseña</h2>
-                    <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para continuar:</p>
+                    <h2>${isInvite ? 'Bienvenido a Xyon Portal' : 'Restablecer Contraseña'}</h2>
+                    <p>${isInvite ? 'Se ha creado tu cuenta. Haz clic en el siguiente enlace para establecer tu contraseña:' : 'Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para continuar:'}</p>
                     <p>
                         <a href="${resetLink}" style="background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
                             Restablecer Contraseña
                         </a>
                     </p>
                     <p style="margin-top: 20px; font-size: 12px; color: #666;">
-                        Si no solicitaste este cambio, puedes ignorar este correo. El enlace expirará en 1 hora.
+                        ${isInvite ? 'El enlace expirará en 72 horas; después puedes usar "He olvidado mi contraseña".' : 'Si no solicitaste este cambio, puedes ignorar este correo. El enlace expirará en 1 hora.'}
                     </p>
                 </div>
             `

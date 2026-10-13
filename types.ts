@@ -73,6 +73,7 @@ export interface User {
   address?: string;
   emergencyContact?: string;
   shiftReminderEmail?: boolean; // Email reminder 30 min before shift
+  active?: boolean; // false = usuario desactivado (no puede iniciar sesion)
   joinDate: string;
 }
 

@@ -1,5 +1,6 @@
 const { getScheduleForDay, detectTurno, timeToMinutes, DAY_NAMES_ES } = require('../services/smartScheduleService');
 const { selectClosestShift } = require('../services/shiftAssignmentService');
+const { applyOverrideToDaySchedule } = require('../services/scheduleOverrideService');
 
 
 /**
@@ -106,7 +107,7 @@ function isEarlyDeparture(fichaje, schedule, dayScheduleOverride) {
  * Agrupa fichajes por día.
  * Now resolves per-day schedules so each day is evaluated against its own schedule.
  */
-function groupFichajesByDay(fichajes, schedule) {
+function groupFichajesByDay(fichajes, schedule, overrideMap) {
     const groups = new Map();
 
     fichajes.forEach(fichaje => {
@@ -169,6 +170,11 @@ function groupFichajesByDay(fichajes, schedule) {
         } else {
             const dateObj = new Date(date + 'T12:00:00'); // Use noon to avoid timezone issues
             daySchedule = getScheduleForDay(schedule, dateObj);
+        }
+
+        // Excepcion de horario puntual (usuario/departamento) para este dia: prevalece sobre el turno
+        if (overrideMap && overrideMap.get && overrideMap.get(date)) {
+            daySchedule = applyOverrideToDaySchedule(daySchedule, overrideMap.get(date), DAY_NAMES_ES[new Date(date + 'T12:00:00').getDay()]);
         }
 
         // Determinar si el día está completo

@@ -20,6 +20,8 @@ const emailTemplateController = require('./controllers/emailTemplateController')
 const pushController = require('./controllers/pushController');
 const userShiftAssignmentController = require('./controllers/userShiftAssignmentController');
 const dashboardLayoutController = require('./controllers/dashboardLayoutController');
+const fichajeAdminController = require('./controllers/fichajeAdminController');
+const teamController = require('./controllers/teamController');
 const { isAdmin, isManagerOrAdmin, validateManagerDepartment } = require('./middleware/auth');
 const { validate, loginSchema, registerSchema, changePasswordSchema, updateProfileSchema, vacationRequestSchema, adminCreateUserSchema, adminUpdateUserSchema } = require('./middleware/validation');
 
@@ -147,6 +149,9 @@ router.post('/admin/users', isAdmin, validate(adminCreateUserSchema), adminContr
 router.put('/admin/users/:id', isAdmin, validate(adminUpdateUserSchema), adminController.updateUser);
 router.delete('/admin/users/:id', isAdmin, adminController.deleteUser);
 router.post('/admin/users/bulk', isAdmin, adminController.importUsers);
+router.post('/admin/users/import', isAdmin, adminController.importUsersSafe);
+router.patch('/admin/users/:id/active', isAdmin, adminController.setUserActive);
+router.put('/admin/users/:id/active', isAdmin, adminController.setUserActive);
 router.get('/admin/vacations', isAdmin, adminController.getAllVacations);
 router.put('/admin/vacations/:id/status', isAdmin, adminController.updateVacationStatus);
 router.get('/admin/settings', isAdmin, adminController.getSettings); // Protected - Admin only
@@ -202,7 +207,7 @@ router.get('/manager/team-members', isManagerOrAdmin, async (req, res) => {
         const department = req.user.department;
         const members = await prisma.user.findMany({
             where: { department, role: { not: 'ADMIN' } },
-            select: { id: true, name: true, email: true, department: true, position: true, avatarUrl: true }
+            select: { id: true, name: true, email: true, department: true, position: true, avatarUrl: true, active: true }
         });
         res.json(members);
     } catch (e) {
@@ -228,6 +233,9 @@ router.post('/fichajes', fichajeController.createFichaje);
 router.get('/fichajes/current', fichajeController.getCurrentFichaje);
 router.get('/fichajes/history', fichajeController.getHistory);
 router.get('/fichajes/report', fichajeController.getAttendanceReport);
+router.post('/fichajes/manual', isManagerOrAdmin, fichajeAdminController.createManual);
+router.put('/fichajes/manual/:id', isManagerOrAdmin, fichajeAdminController.updateManual);
+router.delete('/fichajes/manual/:id', isManagerOrAdmin, fichajeAdminController.deleteManual);
 router.get('/fichajes/week/:userId', fichajeController.getWeek);
 router.get('/fichajes/month/:userId', fichajeController.getMonth);
 router.get('/fichajes/department/:dept/week', isManagerOrAdmin, validateManagerDepartment, fichajeController.getDepartmentWeek);
@@ -238,6 +246,14 @@ router.get('/department-schedules/:department/resolved', sameDepartmentOrAdmin, 
 router.get('/department-schedules/:department', sameDepartmentOrAdmin, scheduleController.getSchedule);
 router.post('/department-schedules', isAdmin, scheduleController.upsertSchedule);
 router.delete('/department-schedules/:department', isAdmin, scheduleController.deleteSchedule);
+
+// Per-day schedule overrides (usuario / departamento)
+router.get('/schedule-overrides', scheduleController.getOverrides);
+router.put('/schedule-overrides', isManagerOrAdmin, scheduleController.setOverride);
+router.delete('/schedule-overrides/:id', isManagerOrAdmin, scheduleController.deleteOverride);
+
+// Vista semanal del equipo (departamento)
+router.get('/team/week', isManagerOrAdmin, teamController.getTeamWeek);
 
 // Late Arrival Notifications Routes
 router.post('/late-notifications', lateNotificationController.createLateNotification);

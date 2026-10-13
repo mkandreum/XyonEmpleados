@@ -29,6 +29,7 @@ exports.getProfile = async (req, res) => {
                 address: true,
                 emergencyContact: true,
                 joinDate: true,
+                active: true,
                 createdAt: true,
             }
         });
@@ -202,6 +203,10 @@ exports.login = async (req, res) => {
         if (!isValid) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
+        // Solo se revela tras acreditar la contrasena (no permite enumerar cuentas)
+        if (user.active === false) {
+            return res.status(403).json({ error: 'Account disabled', code: 'ACCOUNT_DISABLED' });
+        }
 
         const token = jwt.sign({ userId: user.id, role: user.role, department: user.department }, JWT_SECRET, { expiresIn: '1d', algorithm: 'HS256' });
 
@@ -221,7 +226,7 @@ exports.forgotPassword = async (req, res) => {
             return res.status(400).json({ error: 'Email requerido' });
         }
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) {
+        if (!user || user.active === false) {
             // Security: Do not reveal if email exists, but simulating success
             return res.json({ message: 'If the email exists, a reset link has been sent.' });
         }

@@ -176,7 +176,7 @@ const notifyMultipleUsers = async (userIds, type, data, options = {}) => {
  */
 const notifyAllAdmins = async (type, data, options = {}) => {
     const admins = await prisma.user.findMany({
-        where: { role: 'ADMIN' },
+        where: { role: 'ADMIN', active: true },
         select: { id: true }
     });
 
@@ -198,6 +198,7 @@ const notifyDepartmentManagers = async (department, type, data, options = {}) =>
     const managers = await prisma.user.findMany({
         where: { 
             role: 'MANAGER',
+            active: true,
             department
         },
         select: { id: true }

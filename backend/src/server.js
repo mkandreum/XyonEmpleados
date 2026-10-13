@@ -322,6 +322,7 @@ async function sendShiftReminderEmails() {
             const users = await prisma.user.findMany({
                 where: { 
                     department: shift.department,
+                    active: true,
                     shiftReminderEmail: true // Must have enabled reminders
                 },
                 select: { id: true, email: true, name: true }

@@ -111,6 +111,7 @@ const adminUpdateUserSchema = Joi.object({
     department: Joi.string().max(100).optional().allow(''),
     position: Joi.string().max(100).optional().allow(''),
     joinDate: Joi.date().iso().optional().allow(null, ''),
+    active: Joi.boolean().optional(),
     avatarUrl: Joi.string().max(500).pattern(/^(\/uploads\/public\/|https:\/\/)/).optional().allow('', null)
 }).unknown(true);
 

@@ -357,6 +357,10 @@ export const adminService = {
         const response = await api.post('/admin/users/bulk', users);
         return response.data;
     },
+    setUserActive: async (id: string, active: boolean) => {
+        const response = await api.patch<User>(`/admin/users/${id}/active`, { active });
+        return response.data;
+    },
     getSettings: async () => {
         const response = await api.get<any>('/admin/settings');
         return response.data;

@@ -127,7 +127,8 @@ exports.updateJustification = async (req, res) => {
         const managers = await prisma.user.findMany({
             where: {
                 department: request.user.department,
-                role: 'MANAGER'
+                role: 'MANAGER',
+                active: true
             }
         });
 
@@ -227,7 +228,7 @@ exports.managerApproveVacation = async (req, res) => {
         });
 
         // Notify Admins
-        const admins = await prisma.user.findMany({ where: { role: 'ADMIN' } });
+        const admins = await prisma.user.findMany({ where: { role: 'ADMIN', active: true } });
         for (const admin of admins) {
             await createNotification(
                 admin.id,

@@ -284,7 +284,7 @@ export const AdminUsers: React.FC = () => {
                                                 )}
                                             </div>
                                             <div className="ml-4">
-                                                <div className="text-sm font-medium text-slate-900 dark:text-white">{user.name}</div>
+                                                <div className="text-sm font-medium text-slate-900 dark:text-white">{user.name} {user.active === false && <span className="ml-2 px-2 text-xs bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 rounded-full font-semibold">Inactivo</span>}</div>
                                                 <div className="text-sm text-slate-500 dark:text-slate-400">{user.email}</div>
                                             </div>
                                         </div>
@@ -326,7 +326,7 @@ export const AdminUsers: React.FC = () => {
                                     </div>
                                 )}
                                 <div>
-                                    <div className="text-sm font-semibold text-slate-900 dark:text-white">{user.name}</div>
+                                    <div className="text-sm font-semibold text-slate-900 dark:text-white">{user.name} {user.active === false && <span className="ml-2 px-2 text-2xs bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 rounded-full font-semibold">Inactivo</span>}</div>
                                     <div className="text-xs text-slate-500 dark:text-slate-400">{user.email}</div>
                                 </div>
                             </div>
