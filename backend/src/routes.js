@@ -124,6 +124,7 @@ router.delete('/push/subscriptions', pushController.deleteSubscription);
 
 // Stats Routes
 router.get('/admin/stats', isAdmin, statsController.getAdminStats);
+router.get('/admin/system/migrations', isAdmin, require('./controllers/systemController').getMigrationStatus);
 
 // Upload Routes
 router.post('/upload/logo', isAdmin, uploadController.uploadLogo, uploadController.handleUpload);

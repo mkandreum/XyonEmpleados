@@ -49,6 +49,28 @@ npm install
 npm run dev
 ```
 
+## 🗄️ Base de datos: migración automática (Coolify)
+
+No hace falta acceso directo a la base de datos. En cada arranque del contenedor, `backend/prisma/runMigrations.js`:
+
+1. Espera a que PostgreSQL esté listo y toma un bloqueo, para que solo un contenedor migre a la vez.
+2. Si hay cambios pendientes, hace antes una **copia con `pg_dump`** en el volumen `uploads/backups` (no se sirve por web; se conservan las 5 últimas). Si la copia falla, **no toca nada**.
+3. Aplica los `.sql` pendientes de `backend/prisma/migrations/` por orden de nombre y los registra en la tabla `_AppMigrations`.
+4. Sincroniza con `schema.prisma` **solo de forma aditiva**: crea tablas, columnas, índices y claves que falten. Nunca borra, renombra ni cambia tipos; esas diferencias se avisan en el log para hacerlas con un `.sql` revisado.
+
+Si la migración falla 10 veces seguidas, el contenedor no arranca el servidor y Coolify marca el despliegue como fallido. El estado (última migración, pendientes y copias) se ve en **Panel de administración → Base de datos**.
+
+**Nuevas migraciones:** añade un `.sql` idempotente (`IF NOT EXISTS`, bloques `DO $$ … $$`) con prefijo numérico, por ejemplo `006_mi_cambio.sql`.
+
+**Variables opcionales:** `MIGRATION_BACKUPS_KEEP` (5), `MIGRATION_BACKUPS_DIR`, `MIGRATE_WITHOUT_BACKUP=1` (no recomendado), `MIGRATION_SKIP_SCHEMA_SYNC=1`.
+
+**Restaurar una copia** desde la terminal del contenedor `app` en Coolify:
+
+```sh
+ls -lh /app/uploads/backups
+pg_restore --clean --if-exists --no-owner -d "$DATABASE_URL" /app/uploads/backups/pre-migrate-AAAAMMDD-HHMMSS.dump
+```
+
 ## 🏢 Xyon Platforms
 
 XyonEmpleados es un producto desarrollado y mantenido por **Xyon Platforms**, empresa especializada en soluciones digitales para negocios locales y pymes.

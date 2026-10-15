@@ -31,15 +31,18 @@ export const AdminDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [pendingAdjustments, setPendingAdjustments] = useState(0);
+    const [migrations, setMigrations] = useState<Awaited<ReturnType<typeof adminService.getMigrationStatus>> | null>(null);
 
     const fetchStats = useCallback(async () => {
         setLoading(true);
         setError(false);
         try {
-            const [st, adj] = await Promise.all([
+            const [st, adj, mig] = await Promise.all([
                 adminService.getStats(),
                 fichajeAdjustmentService.getPending().catch(() => []),
+                adminService.getMigrationStatus().catch(() => null),
             ]);
+            setMigrations(mig);
             setStats(st);
             setPendingAdjustments(Array.isArray(adj) ? adj.length : 0);
         } catch (err) {
@@ -166,6 +169,38 @@ export const AdminDashboard: React.FC = () => {
                         </ResponsiveContainer>
                     </section>
                 </div>
+            )}
+
+            {/* Database: automatic migrations and backups (no direct DB access needed) */}
+            {migrations && (
+                <section className="card p-6 animate-slide-up delay-300" aria-labelledby="db-title">
+                    <div className="flex flex-wrap items-center gap-3 mb-4">
+                        <h2 id="db-title" className="font-display font-black text-xl tracking-tight text-ink dark:text-white flex-1">Base de datos</h2>
+                        <span className={`chip ${migrations.pending.length ? 'bg-sun' : 'bg-lime'} text-ink`}>
+                            {migrations.pending.length ? `${migrations.pending.length} migración(es) pendiente(s)` : 'Esquema al día'}
+                        </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p className="font-bold text-ink dark:text-white mb-1">Última migración</p>
+                            {migrations.applied[0] ? (
+                                <p className="text-slate-600 dark:text-slate-300">
+                                    {migrations.applied[0].name}
+                                    <span className="block text-xs text-slate-500">{new Date(migrations.applied[0].executedAt).toLocaleString('es-ES')}</span>
+                                </p>
+                            ) : <p className="text-slate-500">Ninguna registrada</p>}
+                        </div>
+                        <div>
+                            <p className="font-bold text-ink dark:text-white mb-1">Copias automáticas ({migrations.backups.length})</p>
+                            {migrations.backups[0] ? (
+                                <p className="text-slate-600 dark:text-slate-300">
+                                    {new Date(migrations.backups[0].createdAt).toLocaleString('es-ES')} · {(migrations.backups[0].sizeBytes / 1024 / 1024).toFixed(1)} MB
+                                    <span className="block text-xs text-slate-500">Se crea una antes de cada migración. Se guardan en el volumen de uploads.</span>
+                                </p>
+                            ) : <p className="text-slate-500">Aún no hay copias (se crean al haber cambios)</p>}
+                        </div>
+                    </div>
+                </section>
             )}
         </div>
     );

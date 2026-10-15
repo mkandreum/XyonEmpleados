@@ -51,9 +51,14 @@ services:
         # ── Run migrations with retry ──
         # ── Volume ownership, then drop root privileges ──
         chown -R node:node /app/uploads
+        # Automatic migration: backup + pending SQL + additive schema sync (see backend/prisma/runMigrations.js).
+        # Give up after 10 attempts so the deployment is marked as failed instead of looping forever.
+        attempt=1
         until su-exec node npm run prisma:migrate; do
-          echo "[app] prisma:migrate failed, retrying in 5s..."
-          sleep 5
+          if [ "$$attempt" -ge 10 ]; then echo "[FATAL] migrations failed 10 times — not starting the server"; exit 1; fi
+          echo "[app] prisma:migrate failed (attempt $$attempt/10), retrying in 10s..."
+          attempt=$$((attempt + 1))
+          sleep 10
         done
         echo "[app] migrations OK — starting server"
         exec su-exec node node src/server.js

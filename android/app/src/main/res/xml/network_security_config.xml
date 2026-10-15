@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HTTPS only. No cleartext; user-installed CAs are NOT trusted.
+     Pinning-ready: uncomment and set the real SPKI SHA-256 pins and expiration. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <!--
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">empleados.example.com</domain>
+        <pin-set expiration="2027-12-31">
+            <pin digest="SHA-256">REPLACE_WITH_PRIMARY_SPKI_BASE64=</pin>
+            <pin digest="SHA-256">REPLACE_WITH_BACKUP_SPKI_BASE64=</pin>
+        </pin-set>
+    </domain-config>
+    -->
+</network-security-config>

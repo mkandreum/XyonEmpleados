@@ -347,6 +347,15 @@ export const uploadService = {
 };
 
 export const adminService = {
+    /** Automatic migration state (applied/pending SQL files and pre-migration backups). */
+    getMigrationStatus: async () => {
+        const response = await api.get<{
+            applied: { name: string; executedAt: string }[];
+            pending: string[];
+            backups: { name: string; sizeBytes: number; createdAt: string }[];
+        }>('/admin/system/migrations');
+        return response.data;
+    },
     getStats: async () => {
         const response = await api.get<AdminStats>('/admin/stats');
         return response.data;

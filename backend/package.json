@@ -14,7 +14,7 @@
     "postinstall": "node -e \"const fs=require('fs');const {execSync}=require('child_process');if(fs.existsSync('prisma/schema.prisma')) execSync('npm run prisma:generate',{stdio:'inherit'});\""
   },
   "dependencies": {
-    "@prisma/client": "^6.4.0",
+    "@prisma/client": "6.4.0",
     "bcryptjs": "^3.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",
@@ -26,11 +26,11 @@
     "morgan": "^1.10.0",
     "multer": "^2.0.2",
     "nodemailer": "^10.0.16",
+    "prisma": "6.4.0",
     "web-push": "^3.6.7"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0",
-    "prisma": "^6.4.0"
+    "nodemon": "^3.1.0"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

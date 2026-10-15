@@ -12,8 +12,8 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 
-# Install curl for health checks
-RUN apk add --no-cache curl su-exec
+# curl: health checks · su-exec: drop root · postgresql-client: pg_dump backups before automatic migrations
+RUN apk add --no-cache curl su-exec postgresql-client
 
 # Copy Prisma schema FIRST (needed by postinstall hook)
 COPY backend/prisma ./prisma
@@ -25,8 +25,9 @@ RUN npm ci
 # Copy backend source
 COPY backend/ .
 
-# Generate Prisma client, then remove dev dependencies to keep runtime image lean
-RUN npm run prisma:generate && npm prune --omit=dev
+# Generate Prisma client, then remove dev dependencies to keep runtime image lean.
+# The Prisma CLI is a production dependency on purpose: the automatic migration runs it at startup.
+RUN npm run prisma:generate && npm prune --omit=dev && test -x node_modules/.bin/prisma
 
 # Copy built frontend to backend's public directory
 COPY --from=frontend-builder /app/dist ./public
@@ -35,7 +36,7 @@ COPY --from=frontend-builder /app/dist ./public
 COPY --from=frontend-builder /app/backend/version.json ./version.json
 
 # Create uploads directory structure (public for logos/avatars/news, private for payrolls/justifications)
-RUN mkdir -p uploads/public/logos uploads/public/avatars uploads/public/news uploads/private/payrolls uploads/private/justifications
+RUN mkdir -p uploads/public/logos uploads/public/avatars uploads/public/news uploads/private/payrolls uploads/private/justifications uploads/backups
 
 # Runtime user is non-root (node). The compose command chowns the volume then drops privileges via su-exec.
 RUN chown -R node:node /app
