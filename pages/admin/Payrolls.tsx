@@ -121,7 +121,7 @@ export const AdminPayrolls: React.FC = () => {
                                 <th className="px-6 py-3 text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        <tbody className="stagger divide-y divide-slate-100 dark:divide-slate-800">
                             {loading ? (
                                 <tr><td colSpan={4} className="px-6 py-4 text-center dark:text-slate-400">Cargando...</td></tr>
                             ) : payrolls.length === 0 ? (

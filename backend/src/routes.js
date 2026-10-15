@@ -198,6 +198,8 @@ router.get('/payrolls/:id/download', payrollController.downloadPayroll);
 router.get('/vacations', vacationController.getAllVacations);
 router.post('/vacations', validate(vacationRequestSchema), vacationController.createVacation);
 router.patch('/vacations/:id/justification', vacationController.updateJustification);
+router.get('/vacations/overlap', vacationController.getOverlap);
+router.delete('/vacations/:id', vacationController.cancelVacation);
 
 // Manager routes (protected - requires MANAGER role)
 router.get('/manager/team-vacations', isManagerOrAdmin, vacationController.getTeamVacations);

@@ -168,6 +168,7 @@ exports.createFichaje = async (req, res) => {
                     
                     // Usar detectTurno si es necesario, adaptando a la estructura de shift
                     turnoInfo = {
+                        label: assignedShift.name, // clients read `label`
                         turno: assignedShift.name,
                         expectedEntry: assignedShift.horaEntrada,
                         expectedExit: assignedShift.horaSalida,
@@ -255,6 +256,7 @@ exports.getCurrentFichaje = async (req, res) => {
                         const entryMinutes = parseInt(assignedShift.horaEntrada.split(':')[0]) * 60 + parseInt(assignedShift.horaEntrada.split(':')[1]);
                         const diffMinutes = Math.abs(fichajeMinutes - entryMinutes);
                         turnoInfo = {
+                            label: assignedShift.name, // clients read `label`
                             turno: assignedShift.name,
                             expectedEntry: assignedShift.horaEntrada,
                             expectedExit: assignedShift.horaSalida,
@@ -268,10 +270,18 @@ exports.getCurrentFichaje = async (req, res) => {
             }
         }
 
+        // An entry from a previous day with no exit afterwards (forgot to clock out)
+        const lastBefore = await prisma.fichaje.findFirst({
+            where: { userId, timestamp: { lt: today } },
+            orderBy: { timestamp: 'desc' },
+        });
+        const missingExit = lastBefore?.tipo === FichajeTipo.ENTRADA ? lastBefore : null;
+
         res.json({
             hasActiveEntry,
             currentFichaje: hasActiveEntry ? lastFichaje : null,
-            turno: turnoInfo
+            turno: turnoInfo,
+            missingExit
         });
     } catch (error) {
         console.error('Error getting current fichaje:', error);
@@ -469,6 +479,15 @@ exports.getMonth = async (req, res) => {
 };
 
 /**
+ * Celda CSV segura: neutraliza fórmulas (inyección CSV en Excel) y quita separadores/saltos de línea.
+ */
+function csvCell(value) {
+    let v = String(value ?? '').replace(/[;\r\n]+/g, ' ').trim();
+    if (/^[=+\-@\t]/.test(v)) v = `'${v}`;
+    return v;
+}
+
+/**
  * Construye las lineas CSV del reporte mensual de un usuario (compartido por reporte individual y de departamento)
  */
 async function buildUserReportLines(user, reportMonth, reportYear) {
@@ -502,9 +521,9 @@ async function buildUserReportLines(user, reportMonth, reportYear) {
 
         // Header info
         lines.push(`Reporte de Asistencia - ${monthNames[reportMonth - 1]} ${reportYear}`);
-        lines.push(`Empleado;${user.name}`);
-        lines.push(`Departamento;${user.department}`);
-        lines.push(`Puesto;${user.position || '-'}`);
+        lines.push(`Empleado;${csvCell(user.name)}`);
+        lines.push(`Departamento;${csvCell(user.department)}`);
+        lines.push(`Puesto;${csvCell(user.position || '-')}`);
         lines.push('');
         lines.push('Fecha;Día;Primera Entrada;Última Salida;Horas Trabajadas;Estado;Observaciones');
 
@@ -587,7 +606,7 @@ async function buildUserReportLines(user, reportMonth, reportYear) {
                 daysAbsent++;
             }
 
-            lines.push(`${dateKey};${dayName};${firstEntry};${lastExit};${hoursStr};${status};${observations}`);
+            lines.push(`${dateKey};${dayName};${firstEntry};${lastExit};${hoursStr};${csvCell(status)};${csvCell(observations)}`);
         }
 
         // Summary

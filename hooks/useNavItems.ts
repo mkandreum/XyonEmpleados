@@ -59,7 +59,7 @@ const FICHAJE_TITLES = new Set([
 ]);
 
 /** Which nav sections an unread notification belongs to, so the item can show a dot. */
-const mapUnreadToPaths = (title: string, message: string, role: string): string[] => {
+export const mapUnreadToPaths = (title: string, message: string, role: string): string[] => {
     const normalizedTitle = (title || '').trim().toLowerCase();
     const text = `${title} ${message}`.toLowerCase();
     const paths: string[] = [];

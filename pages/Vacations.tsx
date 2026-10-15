@@ -41,7 +41,7 @@ export const VacationsPage: React.FC = () => {
     const [deptBenefits, setDeptBenefits] = useState<DepartmentBenefits | null>(null);
     const [userBenefits, setUserBenefits] = useState<UserBenefitsBalance | null>(null);
     const [loading, setLoading] = useState(true);
-    const { modalState, showAlert, closeModal } = useModal();
+    const { modalState, showAlert, showConfirm, closeModal } = useModal();
 
     const fetchVacations = useCallback(async () => {
         try {
@@ -70,6 +70,27 @@ export const VacationsPage: React.FC = () => {
         .filter(v => PENDING_STATUSES.includes(v.status) && v.type === 'VACATION')
         .reduce((acc, curr) => acc + curr.days, 0);
     const remainingDays = totalDays - takenDays - pendingDays;
+
+    const askCancel = (vac: VacationRequest) => showConfirm(
+        `¿Cancelar la solicitud de ${getTypeLabel(vac.type, vac.subtype).toLowerCase()} del ${new Date(vac.startDate).toLocaleDateString('es-ES')}?`,
+        async () => {
+            try {
+                await vacationService.cancel(vac.id);
+                await fetchVacations();
+                showAlert('Solicitud cancelada', 'success');
+            } catch (err: any) {
+                showAlert(err?.response?.data?.error || 'No se pudo cancelar la solicitud', 'error');
+            }
+        },
+        'Cancelar solicitud',
+    );
+
+    const cancelButton = (vac: VacationRequest) => PENDING_STATUSES.includes(vac.status) ? (
+        <button onClick={() => askCancel(vac)} className="press inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold text-coral-ink dark:text-coral hover:bg-coral/15 transition-colors"
+            aria-label={`Cancelar solicitud del ${new Date(vac.startDate).toLocaleDateString('es-ES')}`}>
+            <X size={14} aria-hidden="true" /> Cancelar
+        </button>
+    ) : null;
 
     const canUploadLater = (v: VacationRequest) =>
         v.type === 'SICK_LEAVE' || (v.type === 'OTHER' && isMedicalHoursSubtype(v.subtype));
@@ -164,9 +185,10 @@ export const VacationsPage: React.FC = () => {
                                         <th scope="col" className="px-6 py-3 font-semibold">Tipo</th>
                                         <th scope="col" className="px-6 py-3 font-semibold">Estado</th>
                                         <th scope="col" className="px-6 py-3 font-semibold">Justificante</th>
+                                        <th scope="col" className="px-6 py-3 font-semibold"><span className="sr-only">Acciones</span></th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                                <tbody className="stagger divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
                                     {vacations.map(vac => (
                                         <tr key={vac.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                             <td className="px-6 py-4">
@@ -181,6 +203,7 @@ export const VacationsPage: React.FC = () => {
                                             <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{getTypeLabel(vac.type, vac.subtype)}</td>
                                             <td className="px-6 py-4"><StatusBadge status={vac.status} /></td>
                                             <td className="px-6 py-4">{renderJustification(vac, 'compact')}</td>
+                                            <td className="px-6 py-4 text-right">{cancelButton(vac)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -208,7 +231,7 @@ export const VacationsPage: React.FC = () => {
                                             {new Date(vac.createdAt).toLocaleDateString()}
                                         </span>
                                     </div>
-                                    <div className="flex items-center justify-between text-xs">{renderJustification(vac, 'full')}</div>
+                                    <div className="flex items-center justify-between text-xs">{renderJustification(vac, 'full')}{cancelButton(vac)}</div>
                                 </li>
                             ))}
                         </ul>

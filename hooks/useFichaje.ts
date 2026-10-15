@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { fichajeService } from '../services/api';
-import { FichajeTipo, TurnoInfo } from '../types';
+import { Fichaje, FichajeTipo, TurnoInfo } from '../types';
 import { haptic } from '../utils/haptics';
 
 /**
@@ -14,6 +14,7 @@ export const useFichaje = () => {
     const [hasActiveEntry, setHasActiveEntry] = useState(false);
     const [currentTurno, setCurrentTurno] = useState<TurnoInfo | null>(null);
     const [todayFichajes, setTodayFichajes] = useState<any[]>([]);
+    const [missingExit, setMissingExit] = useState<Fichaje | null>(null);
 
     const loadTodayFichajes = useCallback(async () => {
         try {
@@ -36,6 +37,7 @@ export const useFichaje = () => {
             try {
                 const status = await fichajeService.getCurrent();
                 setHasActiveEntry(status.hasActiveEntry);
+                setMissingExit(status.missingExit ?? null);
                 if (status.turno) setCurrentTurno(status.turno);
                 await loadTodayFichajes();
             } catch (error) {
@@ -76,5 +78,5 @@ export const useFichaje = () => {
         }
     }, [hasActiveEntry, loadTodayFichajes]);
 
-    return { checking, submitting, hasActiveEntry, currentTurno, todayFichajes, toggleFichaje, reloadToday: loadTodayFichajes };
+    return { checking, submitting, hasActiveEntry, currentTurno, todayFichajes, missingExit, toggleFichaje, reloadToday: loadTodayFichajes };
 };

@@ -19,10 +19,40 @@ exports.getAllVacations = async (req, res) => {
     }
 };
 
+/** Days between two dates, both inclusive: natural (calendar) and business (Mon–Fri). */
+function countDays(start, end) {
+    const s = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
+    const e = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+    let natural = 0, business = 0;
+    for (const d = new Date(s); d <= e; d.setUTCDate(d.getUTCDate() + 1)) {
+        natural++;
+        const wd = d.getUTCDay();
+        if (wd !== 0 && wd !== 6) business++;
+    }
+    return { natural, business };
+}
+
 // Create vacation request (with role-based status)
 exports.createVacation = async (req, res) => {
     try {
-        const { startDate, endDate, days, hours, type, justificationUrl } = req.body;
+        const { startDate, endDate, hours, type, justificationUrl } = req.body;
+
+        // The client's day count is never trusted for balances: recompute it from the dates.
+        // VACATION counts working days; other leave types may count calendar days (e.g. "Matrimonio").
+        const { natural, business } = countDays(new Date(startDate), new Date(endDate));
+        const isHoursRequest = Number(req.body.days) === 0 && Number(hours) > 0;
+        let days;
+        if (isHoursRequest) {
+            if (natural !== 1) return res.status(400).json({ error: 'Las solicitudes por horas deben ser de un solo día' });
+            days = 0;
+        } else if (type === 'VACATION') {
+            days = business;
+        } else {
+            days = Number(req.body.days) === natural ? natural : business;
+        }
+        if (!isHoursRequest && days < 1) {
+            return res.status(400).json({ error: 'El rango elegido no incluye días laborables' });
+        }
         if (justificationUrl && !isOwnedPrivateFileUrl(justificationUrl, 'justifications', req.user.userId, req.user.role)) {
             return res.status(400).json({ error: 'justificationUrl invalido' });
         }
@@ -325,5 +355,67 @@ exports.managerRejectVacation = async (req, res) => {
     } catch (error) {
         console.error("Manager reject error:", error);
         res.status(500).json({ error: 'Failed to reject request' });
+    }
+};
+
+/**
+ * DELETE /api/vacations/:id
+ * The owner cancels a request that has not been decided yet.
+ */
+exports.cancelVacation = async (req, res) => {
+    try {
+        const request = await prisma.vacationRequest.findUnique({ where: { id: req.params.id } });
+        if (!request || request.userId !== req.user.userId) {
+            return res.status(404).json({ error: 'Solicitud no encontrada' });
+        }
+        if (!['PENDING', 'PENDING_MANAGER', 'PENDING_ADMIN'].includes(request.status)) {
+            return res.status(409).json({ error: 'Solo se pueden cancelar solicitudes pendientes' });
+        }
+        await prisma.vacationRequest.delete({ where: { id: request.id } });
+        res.json({ ok: true });
+    } catch (error) {
+        console.error('Cancel vacation error:', error);
+        res.status(500).json({ error: 'No se pudo cancelar la solicitud' });
+    }
+};
+
+/**
+ * GET /api/vacations/overlap?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
+ * Colleagues of the caller's department who are absent (approved or pending) in that range,
+ * so the employee can see clashes before asking. Only names are returned, never the leave type.
+ */
+exports.getOverlap = async (req, res) => {
+    try {
+        const start = new Date(String(req.query.startDate || ''));
+        const end = new Date(String(req.query.endDate || ''));
+        if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) {
+            return res.status(400).json({ error: 'Fechas no válidas' });
+        }
+        if ((end - start) / 86400000 > 366) return res.status(400).json({ error: 'Rango demasiado largo' });
+
+        const me = await prisma.user.findUnique({ where: { id: req.user.userId }, select: { department: true } });
+        if (!me?.department) return res.json({ count: 0, people: [] });
+
+        const overlapping = await prisma.vacationRequest.findMany({
+            where: {
+                userId: { not: req.user.userId },
+                status: { in: ['APPROVED', 'PENDING', 'PENDING_MANAGER', 'PENDING_ADMIN'] },
+                startDate: { lte: end },
+                endDate: { gte: start },
+                user: { department: me.department, active: true },
+            },
+            select: { status: true, user: { select: { id: true, name: true } } },
+        });
+        const byUser = new Map();
+        for (const v of overlapping) {
+            const prev = byUser.get(v.user.id);
+            // An approved absence wins over a pending one for the same person
+            if (!prev || v.status === 'APPROVED') byUser.set(v.user.id, { name: v.user.name, approved: v.status === 'APPROVED' });
+        }
+        const people = [...byUser.values()];
+        res.json({ count: people.length, people });
+    } catch (error) {
+        console.error('Vacation overlap error:', error);
+        res.status(500).json({ error: 'No se pudo comprobar el calendario del equipo' });
     }
 };

@@ -10,7 +10,9 @@ import { AuroraBackdrop } from './Shapes';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Avatar } from './Avatar';
+import { LogoMark } from './LogoMark';
 import { CommandPalette } from './CommandPalette';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { LogOut, User, Moon, Sun } from 'lucide-react';
 
 const COLLAPSE_KEY = 'xyon.sidebarCollapsed';
@@ -34,6 +36,8 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [collapsed, setCollapsed] = useState(readCollapsed);
+    // Mount only the navigation for this screen size (each one polls notifications)
+    const isDesktop = useMediaQuery('(min-width: 1024px)');
 
     const companyName = settings.companyName || 'XyonEmpleados';
     const logoUrl = settings.logoUrl;
@@ -55,26 +59,27 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
         <div className="relative min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300">
             <AuroraBackdrop />
 
-            <Sidebar
-                collapsed={collapsed}
-                onToggleCollapsed={toggleCollapsed}
-                companyName={companyName}
-                logoUrl={logoUrl}
-                user={user as any}
-                onOpenProfile={() => setShowProfileModal(true)}
-                onLogout={handleLogout}
-            />
+            {isDesktop && (
+                <Sidebar
+                    collapsed={collapsed}
+                    onToggleCollapsed={toggleCollapsed}
+                    companyName={companyName}
+                    logoUrl={logoUrl}
+                    user={user as any}
+                    onOpenProfile={() => setShowProfileModal(true)}
+                    onLogout={handleLogout}
+                />
+            )}
 
             {/* Mobile / tablet top bar */}
+            {!isDesktop && (
             <header className="lg:hidden fixed top-0 left-0 right-0 h-16 z-header px-4 sm:px-6 flex items-center justify-between bg-slate-50/85 dark:bg-slate-950/85 backdrop-blur-md">
                 <Link to="/" className="flex items-center gap-2 min-w-0" aria-label={`${companyName} — inicio`}>
                     {logoUrl && !logoError ? (
                         <img src={logoUrl} alt={companyName} className="h-10 w-auto max-w-[10rem] object-contain" onError={() => setLogoError(true)} />
                     ) : (
                         <>
-                            <span className="w-9 h-9 shrink-0 rounded-full bg-lime text-ink grid place-items-center font-display font-black text-lg">
-                                {companyName.charAt(0).toUpperCase()}
-                            </span>
+                            <LogoMark size={36} className="shrink-0" />
                             <span className="font-display font-black text-xl tracking-tighter text-ink dark:text-white truncate">{companyName}</span>
                         </>
                     )}
@@ -130,6 +135,7 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
                     </div>
                 </div>
             </header>
+            )}
 
             {showProfileMenu && (
                 <div className="lg:hidden fixed inset-0 z-30" onClick={() => setShowProfileMenu(false)} aria-hidden="true" />
@@ -145,7 +151,7 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
                 </div>
             </main>
 
-            <FloatingNavbar />
+            {!isDesktop && <FloatingNavbar />}
             <CommandPalette />
 
             <ProfileModal

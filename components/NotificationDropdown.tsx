@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Check, X, AlertCircle, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { mapUnreadToPaths } from '../hooks/useNavItems';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -25,7 +27,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ plac
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth() as any;
+    const navigate = useNavigate();
     const prevNotificationsRef = useRef<Notification[]>([]);
     const hasLoadedOnceRef = useRef(false);
 
@@ -61,9 +64,11 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ plac
     useEffect(() => {
         if (isAuthenticated) {
             fetchNotifications();
-            // Poll every 5 seconds for near-real-time updates
-            const interval = setInterval(fetchNotifications, 5000);
-            return () => clearInterval(interval);
+            // Poll every 20 s while the tab is visible; refresh as soon as it becomes visible again
+            const interval = setInterval(() => { if (!document.hidden) fetchNotifications(); }, 20000);
+            const onVisible = () => { if (!document.hidden) fetchNotifications(); };
+            document.addEventListener('visibilitychange', onVisible);
+            return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVisible); };
         }
     }, [isAuthenticated, fetchNotifications]);
 
@@ -188,16 +193,29 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ plac
                                     else if (isWarning) icon = <AlertCircle size={20} className="text-amber-700" />;
                                     else if (isJustification) icon = <FileText size={20} className="text-blue-600" />;
 
+                                    // Where this notification leads: attendance tab for warnings, otherwise its section
+                                    const target = (isWarning || isJustification)
+                                        ? `/news?tab=attendance&notifyId=${notification.id}`
+                                        : mapUnreadToPaths(notification.title, notification.message, user?.role || '')[0];
+                                    const open = async () => {
+                                        if (!target) return;
+                                        setIsOpen(false);
+                                        if (!notification.read) {
+                                            api.put(`/notifications/${notification.id}/read`).catch(() => { /* non-blocking */ });
+                                            setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
+                                            setUnreadCount(prev => Math.max(0, prev - 1));
+                                        }
+                                        navigate(target);
+                                    };
+
                                     return (
                                         <div
                                             key={notification.id}
-                                            onClick={() => {
-                                                if (isWarning || isJustification) {
-                                                    window.location.href = `/news?tab=attendance&notifyId=${notification.id}`;
-                                                    setIsOpen(false);
-                                                }
-                                            }}
-                                            className={`px-4 py-3 border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${(isWarning || isJustification) ? 'cursor-pointer' : ''} ${getNotificationStyle(notification.title, notification.message)} ${!notification.read ? 'opacity-100' : 'opacity-70 dark:opacity-60'}`}
+                                            role={target ? 'button' : undefined}
+                                            tabIndex={target ? 0 : undefined}
+                                            onClick={open}
+                                            onKeyDown={(e) => { if (target && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); void open(); } }}
+                                            className={`px-4 py-3 border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${target ? 'cursor-pointer' : ''} ${getNotificationStyle(notification.title, notification.message)} ${!notification.read ? 'opacity-100' : 'opacity-70 dark:opacity-60'}`}
                                         >
                                             <div className="flex items-start gap-3">
                                                 <div className="flex-shrink-0 mt-1">

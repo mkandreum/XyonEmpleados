@@ -108,7 +108,7 @@ export const AdminEvents: React.FC = () => {
                             <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tbody className="stagger divide-y divide-slate-100 dark:divide-slate-800">
                         {loading ? (
                             <tr><td colSpan={4} className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">Cargando...</td></tr>
                         ) : events.length === 0 ? (

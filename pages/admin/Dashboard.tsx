@@ -4,7 +4,7 @@ import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Toolti
 import {
     Users, Clock, CheckCircle, FileText, CalendarDays, Newspaper, Settings, Gift, CalendarHeart, LayoutGrid, ArrowUpRight,
 } from 'lucide-react';
-import { adminService } from '../../services/api';
+import { adminService, fichajeAdjustmentService } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 import { LoadingState, ErrorState } from '../../components/PageState';
 import { StatCard } from '../../components/StatCard';
@@ -30,12 +30,18 @@ export const AdminDashboard: React.FC = () => {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const [pendingAdjustments, setPendingAdjustments] = useState(0);
 
     const fetchStats = useCallback(async () => {
         setLoading(true);
         setError(false);
         try {
-            setStats(await adminService.getStats());
+            const [st, adj] = await Promise.all([
+                adminService.getStats(),
+                fichajeAdjustmentService.getPending().catch(() => []),
+            ]);
+            setStats(st);
+            setPendingAdjustments(Array.isArray(adj) ? adj.length : 0);
         } catch (err) {
             console.error('Error fetching stats:', err);
             setError(true);
@@ -74,6 +80,25 @@ export const AdminDashboard: React.FC = () => {
                     <StatCard icon={CheckCircle} tone="lime" label="Aprobadas este mes" value={stats?.approvedThisMonth ?? 0} delay="delay-150" />
                     <StatCard icon={FileText} tone="lilac" label="Nóminas procesadas" value={stats?.payrollsProcessed ?? 0} delay="delay-200" />
                 </div>
+            )}
+
+            {/* What needs attention now */}
+            {!error && ((stats?.pendingRequests ?? 0) > 0 || pendingAdjustments > 0) && (
+                <section aria-label="Por revisar" className="card-blue border-thick border-ink dark:border-blue-600 p-5 flex flex-col md:flex-row md:items-center gap-4 animate-slide-up delay-150">
+                    <h2 className="font-display font-black text-2xl tracking-tight flex-1">Por revisar ahora</h2>
+                    <div className="flex flex-wrap gap-2">
+                        {(stats?.pendingRequests ?? 0) > 0 && (
+                            <Link to="/admin/vacations" className="press inline-flex items-center gap-2 rounded-full bg-lime text-ink px-4 h-11 font-extrabold">
+                                {stats.pendingRequests} {stats.pendingRequests === 1 ? 'solicitud' : 'solicitudes'} <ArrowUpRight size={16} aria-hidden="true" />
+                            </Link>
+                        )}
+                        {pendingAdjustments > 0 && (
+                            <Link to="/admin/fichajes" className="press inline-flex items-center gap-2 rounded-full bg-sun text-ink px-4 h-11 font-extrabold">
+                                {pendingAdjustments} {pendingAdjustments === 1 ? 'ajuste de fichaje' : 'ajustes de fichaje'} <ArrowUpRight size={16} aria-hidden="true" />
+                            </Link>
+                        )}
+                    </div>
+                </section>
             )}
 
             {/* Tools hub */}

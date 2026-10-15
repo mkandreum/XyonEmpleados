@@ -202,7 +202,7 @@ export const AdminFichajes: React.FC = () => {
                                                 </th>
                                             </tr>
                                         </thead>
-                                        <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
+                                        <tbody className="stagger bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
                                             {fichajes.map((fichaje: any, index: number) => (
                                                 <tr key={index} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-white">

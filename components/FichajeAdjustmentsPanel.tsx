@@ -196,7 +196,7 @@ export const FichajeAdjustmentsPanel: React.FC = () => {
                                         ))}
                                     </tr>
                                 </thead>
-                                <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800">
+                                <tbody className="stagger bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800">
                                     {history.map(request => (
                                         <tr key={request.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                             <td className="px-5 py-4 font-semibold text-slate-900 dark:text-white">

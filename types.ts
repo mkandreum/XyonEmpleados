@@ -257,6 +257,8 @@ export interface FichajeStatus {
   hasActiveEntry: boolean;
   currentFichaje?: Fichaje;
   turno?: TurnoInfo | null;
+  /** Entry from a previous day with no exit afterwards (forgot to clock out). */
+  missingExit?: Fichaje | null;
 }
 
 export interface FichajeDayStats {

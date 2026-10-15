@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, CornerDownLeft, Gift, CalendarHeart, LayoutGrid, User } from 'lucide-react';
+import { Search, CornerDownLeft, Gift, CalendarHeart, LayoutGrid, User, UserRound } from 'lucide-react';
+import { adminService } from '../services/api';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavItems } from '../hooks/useNavItems';
@@ -27,6 +28,21 @@ export const CommandPalette: React.FC = () => {
     const [query, setQuery] = useState('');
     const [active, setActive] = useState(0);
     const inputRef = useRef<HTMLInputElement>(null);
+    const isAdmin = user?.role === 'ADMIN';
+    const [people, setPeople] = useState<Command[] | null>(null);
+
+    // Admins can also jump straight to a person (loaded once, the first time the palette opens)
+    useEffect(() => {
+        if (!open || !isAdmin || people) return;
+        adminService.getUsers()
+            .then((list: any[]) => setPeople(list.map(u => ({
+                path: `/admin/users?q=${encodeURIComponent(u.name)}`,
+                label: u.name,
+                icon: UserRound,
+                group: u.department || 'Persona',
+            }))))
+            .catch(() => setPeople([]));
+    }, [open, isAdmin, people]);
 
     const commands = useMemo<Command[]>(() => {
         const base = items.map(i => ({ ...i, group: 'Secciones' }));
@@ -36,8 +52,11 @@ export const CommandPalette: React.FC = () => {
 
     const results = useMemo(() => {
         const q = normalize(query.trim());
-        return q ? commands.filter(c => normalize(c.label).includes(q)) : commands;
-    }, [commands, query]);
+        if (!q) return commands;
+        const sections = commands.filter(c => normalize(c.label).includes(q));
+        const persons = (people || []).filter(c => normalize(c.label).includes(q)).slice(0, 8);
+        return [...sections, ...persons];
+    }, [commands, query, people]);
 
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
@@ -97,7 +116,7 @@ export const CommandPalette: React.FC = () => {
                         value={query}
                         onChange={e => setQuery(e.target.value)}
                         onKeyDown={onInputKey}
-                        placeholder="¿A dónde quieres ir?"
+                        placeholder={isAdmin ? 'Busca una sección o una persona…' : '¿A dónde quieres ir?'}
                         aria-label="Buscar sección"
                         aria-controls="palette-results"
                         aria-activedescendant={results[active] ? `cmd-${active}` : undefined}

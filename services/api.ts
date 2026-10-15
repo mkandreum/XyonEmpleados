@@ -199,6 +199,16 @@ export const vacationService = {
     updateJustification: async (id: string, justificationUrl: string) => {
         const response = await api.patch<VacationRequest>(`/vacations/${id}/justification`, { justificationUrl });
         return response.data;
+    },
+    /** Cancel one of my own requests while it is still pending. */
+    cancel: async (id: string) => {
+        const response = await api.delete(`/vacations/${id}`);
+        return response.data;
+    },
+    /** Colleagues of my department absent in that range (approved or pending). */
+    overlap: async (startDate: string, endDate: string) => {
+        const response = await api.get<{ count: number; people: { name: string; approved: boolean }[] }>('/vacations/overlap', { params: { startDate, endDate } });
+        return response.data;
     }
 };
 

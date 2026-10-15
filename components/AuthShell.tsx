@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BlueField } from './Shapes';
+import { LogoMark } from './LogoMark';
 import { useSettings } from '../hooks/useSettings';
 
 interface AuthShellProps {
@@ -35,9 +36,7 @@ export const AuthShell: React.FC<AuthShellProps> = ({ headline, tagline, title, 
                             </span>
                         ) : (
                             <>
-                                <span className="w-11 h-11 rounded-full bg-lime text-ink grid place-items-center font-display font-black text-xl">
-                                    {companyName.charAt(0).toUpperCase()}
-                                </span>
+                                <LogoMark size={44} />
                                 <span className="font-display font-black text-xl tracking-tighter">{companyName}</span>
                             </>
                         )}

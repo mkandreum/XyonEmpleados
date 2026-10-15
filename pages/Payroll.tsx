@@ -262,7 +262,7 @@ export const PayrollPage: React.FC = () => {
                     <th scope="col" className={headerCell}>Firmada</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800">
+                <tbody className="stagger bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800">
                   {payrolls.map((payroll) => (
                     <tr key={payroll.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">

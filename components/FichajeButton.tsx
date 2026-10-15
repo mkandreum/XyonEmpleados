@@ -108,7 +108,7 @@ const TodayFichajesPanel: React.FC<{ fichajes: Fichaje[]; onAdjust: (f: Fichaje)
  * between out/in states with a spring, plus a sparkle burst on success. Sits on a blue field.
  */
 export const FichajeButton: React.FC = () => {
-    const { checking, submitting, hasActiveEntry, currentTurno, todayFichajes, toggleFichaje, reloadToday } = useFichaje();
+    const { checking, submitting, hasActiveEntry, currentTurno, todayFichajes, missingExit, toggleFichaje, reloadToday } = useFichaje();
     const [showHistory, setShowHistory] = useState(false);
     const [adjustingFichaje, setAdjustingFichaje] = useState<Fichaje | null>(null);
     const [pressed, setPressed] = useState(false);
@@ -205,6 +205,15 @@ export const FichajeButton: React.FC = () => {
             </div>
 
             <div className="w-full max-w-sm mt-5 flex flex-col gap-3">
+                {missingExit && (
+                    <div role="alert" className="flex items-start gap-2.5 px-4 py-3 rounded-[1.25rem] bg-coral text-ink text-sm">
+                        <AlertCircle size={18} className="shrink-0 mt-0.5" aria-hidden="true" />
+                        <p>
+                            <b className="font-extrabold">Falta la salida del {new Date(missingExit.timestamp).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</b>
+                            {' '}(entrada a las {formatTime(missingExit.timestamp)}). Pide a tu responsable que la registre.
+                        </p>
+                    </div>
+                )}
                 {currentTurno && hasActiveEntry && <TurnoBadge turno={currentTurno} />}
 
                 {todayFichajes.length > 0 && (

@@ -130,7 +130,7 @@ export const TeamWeekFichajes: React.FC<TeamWeekFichajesProps> = ({ weekData, we
                                 ))}
                             </tr>
                         </thead>
-                        <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800">
+                        <tbody className="stagger bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800">
                             {weekData.map((employee, empIndex) => (
                                 <tr key={empIndex} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-white sticky left-0 bg-white dark:bg-slate-900 z-10 border-r border-slate-100 dark:border-slate-800">

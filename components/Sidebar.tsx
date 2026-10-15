@@ -5,6 +5,7 @@ import { useNavItems } from '../hooks/useNavItems';
 import { useTheme } from '../context/ThemeContext';
 import { NotificationDropdown } from './NotificationDropdown';
 import { Sparkle, COLORS } from './Shapes';
+import { LogoMark } from './LogoMark';
 import { haptic } from '../utils/haptics';
 import { Avatar } from './Avatar';
 
@@ -53,9 +54,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapsed, 
                         <img src={logoUrl} alt={companyName} className="h-10 w-auto max-w-[11rem] object-contain" onError={() => setLogoError(true)} />
                     ) : (
                         <>
-                            <span className="w-10 h-10 shrink-0 rounded-full bg-lime text-ink grid place-items-center font-display font-black text-xl">
-                                {companyName.charAt(0).toUpperCase()}
-                            </span>
+                            <LogoMark size={40} className="shrink-0 rounded-[12px]" />
                             {!collapsed && (
                                 <span className="font-display font-black text-xl tracking-tighter leading-none truncate">
                                     {companyName}

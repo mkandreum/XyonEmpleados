@@ -81,11 +81,12 @@ const updateProfileSchema = Joi.object({
 const vacationRequestSchema = Joi.object({
     startDate: Joi.date().iso().required(),
     endDate: Joi.date().iso().min(Joi.ref('startDate')).required(),
-    days: Joi.number().integer().min(1).max(365).required(),
-    hours: Joi.number().integer().min(0).optional().allow(null),
+    // 0 days is valid for hour-based requests (e.g. medical hours); the server recomputes days anyway
+    days: Joi.number().integer().min(0).max(365).required(),
+    hours: Joi.number().integer().min(0).max(24 * 31).optional().allow(null),
     type: Joi.string().valid('VACATION', 'PERSONAL', 'SICK_LEAVE', 'MEDICAL_LEAVE', 'OVERTIME', 'OTHER').required(),
     subtype: Joi.string().max(100).optional().allow('', null),
-    status: Joi.string().optional(), // Allow status to be sent from frontend
+    status: Joi.string().optional(), // ignored: the server decides the initial status
     justificationUrl: Joi.string().max(500).optional().allow('', null)
 });
 

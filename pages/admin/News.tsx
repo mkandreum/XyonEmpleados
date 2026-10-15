@@ -122,7 +122,7 @@ export const AdminNews: React.FC = () => {
                             <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
+                    <tbody className="stagger divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900">
                         {loading ? (
                             <tr><td colSpan={4} className="px-6 py-4 text-center text-slate-500 dark:text-slate-400">Cargando...</td></tr>
                         ) : news.length === 0 ? (

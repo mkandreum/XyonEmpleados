@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Users, CalendarCheck } from 'lucide-react';
 import { vacationService, uploadService } from '../services/api';
 import { DepartmentBenefits, UserBenefitsBalance } from '../types';
 import { DateRangePicker } from './DateRangePicker';
@@ -42,6 +43,24 @@ export const VacationRequestForm: React.FC<VacationRequestFormProps> = ({
     const [uploading, setUploading] = useState(false);
 
     const update = (patch: Partial<ReturnType<typeof initialForm>>) => setForm(prev => ({ ...prev, ...patch }));
+
+    // Days that will be counted (same rule as the server) and colleagues already off on those dates
+    const isHours = form.type === 'SICK_LEAVE';
+    const rangeOk = !!form.startDate && !!form.endDate && form.endDate >= form.startDate;
+    const countedDays = rangeOk && !isHours
+        ? (form.subtype.includes('Matrimonio') ? calculateNaturalDays(new Date(form.startDate), new Date(form.endDate)) : calculateBusinessDays(new Date(form.startDate), new Date(form.endDate)))
+        : 0;
+    const [overlap, setOverlap] = useState<{ count: number; people: { name: string; approved: boolean }[] } | null>(null);
+    useEffect(() => {
+        if (!rangeOk) { setOverlap(null); return; }
+        let cancelled = false;
+        const t = setTimeout(() => {
+            vacationService.overlap(form.startDate, isHours ? form.startDate : form.endDate)
+                .then(r => { if (!cancelled) setOverlap(r); })
+                .catch(() => { if (!cancelled) setOverlap(null); });
+        }, 350);
+        return () => { cancelled = true; clearTimeout(t); };
+    }, [form.startDate, form.endDate, isHours, rangeOk]);
 
     const sickHoursAvailable = remainingHours(deptBenefits?.sickLeaveHours, userBenefits?.sickLeaveHoursUsed);
     const overtimeHoursAvailable = remainingHours(deptBenefits?.overtimeHoursBank, userBenefits?.overtimeHoursUsed);
@@ -139,17 +158,17 @@ export const VacationRequestForm: React.FC<VacationRequestFormProps> = ({
         try {
             if (form.type === 'SICK_LEAVE') await submitMedicalHours();
             else await submitDaysRequest();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error creating vacation:', error);
-            showAlert('Error al crear la solicitud', 'error');
+            showAlert(error?.response?.data?.error || 'Error al crear la solicitud', 'error');
         } finally {
             setSubmitting(false);
         }
     };
 
     return (
-        <div className="p-4 sm:p-6 bg-blue-50 dark:bg-blue-900/10 border-b border-blue-100 dark:border-blue-900/30 animate-fade-in">
-            <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-4">Nueva solicitud</h3>
+        <div className="p-4 sm:p-6 bg-lilac/40 dark:bg-lilac/10 border-b border-thick border-ink/10 dark:border-slate-800 animate-fade-in">
+            <h3 className="font-display font-black text-xl tracking-tight text-ink dark:text-white mb-4">Nueva solicitud</h3>
             <form className="space-y-4" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -255,6 +274,30 @@ export const VacationRequestForm: React.FC<VacationRequestFormProps> = ({
                         </div>
                     )}
                 </div>
+
+                {/* Live summary: counted days, balance after, colleagues already off */}
+                {rangeOk && (
+                    <div className="flex flex-wrap gap-2" aria-live="polite">
+                        {!isHours && (
+                            <span className="chip bg-lime text-ink !text-xs">
+                                <CalendarCheck size={14} aria-hidden="true" />
+                                {countedDays} {countedDays === 1 ? 'día' : 'días'} {form.subtype.includes('Matrimonio') ? 'naturales' : 'laborables'}
+                                {form.type === 'VACATION' && ` · te quedarán ${Math.max(0, remainingDays - countedDays)}`}
+                            </span>
+                        )}
+                        {overlap && overlap.count > 0 && (
+                            <span className="chip bg-sun text-ink !text-xs" title={overlap.people.map(p => p.name).join(', ')}>
+                                <Users size={14} aria-hidden="true" />
+                                {overlap.count === 1 ? `${overlap.people[0].name.split(' ')[0]} también estará fuera` : `${overlap.count} compañeros también estarán fuera`}
+                            </span>
+                        )}
+                        {overlap && overlap.count === 0 && (
+                            <span className="chip bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 !text-xs">
+                                <Users size={14} aria-hidden="true" /> Nadie de tu equipo está fuera esos días
+                            </span>
+                        )}
+                    </div>
+                )}
 
                 <div>
                     <label className="label" htmlFor="vac-file">Justificante (PDF o imagen)</label>

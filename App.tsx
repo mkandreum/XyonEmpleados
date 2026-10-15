@@ -7,7 +7,6 @@ import { RegisterPage } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { PayrollPage } from './pages/Payroll';
 import { VacationsPage } from './pages/Vacations';
-import { AbsencesPage } from './pages/Absences';
 import { CalendarPage } from './pages/Calendar';
 import { NewsPage } from './pages/News';
 import { ProfilePage } from './pages/Profile';
@@ -141,11 +140,8 @@ const AppRoutes = () => {
                     <CalendarPage />
                 </ProtectedRoute>
             } />
-            <Route path="/absences" element={
-                <ProtectedRoute>
-                    <AbsencesPage />
-                </ProtectedRoute>
-            } />
+            {/* Legacy duplicate of /vacations */}
+            <Route path="/absences" element={<Navigate to="/vacations" replace />} />
             <Route path="/news" element={
                 <ProtectedRoute>
                     <NewsPage />

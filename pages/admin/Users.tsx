@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { adminService } from '../../services/api';
 import { User } from '../../types';
 import { Plus, Edit2 as Edit, Trash2 as Trash, Search, User as UserIcon, Building, X, Save } from 'lucide-react';
@@ -11,7 +12,9 @@ export const AdminUsers: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchParams] = useSearchParams();
+    const [searchTerm, setSearchTerm] = useState(() => searchParams.get('q') || '');
+    useEffect(() => { const q = searchParams.get('q'); if (q !== null) setSearchTerm(q); }, [searchParams]);
     const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
@@ -269,7 +272,7 @@ export const AdminUsers: React.FC = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-700">
+                        <tbody className="stagger bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-700">
                             {filteredUsers.map((user) => (
                                 <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                     <td className="px-6 py-4 whitespace-nowrap">

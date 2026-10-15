@@ -95,7 +95,7 @@ export const AdminBenefits: React.FC = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
+                    <tbody className="stagger bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
                         {DEPARTMENTS.map((dept) => {
                             const deptBenefits = getBenefitsForDept(dept);
                             const isEditing = editingDept === dept;

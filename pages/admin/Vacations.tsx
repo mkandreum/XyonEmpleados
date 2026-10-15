@@ -45,6 +45,8 @@ export const AdminVacations: React.FC = () => {
     const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
     const [viewMode, setViewMode] = useState<'grouped' | 'list'>('grouped');
     const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [bulkBusy, setBulkBusy] = useState(false);
 
     const fetchVacations = async () => {
         try {
@@ -76,6 +78,29 @@ export const AdminVacations: React.FC = () => {
             setActionLoadingId(null);
         }
     };
+
+    /** Approve or reject every selected pending request; reports partial failures. */
+    const handleBulk = async (status: 'APPROVED' | 'REJECTED') => {
+        const ids = [...selected];
+        if (ids.length === 0) return;
+        if (status === 'REJECTED' && !window.confirm(`¿Rechazar ${ids.length} ${ids.length === 1 ? 'solicitud' : 'solicitudes'}?`)) return;
+        setBulkBusy(true);
+        const results = await Promise.allSettled(ids.map(id => adminService.updateVacationStatus(id, status)));
+        const failed = results.filter(r => r.status === 'rejected').length;
+        const ok = ids.length - failed;
+        haptic(failed ? 'error' : 'success');
+        if (ok) toast.success(`${ok} ${ok === 1 ? 'solicitud' : 'solicitudes'} ${status === 'APPROVED' ? 'aprobada' : 'rechazada'}${ok === 1 ? '' : 's'}`);
+        if (failed) toast.error(`${failed} no se pudieron actualizar`);
+        setSelected(new Set());
+        await fetchVacations();
+        setBulkBusy(false);
+    };
+
+    const toggleSelected = (id: string) => setSelected(prev => {
+        const next = new Set(prev);
+        next.has(id) ? next.delete(id) : next.add(id);
+        return next;
+    });
 
     // Helper functions
 
@@ -182,17 +207,43 @@ export const AdminVacations: React.FC = () => {
             {/* Pending Requests Section */}
             {pendingRequests.length > 0 && (
                 <div className="bg-sun text-ink border-thick border-ink dark:border-transparent rounded-card p-4 md:p-6 animate-slide-up delay-150">
-                    <div className="flex items-center gap-2 mb-4">
+                    <div className="flex flex-wrap items-center gap-3 mb-4">
                         <AlertCircle size={24} aria-hidden="true" />
-                        <h2 className="font-display font-black text-xl md:text-2xl tracking-tight">
-                            Solicitudes Pendientes ({pendingRequests.length})
+                        <h2 className="font-display font-black text-xl md:text-2xl tracking-tight flex-1">
+                            Solicitudes pendientes ({pendingRequests.length})
                         </h2>
+                        <label className="flex items-center gap-2 text-sm font-bold cursor-pointer select-none">
+                            <input
+                                type="checkbox"
+                                className="w-5 h-5 rounded-md accent-[#0C0C12]"
+                                checked={selected.size > 0 && pendingRequests.every(r => selected.has(r.id))}
+                                onChange={(e) => setSelected(e.target.checked ? new Set(pendingRequests.map(r => r.id)) : new Set())}
+                            />
+                            Seleccionar todas
+                        </label>
+                        {selected.size > 0 && (
+                            <div className="flex gap-2 animate-pop">
+                                <button onClick={() => handleBulk('APPROVED')} disabled={bulkBusy} className="btn-primary">
+                                    <Check size={16} aria-hidden="true" /> Aprobar {selected.size}
+                                </button>
+                                <button onClick={() => handleBulk('REJECTED')} disabled={bulkBusy} className="btn-secondary">
+                                    <X size={16} aria-hidden="true" /> Rechazar {selected.size}
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     <div className="space-y-3">
                         {pendingRequests.map(request => (
-                            <div key={request.id} className="bg-white dark:bg-slate-900 rounded-[1.375rem] p-3 md:p-4 transition-colors">
+                            <div key={request.id} className={`bg-white dark:bg-slate-900 rounded-[1.375rem] p-3 md:p-4 transition-colors ${selected.has(request.id) ? 'ring-2 ring-ink dark:ring-lime' : ''}`}>
                                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                    <input
+                                        type="checkbox"
+                                        className="hidden md:block w-5 h-5 rounded-md accent-[#2563EB] shrink-0"
+                                        checked={selected.has(request.id)}
+                                        onChange={() => toggleSelected(request.id)}
+                                        aria-label={`Seleccionar solicitud de ${request.user.name}`}
+                                    />
                                     <div className="flex-1">
                                         <div className="flex flex-wrap items-center gap-2 mb-2">
                                             <span className="text-base font-semibold text-slate-900 dark:text-white">{request.user.name}</span>
@@ -241,7 +292,8 @@ export const AdminVacations: React.FC = () => {
                                         <button
                                             onClick={() => handleStatusUpdate(request.id, 'APPROVED')}
                                             disabled={actionLoadingId === request.id}
-                                            className="flex-1 md:flex-none px-3 md:px-4 py-2 bg-green-600 text-white rounded-control hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                                            className="btn-lime flex-1 md:flex-none md:px-4"
+                                            aria-label={`Aprobar solicitud de ${request.user.name}`}
                                         >
                                             <Check size={16} />
                                             <span className="hidden md:inline">{actionLoadingId === request.id ? 'Procesando...' : 'Aprobar'}</span>
@@ -251,6 +303,7 @@ export const AdminVacations: React.FC = () => {
                                             onClick={() => handleStatusUpdate(request.id, 'REJECTED')}
                                             disabled={actionLoadingId === request.id}
                                             className="btn-danger flex-1 md:flex-none md:px-4"
+                                            aria-label={`Rechazar solicitud de ${request.user.name}`}
                                         >
                                             <X size={16} />
                                             <span className="hidden md:inline">{actionLoadingId === request.id ? 'Procesando...' : 'Rechazar'}</span>
@@ -334,7 +387,7 @@ export const AdminVacations: React.FC = () => {
                                                             <th className="px-4 py-2 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">Justificante</th>
                                                         </tr>
                                                     </thead>
-                                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 transition-colors">
+                                                    <tbody className="stagger divide-y divide-slate-100 dark:divide-slate-800 transition-colors">
                                                         {group.requests.map(request => (
                                                             <tr key={request.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                                                                 <td className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">{formatDate(request.startDate)}</td>
@@ -462,7 +515,7 @@ export const AdminVacations: React.FC = () => {
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase">Justificante</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 transition-colors">
+                                    <tbody className="stagger divide-y divide-slate-100 dark:divide-slate-800 transition-colors">
                                         {historicalRequests.map(request => (
                                             <tr key={request.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                                                 <td className="px-4 py-3 text-sm text-slate-800 dark:text-white font-medium">{request.user.name}</td>
