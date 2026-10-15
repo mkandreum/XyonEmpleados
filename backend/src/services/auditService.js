@@ -5,6 +5,7 @@
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = require('../lib/prisma');
+const { describeClient } = require('../utils/requestInfo');
 
 /**
  * Tipos de acciones auditables
@@ -67,8 +68,12 @@ const logAudit = async (userId, action, resourceType, resourceId, metadata = {},
         };
 
         if (req) {
-            enrichedMetadata.ip = req.ip || req.connection.remoteAddress;
-            enrichedMetadata.userAgent = req.get('user-agent');
+            const client = describeClient(req);
+            enrichedMetadata.ip = client.ip;
+            enrichedMetadata.userAgent = client.userAgent;
+            enrichedMetadata.browser = client.browser;
+            enrichedMetadata.os = client.os;
+            enrichedMetadata.device = client.device;
             enrichedMetadata.method = req.method;
             enrichedMetadata.path = req.path;
         }

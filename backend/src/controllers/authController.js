@@ -3,6 +3,7 @@ const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const { describeClient } = require('../utils/requestInfo');
 const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
@@ -226,6 +227,12 @@ exports.forgotPassword = async (req, res) => {
             return res.status(400).json({ error: 'Email requerido' });
         }
         const user = await prisma.user.findUnique({ where: { email } });
+        const client = describeClient(req);
+        console.log(
+            `🔐 [PASSWORD RESET REQUEST] email=${email} existe=${!!user && user.active !== false} ` +
+            `ip=${client.ip} navegador="${client.browser}" so="${client.os}" dispositivo="${client.device}" ` +
+            `tipo=${client.clientType} ua="${client.userAgent}"`
+        );
         if (!user || user.active === false) {
             // Security: Do not reveal if email exists, but simulating success
             return res.json({ message: 'If the email exists, a reset link has been sent.' });
@@ -294,6 +301,13 @@ exports.resetPassword = async (req, res) => {
                 resetTokenExpiry: null
             }
         });
+
+        const client = describeClient(req);
+        console.log(
+            `🔐 [PASSWORD RESET DONE] email=${email} ` +
+            `ip=${client.ip} navegador="${client.browser}" so="${client.os}" dispositivo="${client.device}" ` +
+            `tipo=${client.clientType} ua="${client.userAgent}"`
+        );
 
         res.json({ message: 'Password reset successfully' });
     } catch (err) {
