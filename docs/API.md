@@ -9,7 +9,7 @@ Base: `https://<host>/api`. JSON salvo subidas (multipart). Cabecera de auth: `A
 - Rol, departamento y estado `active` se releen de la BD en cada peticion (un cambio de rol aplica al instante).
 - Usuario desactivado: `POST /auth/login` con credenciales correctas -> `403 {code:'ACCOUNT_DISABLED'}`; con un token ya emitido -> `401 ACCOUNT_DISABLED`. Tratar como "volver a login" y avisar al usuario.
 - Politica de contrasena (register/change/reset/alta admin): >= 12 caracteres, mayuscula, minuscula, numero y simbolo.
-- Rate limit: login/register 5 intentos fallidos/15 min por IP; forgot/reset 10/hora; global 1000/15 min. Respuesta 429 `{error}`.
+- Rate limit: login/register 5 intentos fallidos/15 min por IP; forgot/reset 10/hora por IP; forgot-password ademas 3/15 min por email objetivo (y el servidor no reenvia si el enlace actual tiene menos de 10 min); global 1000/15 min. IP = la real del cliente (`cf-connecting-ip`/`X-Forwarded-For`), no el IP del borde de Cloudflare. Respuesta 429 `{error}`.
 - CORS: las peticiones sin cabecera `Origin` (apps nativas) se aceptan; los navegadores deben coincidir con `FRONTEND_URL` (lista separada por comas).
 
 ## Roles

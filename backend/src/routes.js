@@ -26,7 +26,7 @@ const { isAdmin, isManagerOrAdmin, validateManagerDepartment } = require('./midd
 const { validate, loginSchema, registerSchema, changePasswordSchema, updateProfileSchema, vacationRequestSchema, adminCreateUserSchema, adminUpdateUserSchema } = require('./middleware/validation');
 
 // Import auth rate limiter from server
-const { authLimiter, passwordResetLimiter } = require('./server');
+const { authLimiter, passwordResetLimiter, passwordResetEmailLimiter } = require('./server');
 
 // Los usuarios no admin solo pueden consultar datos de su propio departamento
 const sameDepartmentOrAdmin = (req, res, next) => {
@@ -63,7 +63,7 @@ router.get('/version', (req, res) => {
 // Public Routes (NO AUTH REQUIRED)
 router.post('/auth/register', authLimiter, validate(registerSchema), authController.register);
 router.post('/auth/login', authLimiter, validate(loginSchema), authController.login);
-router.post('/auth/forgot-password', passwordResetLimiter, authController.forgotPassword);
+router.post('/auth/forgot-password', passwordResetLimiter, passwordResetEmailLimiter, authController.forgotPassword);
 router.post('/auth/reset-password', passwordResetLimiter, authController.resetPassword);
 
 // Public endpoint for logo only (secure alternative to exposing all settings)

@@ -4,6 +4,8 @@ const morgan = require('morgan');
 const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = rateLimit;
+const { getRealIp } = require('./utils/requestInfo');
 const { getTodayRange } = require('./utils/fichajeUtils');
 const { notifyUser } = require('./services/notificationService');
 require('dotenv').config();
@@ -42,12 +44,19 @@ app.use(helmet({
 }));
 app.disable('x-powered-by'); // Hide Express signature
 
+// Rate Limiting - Clave por IP REAL del cliente.
+// Detras de Cloudflare req.ip puede resolver a un IP del borde (compartido entre
+// usuarios) o cambiar en cada peticion; getRealIp (cf-connecting-ip / XFF) da el IP
+// verdadero, que es el que ya se registra en los logs de seguridad.
+const clientIpKey = (req) => ipKeyGenerator(getRealIp(req) || req.ip);
+
 // Rate Limiting - General
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 1000, // Increased to 1000 to prevent false positives on dashboard load
     standardHeaders: true,
     legacyHeaders: false,
+    keyGenerator: clientIpKey,
     message: { error: 'Too many requests from this IP, please try again after 15 minutes' }
 });
 
@@ -58,6 +67,7 @@ const authLimiter = rateLimit({
     skipSuccessfulRequests: true, // Don't count successful logins
     standardHeaders: true,
     legacyHeaders: false,
+    keyGenerator: clientIpKey,
     message: { error: 'Too many login attempts. Please try again in 15 minutes' }
 });
 
@@ -67,12 +77,29 @@ const passwordResetLimiter = rateLimit({
     max: 10,
     standardHeaders: true,
     legacyHeaders: false,
+    keyGenerator: clientIpKey,
+    message: { error: 'Too many requests. Please try again later.' }
+});
+
+// Rate Limiting - forgot-password POR EMAIL.
+// El IP de origen puede rotar (bots/proxies), asi que el limitador por IP no basta:
+// aqui la clave es la cuenta objetivo, no quien hace la peticion.
+const passwordResetEmailLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 3,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => {
+        const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+        return email ? `reset-email:${email.slice(0, 254)}` : clientIpKey(req);
+    },
     message: { error: 'Too many requests. Please try again later.' }
 });
 
 // Export limiters for use in routes
 module.exports.authLimiter = authLimiter;
 module.exports.passwordResetLimiter = passwordResetLimiter;
+module.exports.passwordResetEmailLimiter = passwordResetEmailLimiter;
 
 // Apply rate limiter to all requests
 app.use(limiter);

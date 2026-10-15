@@ -238,6 +238,17 @@ exports.forgotPassword = async (req, res) => {
             return res.json({ message: 'If the email exists, a reset link has been sent.' });
         }
 
+        // Cooldown: no reenviar si el enlace actual tiene menos de 10 minutos (el token
+        // caduca a la hora, asi que se infiere la antiguedad desde resetTokenExpiry).
+        // Evita bombardeo de emails y que reintentos seguidos invaliden el enlace anterior.
+        const RESET_TOKEN_TTL_MS = 3600000;
+        const RESEND_COOLDOWN_MS = 10 * 60 * 1000;
+        if (user.resetToken && user.resetTokenExpiry &&
+            user.resetTokenExpiry.getTime() - Date.now() > RESET_TOKEN_TTL_MS - RESEND_COOLDOWN_MS) {
+            console.log(`⏳ [PASSWORD RESET COOLDOWN] email=${email} ip=${client.ip} — reenvio omitido, el enlace actual es reciente`);
+            return res.json({ message: 'If the email exists, a reset link has been sent.' });
+        }
+
         const resetToken = crypto.randomBytes(32).toString('hex');
         const hash = await bcrypt.hash(resetToken, 10);
         const expiry = new Date(Date.now() + 3600000); // 1 hour

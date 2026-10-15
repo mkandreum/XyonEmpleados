@@ -1,11 +1,10 @@
 const nodemailer = require('nodemailer');
 const { PrismaClient } = require('@prisma/client');
 const prisma = require('../lib/prisma');
-const { decryptSMTPPassword } = require('../utils/encryptionUtils');
+const { decryptSMTPPassword, encryptSMTPPassword, isEncrypted } = require('../utils/encryptionUtils');
 
 const getTransporter = async () => {
     try {
-        console.log('📧 [DEBUG] Fetching SMTP settings from DB...');
         const settings = await prisma.globalSettings.findMany({
             where: {
                 key: { in: ['smtpHost', 'smtpPort', 'smtpUser', 'smtpPass', 'smtpSecure'] }
@@ -17,18 +16,26 @@ const getTransporter = async () => {
             return acc;
         }, {});
 
-        // Log config presence (masking sensitive data)
-        console.log('📧 [DEBUG] SMTP Config retrieved:', {
-            host: config.smtpHost ? 'FOUND' : 'MISSING',
-            port: config.smtpPort ? config.smtpPort : 'MISSING(Default:587)',
-            user: config.smtpUser ? 'FOUND' : 'MISSING',
-            pass: config.smtpPass ? 'FOUND (encrypted)' : 'MISSING',
-            secure: config.smtpSecure
-        });
-
         if (!config.smtpHost || !config.smtpUser || !config.smtpPass) {
             console.warn('⚠️ SMTP settings not configured: Missing Host, User, or Pass');
             return null;
+        }
+
+        // Migracion automatica: si la password SMTP esta en texto plano (formato legacy),
+        // guardarla cifrada en BD para no dejar el secreto en claro.
+        if (!isEncrypted(config.smtpPass)) {
+            try {
+                const encrypted = encryptSMTPPassword(config.smtpPass);
+                await prisma.globalSettings.upsert({
+                    where: { key: 'smtpPass' },
+                    update: { value: encrypted },
+                    create: { key: 'smtpPass', value: encrypted }
+                });
+                config.smtpPass = encrypted;
+                console.log('🔒 SMTP password migrated to encrypted format');
+            } catch (migrateError) {
+                console.warn('⚠️ Could not migrate SMTP password to encrypted format:', migrateError.message);
+            }
         }
 
         // Descifrar contraseña SMTP
