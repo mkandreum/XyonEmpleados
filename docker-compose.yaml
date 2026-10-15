@@ -48,9 +48,10 @@ services:
         DB_PASS_ENCODED=$(node -e "console.log(encodeURIComponent(process.env.POSTGRES_PASSWORD))")
         export DATABASE_URL="postgresql://${POSTGRES_USER}:${DB_PASS_ENCODED}@db:5432/${POSTGRES_DB}"
         echo "[app] DATABASE_URL built → connecting to db:5432/${POSTGRES_DB}"
-        # ── Run migrations with retry ──
         # ── Volume ownership, then drop root privileges ──
-        chown -R node:node /app/uploads
+        # Best-effort: the volume files are already owned by 'node'. Do not abort startup if
+        # chown is denied (e.g. rootless Docker), which would otherwise crash-loop the container.
+        chown -R node:node /app/uploads 2>/dev/null || true
         # Automatic migration: backup + pending SQL + additive schema sync (see backend/prisma/runMigrations.js).
         # Give up after 10 attempts so the deployment is marked as failed instead of looping forever.
         attempt=1
