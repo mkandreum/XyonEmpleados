@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 const { PrismaClient } = require('@prisma/client');
 const prisma = require('../lib/prisma');
-const { decryptSMTPPassword, encryptSMTPPassword, isEncrypted } = require('../utils/encryptionUtils');
+const { decryptWithInfo, encryptSMTPPassword, isEncrypted } = require('../utils/encryptionUtils');
 
 const getTransporter = async () => {
     try {
@@ -23,23 +23,37 @@ const getTransporter = async () => {
 
         // Migracion automatica: si la password SMTP esta en texto plano (formato legacy),
         // guardarla cifrada en BD para no dejar el secreto en claro.
+        const persistEncrypted = async (plain, logMessage) => {
+            const encrypted = encryptSMTPPassword(plain);
+            await prisma.globalSettings.upsert({
+                where: { key: 'smtpPass' },
+                update: { value: encrypted },
+                create: { key: 'smtpPass', value: encrypted }
+            });
+            console.log(logMessage);
+        };
+
+        let decryptedPassword;
         if (!isEncrypted(config.smtpPass)) {
+            decryptedPassword = config.smtpPass;
             try {
-                const encrypted = encryptSMTPPassword(config.smtpPass);
-                await prisma.globalSettings.upsert({
-                    where: { key: 'smtpPass' },
-                    update: { value: encrypted },
-                    create: { key: 'smtpPass', value: encrypted }
-                });
-                config.smtpPass = encrypted;
-                console.log('🔒 SMTP password migrated to encrypted format');
+                await persistEncrypted(decryptedPassword, '🔒 SMTP password migrated to encrypted format');
             } catch (migrateError) {
                 console.warn('⚠️ Could not migrate SMTP password to encrypted format:', migrateError.message);
             }
+        } else {
+            const { value, key } = decryptWithInfo(config.smtpPass);
+            decryptedPassword = value;
+            // Valor cifrado con una clave antigua (legacy o derivada de JWT_SECRET antes de
+            // definir ENCRYPTION_KEY): guardarlo de nuevo con la clave actual.
+            if (key !== 'primary') {
+                try {
+                    await persistEncrypted(value, `🔒 SMTP password re-encrypted with current key (was: ${key})`);
+                } catch (reencryptError) {
+                    console.warn('⚠️ Could not re-encrypt SMTP password:', reencryptError.message);
+                }
+            }
         }
-
-        // Descifrar contraseña SMTP
-        const decryptedPassword = decryptSMTPPassword(config.smtpPass);
 
         const transportConfig = {
             host: config.smtpHost,

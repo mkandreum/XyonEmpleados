@@ -25,9 +25,65 @@ const getEncryptionKey = () => {
     // Sin ENCRYPTION_KEY: derivar de JWT_SECRET (secreto por despliegue) en vez de una clave publica en el codigo
     if (process.env.JWT_SECRET) {
         console.warn('[SECURITY] ENCRYPTION_KEY not set: deriving key from JWT_SECRET. Set ENCRYPTION_KEY (openssl rand -base64 32).');
-        return crypto.createHash('sha256').update('xyon-enc:' + process.env.JWT_SECRET).digest();
+        return jwtDerivedKey();
     }
     throw new Error('ENCRYPTION_KEY or JWT_SECRET must be set');
+};
+
+// Clave derivada de JWT_SECRET: era la clave efectiva cuando ENCRYPTION_KEY no estaba definida.
+// Se mantiene como ultimo recurso de descifrado para no romper valores guardados con ella.
+const jwtDerivedKey = () => crypto.createHash('sha256').update('xyon-enc:' + process.env.JWT_SECRET).digest();
+
+/**
+ * Claves candidatas para descifrar, en orden de preferencia. Se omiten duplicados.
+ * - primary: clave actual (ENCRYPTION_KEY, o derivada de JWT_SECRET si no esta definida)
+ * - legacy: clave por defecto publica en el codigo (valores antiguos)
+ * - jwt-derived: clave derivada de JWT_SECRET (valores cifrados antes de definir ENCRYPTION_KEY)
+ */
+const keyCandidates = () => {
+    const primary = getEncryptionKey();
+    const candidates = [{ name: 'primary', key: primary }];
+    const legacy = LEGACY_KEY();
+    if (!legacy.equals(primary)) candidates.push({ name: 'legacy', key: legacy });
+    if (process.env.JWT_SECRET) {
+        const derived = jwtDerivedKey();
+        if (!derived.equals(primary) && !derived.equals(legacy)) candidates.push({ name: 'jwt-derived', key: derived });
+    }
+    return candidates;
+};
+
+/**
+ * Descifra un texto indicando con que clave se ha descifrado
+ * @param {string} encryptedText - Texto cifrado en formato: iv:encryptedData (hex)
+ * @returns {{ value: string, key: 'primary'|'legacy'|'jwt-derived' }}
+ */
+const decryptWithInfo = (encryptedText) => {
+    if (!encryptedText) return { value: null, key: null };
+
+    const parts = encryptedText.split(':');
+    if (parts.length !== 2) {
+        throw new Error('Invalid encrypted text format');
+    }
+
+    const iv = Buffer.from(parts[0], 'hex');
+    const encrypted = parts[1];
+
+    let lastError;
+    for (const candidate of keyCandidates()) {
+        try {
+            const decipher = crypto.createDecipheriv(ALGORITHM, candidate.key, iv);
+            let out = decipher.update(encrypted, 'hex', 'utf8');
+            out += decipher.final('utf8');
+            if (candidate.name !== 'primary') {
+                console.warn(`[SECURITY] Decrypted with ${candidate.name} key; re-encrypting with the current key.`);
+            }
+            return { value: out, key: candidate.name };
+        } catch (err) {
+            lastError = err;
+        }
+    }
+
+    throw lastError || new Error('Decrypt failed: no candidate key matched');
 };
 
 /**
@@ -61,31 +117,9 @@ const encrypt = (text) => {
  */
 const decrypt = (encryptedText) => {
     if (!encryptedText) return null;
-    
+
     try {
-        // Separar iv y datos cifrados
-        const parts = encryptedText.split(':');
-        if (parts.length !== 2) {
-            throw new Error('Invalid encrypted text format');
-        }
-        
-        const iv = Buffer.from(parts[0], 'hex');
-        const encrypted = parts[1];
-        
-        const tryKey = (key) => {
-            const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
-            let out = decipher.update(encrypted, 'hex', 'utf8');
-            out += decipher.final('utf8');
-            return out;
-        };
-        try {
-            return tryKey(getEncryptionKey());
-        } catch (primaryErr) {
-            // Compatibilidad: valores cifrados con la antigua clave por defecto (re-guardar los ajustes SMTP para migrar)
-            const out = tryKey(LEGACY_KEY());
-            console.warn('[SECURITY] Decrypted with legacy key; re-save SMTP settings to re-encrypt.');
-            return out;
-        }
+        return decryptWithInfo(encryptedText).value;
     } catch (error) {
         console.error('Error decrypting data:', error);
         throw error;
@@ -149,6 +183,7 @@ const decryptSMTPPassword = (encryptedPassword) => {
 module.exports = {
     encrypt,
     decrypt,
+    decryptWithInfo,
     isEncrypted,
     encryptSMTPPassword,
     decryptSMTPPassword
