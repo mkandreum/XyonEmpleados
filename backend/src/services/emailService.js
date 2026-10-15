@@ -2,6 +2,9 @@ const nodemailer = require('nodemailer');
 const { PrismaClient } = require('@prisma/client');
 const prisma = require('../lib/prisma');
 const { decryptWithInfo, encryptSMTPPassword, isEncrypted } = require('../utils/encryptionUtils');
+const {
+    COLORS, getBranding, renderEmail, renderParagraph, escapeHtml,
+} = require('./emailLayout');
 
 const getTransporter = async () => {
     try {
@@ -98,24 +101,35 @@ const sendPasswordResetEmail = async (email, resetLink, opts = {}) => {
     const from = fromSetting?.value || '"Xyon Portal" <no-reply@xyon.com>';
 
     try {
+        const branding = await getBranding();
+        const html = renderEmail({
+            branding,
+            accent: COLORS.lilac,
+            accentSoft: COLORS.lilacSoft,
+            accentInk: COLORS.lilacInk,
+            badge: isInvite ? 'Cuenta nueva' : 'Seguridad',
+            title: isInvite ? 'Bienvenido a Xyon' : 'Restablecer contraseña',
+            preheader: isInvite
+                ? 'Establece la contraseña de tu cuenta de Xyon'
+                : 'Enlace para restablecer tu contraseña de Xyon',
+            intro: isInvite
+                ? 'Se ha creado tu cuenta. Pulsa el botón para establecer tu contraseña y empezar a usar el portal.'
+                : 'Has solicitado restablecer tu contraseña. Pulsa el botón para elegir una nueva.',
+            content: renderParagraph(
+                `<span style="color:${COLORS.slate500};font-size:13px;">` +
+                (isInvite
+                    ? 'El enlace expirará en 72 horas; después puedes usar "He olvidado mi contraseña".'
+                    : 'Si no solicitaste este cambio, puedes ignorar este correo. El enlace expirará en 1 hora.') +
+                '</span>'
+            ),
+            cta: { label: isInvite ? 'Establecer contraseña' : 'Restablecer contraseña', href: resetLink },
+        });
+
         await transporter.sendMail({
             from,
             to: email,
-            subject: isInvite ? 'Tu cuenta en Xyon Portal - Establece tu contraseña' : 'Restablecer Contraseña - Xyon Portal',
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2>${isInvite ? 'Bienvenido a Xyon Portal' : 'Restablecer Contraseña'}</h2>
-                    <p>${isInvite ? 'Se ha creado tu cuenta. Haz clic en el siguiente enlace para establecer tu contraseña:' : 'Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para continuar:'}</p>
-                    <p>
-                        <a href="${resetLink}" style="background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                            Restablecer Contraseña
-                        </a>
-                    </p>
-                    <p style="margin-top: 20px; font-size: 12px; color: #666;">
-                        ${isInvite ? 'El enlace expirará en 72 horas; después puedes usar "He olvidado mi contraseña".' : 'Si no solicitaste este cambio, puedes ignorar este correo. El enlace expirará en 1 hora.'}
-                    </p>
-                </div>
-            `
+            subject: isInvite ? 'Tu cuenta en Xyon - Establece tu contraseña' : 'Restablecer Contraseña - Xyon',
+            html,
         });
         console.log(`Password reset email sent to ${email}`);
         return true;
@@ -133,16 +147,23 @@ const sendWelcomeEmail = async (email, name) => {
     const from = fromSetting?.value || '"Xyon Portal" <no-reply@xyon.com>';
 
     try {
+        const branding = await getBranding();
+        const html = renderEmail({
+            branding,
+            accent: COLORS.lime,
+            accentSoft: COLORS.limeSoft,
+            accentInk: COLORS.limeInk,
+            badge: 'Bienvenido',
+            title: `¡Hola, ${escapeHtml(name)}!`,
+            preheader: 'Tu cuenta de Xyon está lista',
+            intro: 'Tu cuenta se ha creado correctamente. Ya puedes acceder al portal de empleados y consultar tus fichajes, solicitudes y novedades.',
+        });
+
         await transporter.sendMail({
             from,
             to: email,
-            subject: 'Bienvenido a Xyon Portal',
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2>¡Bienvenido, ${name}!</h2>
-                    <p>Tu cuenta ha sido creada exitosamente. Ya puedes acceder al portal de empleados.</p>
-                </div>
-            `
+            subject: 'Bienvenido a Xyon',
+            html,
         });
         return true;
     } catch (error) {
