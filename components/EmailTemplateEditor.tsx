@@ -205,8 +205,15 @@ export const EmailTemplateEditor: React.FC<EmailTemplateEditorProps> = ({ templa
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Asunto:</p>
                                 <p className="font-medium text-slate-900 dark:text-white">{preview.subject}</p>
                             </div>
-                            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-control">
-                                <div dangerouslySetInnerHTML={{ __html: preview.htmlBody }} />
+                            <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-control">
+                                {/* Sandboxed: the template HTML cannot run scripts or touch this page */}
+                                <iframe
+                                    title="Vista previa del email"
+                                    sandbox=""
+                                    referrerPolicy="no-referrer"
+                                    srcDoc={preview.htmlBody}
+                                    className="w-full h-[60vh] rounded-control bg-white"
+                                />
                             </div>
                         </div>
                     </div>

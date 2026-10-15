@@ -363,3 +363,35 @@ textarea:focus-visible {
     @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-2xs font-extrabold leading-none;
   }
 }
+
+/* ------------------------------------------------------------------
+   Readable data tables (admin & lists): same language as the app's
+   cards — sentence-case headers, larger rows, clear actions.
+------------------------------------------------------------------- */
+.card table thead,
+.card table thead tr {
+  background: transparent !important;
+}
+.card table thead th {
+  @apply px-5 py-3.5 text-left text-[0.8125rem] font-extrabold normal-case tracking-normal text-slate-500 dark:text-slate-400;
+  border-bottom: 1.5px solid theme('colors.slate.200');
+}
+.dark .card table thead th {
+  border-bottom-color: theme('colors.slate.800');
+}
+.card table tbody td {
+  @apply px-5 py-4 text-sm text-ink dark:text-slate-200 align-middle;
+}
+.card table tbody tr {
+  @apply transition-colors;
+}
+.card table tbody tr:hover {
+  background: rgb(200 245 60 / 0.12) !important;
+}
+/* Icon-only row actions: round, finger-sized, visible focus */
+.card table tbody td button:not(.btn):not([class*="btn-"]) {
+  @apply inline-grid place-items-center min-w-[2.25rem] min-h-[2.25rem] rounded-full transition-colors;
+}
+.card table tbody td button:not(.btn):not([class*="btn-"]):hover {
+  @apply bg-slate-100 dark:bg-slate-800;
+}

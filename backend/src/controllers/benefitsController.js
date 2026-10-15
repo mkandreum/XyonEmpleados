@@ -218,7 +218,7 @@ exports.updateUserBalance = async (req, res) => {
         res.json(updated);
     } catch (error) {
         console.error('Update balance error:', error);
-        res.status(500).json({ error: error.message || 'Failed to update balance' });
+        res.status(500).json({ error: 'No se pudo actualizar el saldo' });
     }
 };
 

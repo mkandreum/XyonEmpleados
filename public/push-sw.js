@@ -34,7 +34,12 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = event.notification?.data?.url || '/';
+  // Only same-origin destinations: a crafted push payload must not open external (phishing) pages
+  let targetUrl = '/';
+  try {
+    const u = new URL(event.notification?.data?.url || '/', self.location.origin);
+    if (u.origin === self.location.origin) targetUrl = u.pathname + u.search + u.hash;
+  } catch (e) { /* keep "/" */ }
 
   event.waitUntil(
     (async () => {

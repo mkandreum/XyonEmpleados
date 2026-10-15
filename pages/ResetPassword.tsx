@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { authService } from '../services/api';
 import { Lock, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
@@ -12,8 +12,12 @@ export const ResetPassword = () => {
     const [error, setError] = useState('');
     const [formData, setFormData] = useState({ newPassword: '', confirmPassword: '' });
 
-    const token = searchParams.get('token');
-    const email = searchParams.get('email');
+    // Read the one-time token once, then drop it from the address bar (history, screenshots, Referer)
+    const [token] = useState(() => searchParams.get('token'));
+    const [email] = useState(() => searchParams.get('email'));
+    useEffect(() => {
+        if (window.location.search) window.history.replaceState({}, '', '/reset-password');
+    }, []);
     const linkValid = !!token && !!email;
 
     const handleSubmit = async (e: React.FormEvent) => {

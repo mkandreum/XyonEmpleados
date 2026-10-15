@@ -280,6 +280,9 @@ router.get('/user-shift-assignments', userShiftAssignmentController.getUserShift
 // DepartmentShift routes (admin manages shifts, managers/employees can read)
 router.get('/department-shifts/:department', async (req, res) => {
     try {
+        if (req.user.role !== 'ADMIN' && req.params.department !== req.user.department) {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
         const prisma = require('./lib/prisma');
         const shifts = await prisma.departmentShift.findMany({ where: { department: req.params.department } });
         res.json(shifts);

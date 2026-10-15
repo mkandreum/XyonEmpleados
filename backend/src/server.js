@@ -105,32 +105,32 @@ module.exports.passwordResetEmailLimiter = passwordResetEmailLimiter;
 app.use(limiter);
 
 // Middleware - CORS Configuration (SECURE)
-const corsOptions = {
+const sameOrigin = (origin, req) => {
+    try {
+        const host = req.headers['x-forwarded-host'] || req.headers.host;
+        return !!host && new URL(origin).host === String(host).split(',')[0].trim();
+    } catch {
+        return false;
+    }
+};
+const corsOptionsFor = (req) => ({
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
+        // No Origin header: native app, curl, server-to-server (no browser CORS involved)
         if (!origin) return callback(null, true);
 
         // FRONTEND_URL puede ser una lista separada por comas
-        if (process.env.FRONTEND_URL) {
-            const allowed = process.env.FRONTEND_URL.split(',').map(o => o.trim().replace(/\/$/, ''));
-            if (allowed.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        } else {
-            // In production without FRONTEND_URL, allow same-origin
-            // Coolify will handle the domain automatically
-            callback(null, true);
-        }
+        const allowed = (process.env.FRONTEND_URL || '').split(',').map(o => o.trim().replace(/\/$/, '')).filter(Boolean);
+        // Fail closed: without FRONTEND_URL only the app's own origin (web served by this server) is allowed
+        if (allowed.includes(origin) || sameOrigin(origin, req)) return callback(null, true);
+        callback(new Error('Not allowed by CORS'));
     },
     credentials: false,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     // El API usa Bearer token (no cookies): credentials no es necesario
     maxAge: 86400 // 24 hours
-};
-app.use(cors(corsOptions));
+});
+app.use(cors((req, cb) => cb(null, corsOptionsFor(req))));
 app.use(express.json({ limit: '100kb' })); // Body limit to prevent DoS
 app.use(morgan(isDevelopment ? 'dev' : 'combined'));
 

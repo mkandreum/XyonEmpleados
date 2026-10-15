@@ -7,6 +7,7 @@ import { ConfirmModal } from '../../components/ConfirmModal';
 import toast from 'react-hot-toast';
 import { haptic } from '../../utils/haptics';
 import { LoadingState } from '../../components/PageState';
+import { Avatar } from '../../components/Avatar';
 
 export const AdminUsers: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
@@ -278,13 +279,7 @@ export const AdminUsers: React.FC = () => {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
                                             <div className="flex-shrink-0 h-10 w-10">
-                                                {user.avatarUrl && !user.avatarUrl.includes('ui-avatars.com') ? (
-                                                    <img className="h-10 w-10 rounded-full object-cover bg-slate-200 dark:bg-slate-700" src={user.avatarUrl} alt="" />
-                                                ) : (
-                                                    <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
-                                                        <UserIcon size={20} />
-                                                    </div>
-                                                )}
+                                                <Avatar name={user.name} url={user.avatarUrl && !user.avatarUrl.includes('ui-avatars.com') ? user.avatarUrl : null} size={40} />
                                             </div>
                                             <div className="ml-4">
                                                 <div className="text-sm font-medium text-slate-900 dark:text-white">{user.name} {user.active === false && <span className="ml-2 px-2 text-xs bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 rounded-full font-semibold">Inactivo</span>}</div>
@@ -321,13 +316,7 @@ export const AdminUsers: React.FC = () => {
                     <div key={user.id} className="card p-4">
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
-                                {user.avatarUrl && !user.avatarUrl.includes('ui-avatars.com') ? (
-                                    <img className="h-10 w-10 rounded-full object-cover bg-slate-200 dark:bg-slate-700" src={user.avatarUrl} alt="" />
-                                ) : (
-                                    <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
-                                        <UserIcon size={20} />
-                                    </div>
-                                )}
+                                <Avatar name={user.name} url={user.avatarUrl && !user.avatarUrl.includes('ui-avatars.com') ? user.avatarUrl : null} size={40} />
                                 <div>
                                     <div className="text-sm font-semibold text-slate-900 dark:text-white">{user.name} {user.active === false && <span className="ml-2 px-2 text-2xs bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 rounded-full font-semibold">Inactivo</span>}</div>
                                     <div className="text-xs text-slate-500 dark:text-slate-400">{user.email}</div>

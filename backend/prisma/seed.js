@@ -6,8 +6,14 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('Start seeding ...');
 
-    // Create Admin User
-    const hashedPassword = await bcrypt.hash('admin_password_123', 10);
+    // Admin user: never a known default password. Uses ADMIN_INITIAL_PASSWORD (same as the server bootstrap)
+    // or a random one printed once; the seed also refuses to run in production.
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error('seed.js is for development only (the server creates the admin from ADMIN_INITIAL_PASSWORD)');
+    }
+    const initial = process.env.ADMIN_INITIAL_PASSWORD || require('crypto').randomBytes(12).toString('base64url') + 'aA1!';
+    if (!process.env.ADMIN_INITIAL_PASSWORD) console.log('Generated admin password (dev only):', initial);
+    const hashedPassword = await bcrypt.hash(initial, 12);
 
     const admin = await prisma.user.upsert({
         where: { email: 'admin@xyonempleados.com' },

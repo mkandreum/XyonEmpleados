@@ -5,8 +5,13 @@
 
 const crypto = require('crypto');
 
+// New values: AES-256-GCM (authenticated) as "v2:iv:tag:data". Old values: AES-256-CBC "iv:data",
+// still readable and re-encrypted to v2 the first time they are used.
 const ALGORITHM = 'aes-256-cbc';
 const IV_LENGTH = 16;
+const GCM = 'aes-256-gcm';
+const GCM_IV_LENGTH = 12;
+const V2 = 'v2';
 
 /**
  * Obtiene la clave de cifrado desde variables de entorno
@@ -60,6 +65,22 @@ const keyCandidates = () => {
 const decryptWithInfo = (encryptedText) => {
     if (!encryptedText) return { value: null, key: null };
 
+    if (encryptedText.startsWith(V2 + ':')) {
+        const [, ivHex, tagHex, dataHex] = encryptedText.split(':');
+        let lastError;
+        for (const candidate of keyCandidates()) {
+            try {
+                const decipher = crypto.createDecipheriv(GCM, candidate.key, Buffer.from(ivHex, 'hex'));
+                decipher.setAuthTag(Buffer.from(tagHex, 'hex'));
+                const out = Buffer.concat([decipher.update(Buffer.from(dataHex, 'hex')), decipher.final()]).toString('utf8');
+                return { value: out, key: candidate.name };
+            } catch (err) {
+                lastError = err;
+            }
+        }
+        throw lastError || new Error('Decrypt failed: no candidate key matched');
+    }
+
     const parts = encryptedText.split(':');
     if (parts.length !== 2) {
         throw new Error('Invalid encrypted text format');
@@ -77,7 +98,8 @@ const decryptWithInfo = (encryptedText) => {
             if (candidate.name !== 'primary') {
                 console.warn(`[SECURITY] Decrypted with ${candidate.name} key; re-encrypting with the current key.`);
             }
-            return { value: out, key: candidate.name };
+            // Old CBC format: report a non-primary key so callers re-encrypt it as GCM (v2)
+            return { value: out, key: candidate.name === 'primary' ? 'primary-cbc' : candidate.name };
         } catch (err) {
             lastError = err;
         }
@@ -96,14 +118,10 @@ const encrypt = (text) => {
     
     try {
         const key = getEncryptionKey();
-        const iv = crypto.randomBytes(IV_LENGTH);
-        const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
-        
-        let encrypted = cipher.update(text, 'utf8', 'hex');
-        encrypted += cipher.final('hex');
-        
-        // Retornar iv + encrypted data separados por ':'
-        return iv.toString('hex') + ':' + encrypted;
+        const iv = crypto.randomBytes(GCM_IV_LENGTH);
+        const cipher = crypto.createCipheriv(GCM, key, iv);
+        const data = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
+        return [V2, iv.toString('hex'), cipher.getAuthTag().toString('hex'), data.toString('hex')].join(':');
     } catch (error) {
         console.error('Error encrypting data:', error);
         throw error;
@@ -133,7 +151,13 @@ const decrypt = (encryptedText) => {
  */
 const isEncrypted = (text) => {
     if (!text || typeof text !== 'string') return false;
-    
+
+    const hex = /^[0-9a-fA-F]+$/;
+    if (text.startsWith(V2 + ':')) {
+        const p = text.split(':');
+        return p.length === 4 && p[1].length === GCM_IV_LENGTH * 2 && p[2].length === 32 && p.slice(1).every(x => hex.test(x));
+    }
+
     // Formato cifrado: 32 caracteres hex (IV) + ':' + datos hex
     const parts = text.split(':');
     if (parts.length !== 2) return false;

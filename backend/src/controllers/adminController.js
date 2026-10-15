@@ -515,7 +515,7 @@ exports.updateSettings = async (req, res) => {
         const settings = { ...req.body }; // Expects object like { logoUrl: '...', companyName: '...', defaultAvatarUrl: '...' }
         // Solo valores string, claves razonables; la mascara de secreto no se persiste
         for (const k of Object.keys(settings)) {
-            if (!/^[A-Za-z0-9_.-]{1,64}$/.test(k) || typeof settings[k] !== 'string' || settings[k].length > 20000) {
+            if (!/^[A-Za-z0-9_.-]{1,64}$/.test(k) || /^audit_/i.test(k) || typeof settings[k] !== 'string' || settings[k].length > 20000) {
                 return res.status(400).json({ error: `Ajuste invalido: ${k}` });
             }
         }

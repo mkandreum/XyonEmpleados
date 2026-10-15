@@ -7,6 +7,7 @@
  *  4. Applies pending prisma/migrations/*.sql in name order, recording them in "_AppMigrations".
  *  5. Additive sync with schema.prisma: creates missing tables/columns/indexes/enum values.
  *     Destructive statements (DROP, type changes, renames…) are NEVER run automatically — they are logged.
+ *     Un DROP+ADD de la misma constraint (Prisma recrea FKs) se omite entero: la FK existente se conserva.
  *
  * Env:
  *   DATABASE_URL                required
@@ -121,7 +122,26 @@ function splitDiff(script) {
     const safe = [];
     const skipped = [];
     for (const st of statements) (DESTRUCTIVE.some(re => re.test(st)) ? skipped : safe).push(st);
-    return { safe, skipped };
+
+    // Prisma emite "DROP CONSTRAINT X" + "ADD CONSTRAINT X" cuando recrea una FK (p. ej. porque
+    // cambia el tipo de una columna implicada). DESTRUCTIVE descarta el DROP, asi que el ADD
+    // fallaria con "constraint already exists" y ensuciaria el arranque en cada deploy.
+    // Como el neto drop+add de la misma constraint es un no-op aqui, se omiten los dos.
+    const droppedConstraints = new Set();
+    for (const st of skipped) {
+        const m = st.match(/\bDROP\s+CONSTRAINT\s+(?:IF\s+EXISTS\s+)?"?([^"\s;]+)"?/i);
+        if (m) droppedConstraints.add(m[1]);
+    }
+    const additive = [];
+    for (const st of safe) {
+        const m = st.match(/\bADD\s+CONSTRAINT\s+"?([^"\s;]+)"?/i);
+        if (m && droppedConstraints.has(m[1])) {
+            skipped.push(`-- ${st.split('\n')[0].slice(0, 110)} → ADDs de constraints cuyo DROP quedo pendiente (FK existente conservada)`);
+            continue;
+        }
+        additive.push(st);
+    }
+    return { safe: additive, skipped };
 }
 
 function executeSql(sql) {
@@ -138,11 +158,16 @@ function additiveSync(label) {
     }
     const { safe, skipped } = splitDiff(script);
     for (const st of safe) {
+        const label110 = st.split('\n')[0].slice(0, 110);
         try {
             executeSql(st + ';');
-            log(`${label}: ✅ ${st.split('\n')[0].slice(0, 110)}`);
+            log(`${label}: ✅ ${label110}`);
         } catch (e) {
-            warn(`${label}: could not apply → ${st.split('\n')[0].slice(0, 110)} (${e.message.split('\n')[0]})`);
+            const firstLine = (e.message || '').split('\n')[0];
+            // "already exists" = el objeto ya esta como queremos (p. ej. otra sesion lo aplico):
+            // idempotente, no es un fallo.
+            if (/already exists/i.test(firstLine)) log(`${label}: ⏭️  ya aplicado → ${label110}`);
+            else warn(`${label}: could not apply → ${label110} (${firstLine})`);
         }
     }
     return skipped;
@@ -226,8 +251,12 @@ async function main() {
     }
 }
 
-main().catch(async (e) => {
-    console.error('[migrate] ❌', e.message || e);
-    await prisma.$disconnect().catch(() => {});
-    process.exit(1);
-});
+if (require.main === module) {
+    main().catch(async (e) => {
+        console.error('[migrate] ❌', e.message || e);
+        await prisma.$disconnect().catch(() => {});
+        process.exit(1);
+    });
+}
+
+module.exports = { splitDiff, DESTRUCTIVE, main };

@@ -16,7 +16,7 @@ interface TabsProps<T extends string> {
 /** Accessible horizontal tab bar (scrolls on narrow screens). */
 export function Tabs<T extends string>({ tabs, active, onChange, label = 'Secciones' }: TabsProps<T>) {
     return (
-        <div role="tablist" aria-label={label} className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
+        <div role="tablist" aria-label={label} className="flex gap-1 overflow-x-auto p-1 rounded-full bg-white dark:bg-slate-900 border-thick border-ink dark:border-slate-700 w-fit max-w-full">
             {tabs.map(({ id, label: text, icon: Icon }) => {
                 const selected = id === active;
                 return (
@@ -25,9 +25,9 @@ export function Tabs<T extends string>({ tabs, active, onChange, label = 'Seccio
                         role="tab"
                         aria-selected={selected}
                         onClick={() => onChange(id)}
-                        className={`px-4 py-2 rounded-control text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${selected
-                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                        className={`press px-4 h-10 rounded-full text-sm font-extrabold whitespace-nowrap transition-colors flex items-center gap-2 ${selected
+                            ? 'bg-lime text-ink'
+                            : 'text-slate-600 dark:text-slate-300 hover:text-ink dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                     >
                         {Icon && <Icon size={18} />}
                         {text}

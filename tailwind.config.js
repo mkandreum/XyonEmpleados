@@ -59,6 +59,18 @@ export default {
                     900: '#111118',
                     950: '#0A0A10',
                 },
+                // Legacy pastel status colours used across older admin screens, remapped to the app palette
+                // (soft background + dark ink text). Solid 500/600 shades keep Tailwind's defaults.
+                green: { 50: '#F6FDE3', 100: '#EEFBC4', 200: '#DDF68A', 700: '#3D4D0A', 800: '#33410A', 900: '#2A3508' },
+                emerald: { 50: '#F6FDE3', 100: '#EEFBC4', 200: '#DDF68A', 700: '#3D4D0A', 800: '#33410A', 900: '#2A3508' },
+                purple: { 50: '#F6F3FF', 100: '#EEE8FF', 200: '#DED2FF', 700: '#3B2A80', 800: '#33246E', 900: '#2A1E5A' },
+                violet: { 50: '#F6F3FF', 100: '#EEE8FF', 200: '#DED2FF', 700: '#3B2A80', 800: '#33246E', 900: '#2A1E5A' },
+                indigo: { 50: '#F6F3FF', 100: '#EEE8FF', 200: '#DED2FF', 700: '#3B2A80', 800: '#33246E', 900: '#2A1E5A' },
+                red: { 50: '#FFF3EF', 100: '#FFE3DB', 200: '#FFC7B7', 700: '#8A2A14', 800: '#742311', 900: '#5E1C0E' },
+                rose: { 50: '#FFF3EF', 100: '#FFE3DB', 200: '#FFC7B7', 700: '#8A2A14', 800: '#742311', 900: '#5E1C0E' },
+                amber: { 50: '#FFFAE6', 100: '#FFF5CC', 200: '#FFE98F', 700: '#6B5300', 800: '#5A4600', 900: '#4A3A00' },
+                yellow: { 50: '#FFFAE6', 100: '#FFF5CC', 200: '#FFE98F', 700: '#6B5300', 800: '#5A4600', 900: '#4A3A00' },
+                orange: { 50: '#FFF3EF', 100: '#FFE3DB', 200: '#FFC7B7', 700: '#8A2A14', 800: '#742311', 900: '#5E1C0E' },
                 paper: '#F4F2EA',
                 ink: '#0C0C12',
                 lime: { DEFAULT: '#C8F53C', soft: '#EEFBC4', ink: '#3D4D0A' },

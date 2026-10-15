@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import SignatureModal from '../components/SignatureModal';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, X, Download, FileText, CheckCircle2, AlertTriangle, Clock, MapPin, Search } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, X, Download, FileText, CheckCircle2, AlertTriangle, Clock, MapPin, Search, Plane } from 'lucide-react';
+import { StatCard } from '../components/StatCard';
+import { BlobIcon } from '../components/Shapes';
 import { fichajeService, vacationService, fichajeAdjustmentService, scheduleService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { FichajeDayStats, VacationRequest, VacationStatus, Fichaje, FichajeAdjustment, FichajeAdjustmentStatus, DepartmentSchedule, DayScheduleOverride } from '../types';
@@ -171,6 +173,7 @@ export const CalendarPage: React.FC = () => {
     }
   };
 
+  /** Day status, same palette as the native app: lime ok · sun incident · coral missing · lilac absence · blue vacation. */
   const getDayBadge = (date: Date): DayBadge | null => {
     const isoString = toISODate(date);
     const stats = fichajeDays[isoString];
@@ -182,44 +185,26 @@ export const CalendarPage: React.FC = () => {
 
     if (approvedVacations.length > 0) {
       const v = approvedVacations[0];
-      const colorMap = {
-        VACATION: 'bg-blue-500',
-        SICK_LEAVE: 'bg-orange-500',
-        MEDICAL_LEAVE: 'bg-red-500',
-        PERSONAL: 'bg-amber-500',
-        OVERTIME: 'bg-indigo-500',
-        OTHER: 'bg-slate-400'
-      };
       const labelMap = {
         VACATION: 'Vacaciones',
-        SICK_LEAVE: 'Horas Médicas',
-        MEDICAL_LEAVE: 'Baja Médica',
-        PERSONAL: 'Asuntos Propios/Permiso',
-        OVERTIME: 'Compensación Horas',
+        SICK_LEAVE: 'Horas médicas',
+        MEDICAL_LEAVE: 'Baja médica',
+        PERSONAL: 'Asunto propio / permiso',
+        OVERTIME: 'Compensación de horas',
         OTHER: 'Ausencia'
       };
-      const emojiMap = {
-        VACATION: '🏖️',
-        SICK_LEAVE: '🏥',
-        MEDICAL_LEAVE: '😷',
-        PERSONAL: '📄',
-        OVERTIME: '⏰',
-        OTHER: '💼'
-      };
-
+      const isVacation = v.type === 'VACATION';
       const start = new Date(v.startDate);
       const end = new Date(v.endDate);
-      const isStart = toISODate(date) === toISODate(start);
-      const isEnd = toISODate(date) === toISODate(end);
 
       return {
-        color: colorMap[v.type as keyof typeof colorMap] || 'bg-blue-500',
-        textColor: 'text-white',
-        label: `${emojiMap[v.type as keyof typeof emojiMap] || ''} ${labelMap[v.type as keyof typeof labelMap] || 'Ausencia'}`,
-        shortLabel: v.type === 'VACATION' ? 'V' : 'A',
-        detail: v.hours ? `${v.hours}h` : `${v.days} día(s)`,
-        outline: v.type !== 'VACATION',
-        range: { isStart, isEnd }
+        color: isVacation ? 'bg-blue-600' : 'bg-lilac',
+        textColor: isVacation ? 'text-white' : 'text-ink',
+        label: labelMap[v.type as keyof typeof labelMap] || 'Ausencia',
+        shortLabel: isVacation ? 'V' : 'A',
+        detail: v.hours ? `${v.hours}h` : isVacation ? 'Vac.' : 'Aus.',
+        outline: !isVacation,
+        range: { isStart: toISODate(date) === toISODate(start), isEnd: toISODate(date) === toISODate(end) }
       } as any;
     }
 
@@ -227,198 +212,165 @@ export const CalendarPage: React.FC = () => {
       const isWeekend = date.getDay() === 0 || date.getDay() === 6;
       if (isWeekend) return null;
       if (date > new Date()) return null;
-      return {
-        color: 'bg-rose-500',
-        textColor: 'text-white',
-        label: '❌ No fichado - Ausencia no justificada',
-        shortLabel: '!',
-        detail: 'Sin fichajes registrados'
-      };
+      return { color: 'bg-coral', textColor: 'text-ink', label: 'Sin fichar · ausencia no justificada', shortLabel: '!', detail: 'Sin fichar' };
     }
 
     const goodDay = stats.isComplete && !stats.isLate && !stats.isEarlyDeparture;
     if (goodDay) {
-      return {
-        color: 'bg-emerald-500',
-        textColor: 'text-white',
-        label: `✅ Fichado correcto - ${stats.horasTrabajadas}h trabajadas`,
-        shortLabel: '✓',
-        detail: `${stats.horasTrabajadas}h`
-      };
+      return { color: 'bg-lime', textColor: 'text-ink', label: `Fichado correcto · ${stats.horasTrabajadas}h`, shortLabel: '✓', detail: `${stats.horasTrabajadas}h` };
     }
 
-    const badDay = stats.isLate || stats.isEarlyDeparture || !stats.isComplete;
-    if (badDay) {
-      return {
-        color: 'bg-amber-500',
-        textColor: 'text-white',
-        label: 'Incidencia',
-        shortLabel: '!',
-        detail: `${stats.horasTrabajadas}h`
-      };
-    }
-
-    return null;
+    return { color: 'bg-sun', textColor: 'text-ink', label: 'Incidencia', shortLabel: '!', detail: `${stats.horasTrabajadas}h` };
   };
 
   const selectedBadge = selectedDay ? getDayBadge(selectedDay) : null;
 
+  const monthStats = Object.values(fichajeDays);
+  const okDays = monthStats.filter(s => s.isComplete && !s.isLate && !s.isEarlyDeparture).length;
+  const incidentDays = monthStats.filter(s => s.isLate || s.isEarlyDeparture).length;
+  const hours = monthStats.reduce((acc, s) => acc + s.horasTrabajadas, 0);
+  const vacationCount = vacations.filter(v => v.status === 'APPROVED' && new Date(v.startDate).getMonth() === currentMonth.getMonth()).length;
+
+  const views: { id: typeof view; label: string; show: boolean }[] = [
+    { id: 'calendario', label: 'Mi calendario', show: true },
+    { id: 'cuadrante', label: 'Cuadrante', show: !isManagerOrAdmin },
+    { id: 'equipo', label: 'Equipo', show: isManagerOrAdmin },
+  ];
+
   return (
-    <div className="flex flex-col gap-6 max-w-5xl mx-auto">
-      {/* Selector de píldora con diseño deslizable */}
-      <div className="flex justify-center items-center mt-2">
-        <div className="relative flex bg-slate-100 dark:bg-slate-800 p-1 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-          {/* Fondo deslizable (indicador) */}
-          <div
-            className="absolute top-1 bottom-1 left-1 rounded-full bg-white dark:bg-slate-900 shadow-sm transition-transform duration-300 ease-out z-0"
-            style={{
-              width: 'calc(50% - 4px)', // Asumiendo 2 botones iguales en tamaño
-              transform: `translateX(${view === 'calendario' ? '0%' : '100%'})` // 100% + gap si hubiera
-            }}
-          />
-
-          <button
-            className={`relative z-10 px-6 py-1.5 font-semibold text-sm transition-colors flex-1 text-center w-[120px] ${view === 'calendario' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-            onClick={() => setView('calendario')}
-          >
-            Calendario
-          </button>
-
-          {/* Cuadrante only for employees */}
-          {!isManagerOrAdmin && (
-            <button
-              className={`relative z-10 px-6 py-1.5 font-semibold text-sm transition-colors flex-1 text-center w-[120px] ${view === 'cuadrante' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-              onClick={() => setView('cuadrante')}
-            >
-              Cuadrante
-            </button>
-          )}
-
-          {/* Equipo solo para Managers/Admins */}
-          {isManagerOrAdmin && (
-            <button
-              className={`relative z-10 px-6 py-1.5 font-semibold text-sm transition-colors flex-1 text-center w-[120px] ${view === 'equipo' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
-              onClick={() => setView('equipo')}
-            >
-              C. Equipo
+    <div className="flex flex-col gap-5">
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 animate-slide-up">
+        <div>
+          <h1 className="page-title">Calendario</h1>
+          <p className="page-subtitle">Tus fichajes, ausencias y turnos del mes</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* View switch: flat pills like the app's chips */}
+          <div role="tablist" aria-label="Vista" className="flex gap-1 p-1 rounded-full bg-white dark:bg-slate-900 border-thick border-ink dark:border-slate-700">
+            {views.filter(v => v.show).map(v => (
+              <button
+                key={v.id}
+                role="tab"
+                aria-selected={view === v.id}
+                onClick={() => setView(v.id)}
+                className={`press px-4 h-9 rounded-full text-sm font-extrabold transition-colors ${view === v.id ? 'bg-lime text-ink' : 'text-slate-600 dark:text-slate-300 hover:text-ink dark:hover:text-white'}`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+          {view === 'calendario' && (
+            <button onClick={handleDownloadClick} disabled={downloading} className="btn-secondary">
+              {downloading ? <Clock className="animate-spin" size={18} aria-hidden="true" /> : <Download size={18} aria-hidden="true" />}
+              {downloading ? 'Generando…' : 'Informe'}
             </button>
           )}
         </div>
-      </div>
+      </header>
 
-      {/* Vista Calendario */}
       {view === 'calendario' && (
         <>
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <h1 className="page-title flex items-center gap-2">
-                <CalendarIcon className="text-blue-600" />
-                Calendario de Asistencia
-              </h1>
-              <p className="text-slate-500 dark:text-slate-400">Control de fichajes y ausencias mensuales</p>
-            </div>
-            <button
-              onClick={handleDownloadClick}
-              disabled={downloading}
-              className="bg-slate-900 dark:bg-slate-800 text-white px-4 py-2.5 rounded-control hover:bg-slate-800 transition-all flex items-center gap-2 font-medium shadow-sm disabled:opacity-50"
-            >
-              {downloading ? <Clock className="animate-spin" size={18} /> : <Download size={18} />}
-              {downloading ? 'Generando...' : 'Descargar Reporte'}
-            </button>
-          </div>
-
           <SignatureModal
             isOpen={showSignatureModal}
             onClose={() => setShowSignatureModal(false)}
             onConfirm={handleSignatureConfirm}
           />
 
-          <div className="card overflow-hidden shadow-slate-200/50 dark:shadow-none">
-            {/* Header con mes */}
-            <div className="p-4 md:p-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
-              <h2 className="text-xl font-bold text-slate-800 dark:text-white capitalize">{monthLabel}</h2>
-              <div className="flex gap-2">
-                <button aria-label="Anterior" onClick={prevMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-control transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
-                  <ChevronLeft size={20} />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            {/* Month */}
+            <section className="card p-4 sm:p-6 lg:col-span-7 animate-slide-up delay-75" aria-label={`Calendario de ${monthLabel}`}>
+              <div className="flex items-center justify-between mb-4">
+                <button aria-label="Mes anterior" onClick={prevMonth} className="press w-11 h-11 grid place-items-center rounded-full border-thick border-ink dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800">
+                  <ChevronLeft size={20} aria-hidden="true" />
                 </button>
-                <button aria-label="Siguiente" onClick={nextMonth} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-control transition-colors border border-slate-100 dark:border-slate-800 shadow-sm">
-                  <ChevronRight size={20} />
+                <h2 className="font-display font-black text-2xl tracking-tight first-letter:uppercase text-ink dark:text-white">{monthLabel}</h2>
+                <button aria-label="Mes siguiente" onClick={nextMonth} className="press w-11 h-11 grid place-items-center rounded-full border-thick border-ink dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800">
+                  <ChevronRight size={20} aria-hidden="true" />
                 </button>
               </div>
-            </div>
 
-            {/* Labels de días */}
-            <div className="grid grid-cols-7 border-b border-slate-50 dark:border-slate-800/50">
-              {weekdayLabels.map(l => (
-                <div key={l} className="py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">{l}</div>
-              ))}
-            </div>
+              <div className="grid grid-cols-7 mb-1">
+                {weekdayLabels.map(l => (
+                  <div key={l} className="py-1 text-center text-xs font-extrabold text-slate-500 dark:text-slate-400">{l.charAt(0)}</div>
+                ))}
+              </div>
 
-            {/* Celdas del calendario */}
-            {loading ? (
-              <div className="h-[400px] flex items-center justify-center bg-slate-50/30 dark:bg-slate-900/10">
-                <div className="flex flex-col items-center gap-2">
-                  <Clock className="animate-spin text-blue-600" size={32} />
-                  <p className="text-sm font-medium text-slate-500">Cargando mensualidad...</p>
+              {loading ? (
+                <div className="h-[340px] grid place-items-center">
+                  <div className="flex flex-col items-center gap-2 text-slate-500">
+                    <Clock className="animate-spin text-blue-600" size={28} aria-hidden="true" />
+                    <p className="text-sm font-semibold">Cargando el mes…</p>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-7">
-                {days.map((d, i) => {
-                  const isToday = toISODate(d) === toISODate(new Date());
-                  const isCurrentMonth = d.getMonth() === currentMonth.getMonth();
-                  const isSelected = selectedDay && toISODate(d) === toISODate(selectedDay);
-                  const badge = getDayBadge(d);
-                  const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedDay(d)}
-                      className={`relative flex flex-col items-center justify-center aspect-square rounded-control sm:rounded-card transition-all duration-200 p-1 mx-0.5 my-0.5
-                    ${!isCurrentMonth ? 'opacity-20' : 'opacity-100'}
-                    ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/20 z-10' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}
-                    ${isWeekend && !badge ? 'bg-slate-50/50 dark:bg-slate-900/20' : ''}
-                  `}
-                    >
-                      {/* Numero del día con indicador 'Hoy' */}
-                      <span className={`text-xs sm:text-sm font-medium leading-none mb-1 ${isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : isCurrentMonth ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500'}`}>
-                        {d.getDate()}
-                        {isToday && <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-blue-600 rounded-full" />}
-                      </span>
-
-                      {/* Badge visual (punto o etiqueta corta) */}
-                      {badge && (
-                        <>
-                          <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${badge.color} shadow-sm`} />
-                          <span className={`hidden sm:inline-block mt-1 px-1.5 py-0.5 rounded-full text-2xs font-medium ${badge.textColor} ${badge.color} leading-none whitespace-nowrap`}>
-                            {badge.detail || badge.shortLabel}
+              ) : (
+                <div className="grid grid-cols-7 gap-y-1">
+                  {days.map((d, i) => {
+                    const isToday = toISODate(d) === toISODate(new Date());
+                    const inMonth = d.getMonth() === currentMonth.getMonth();
+                    const isSelected = !!selectedDay && toISODate(d) === toISODate(selectedDay);
+                    const badge = inMonth ? getDayBadge(d) : null;
+                    return (
+                      <div key={i} className="relative flex justify-center">
+                        {/* Absence range band behind consecutive days */}
+                        {badge?.range && (
+                          <span aria-hidden="true" className={`absolute top-1.5 bottom-1.5 ${badge.range.isStart ? 'left-1/2 right-0' : badge.range.isEnd ? 'left-0 right-1/2' : 'inset-x-0'} ${badge.color} opacity-25`} />
+                        )}
+                        <button
+                          onClick={() => setSelectedDay(d)}
+                          aria-label={`${d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}${badge ? ` — ${badge.label}` : ''}`}
+                          aria-pressed={isSelected}
+                          className={`relative z-10 w-full max-w-[3.5rem] aspect-square rounded-full flex flex-col items-center justify-center transition-[background-color,transform] duration-300 ease-spring active:scale-90
+                            ${!inMonth ? 'opacity-25' : ''}
+                            ${isSelected ? 'bg-blue-600 text-white' : isToday ? 'bg-lime/40 text-ink dark:text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-ink dark:text-slate-100'}`}
+                        >
+                          <span className={`text-sm sm:text-base leading-none ${isSelected || isToday ? 'font-black' : 'font-semibold'}`}>{d.getDate()}</span>
+                          <span className="mt-1 h-1.5 flex gap-0.5">
+                            {badge && <span className={`w-1.5 h-1.5 rounded-full ${isSelected && badge.color === 'bg-blue-600' ? 'bg-white' : badge.color}`} />}
                           </span>
-                        </>
-                      )}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
-                      {/* Range connector for vacations */}
-                      {badge?.range && (
-                        <div className={`absolute inset-y-1 ${badge.range.isStart ? 'left-1/2 right-0' : badge.range.isEnd ? 'left-0 right-1/2' : 'left-0 right-0'} ${badge.color} opacity-10 -z-0`} />
-                      )}
-                    </button>
-                  );
-                })}
+              {/* Compact legend */}
+              <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                {[['bg-lime', 'Correcto'], ['bg-sun', 'Incidencia'], ['bg-coral', 'Sin fichar'], ['bg-blue-600', 'Vacaciones'], ['bg-lilac', 'Otras ausencias']].map(([c, l]) => (
+                  <li key={l} className="flex items-center gap-1.5"><span className={`w-2.5 h-2.5 rounded-full ${c}`} aria-hidden="true" />{l}</li>
+                ))}
+              </ul>
+            </section>
+
+            {/* Side: month summary + selected day */}
+            <div className="lg:col-span-5 flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-3">
+                <StatCard icon={CheckCircle2} tone="lime" label="Días correctos" value={okDays} delay="delay-100" />
+                <StatCard icon={AlertTriangle} tone="sun" label="Incidencias" value={incidentDays} delay="delay-150" />
+                <StatCard icon={Clock} tone="lilac" label="Horas trabajadas" value={hours.toFixed(1)} delay="delay-200" />
+                <StatCard icon={Plane} tone="blue" label="Vacaciones" value={vacationCount} delay="delay-300" />
               </div>
-            )}
-          </div>
 
-          {selectedDay && (
-            <DayDetailPanel
-              date={selectedDay}
-              badgeLabel={selectedBadge?.label}
-              badgeDetail={selectedBadge?.detail}
-              stats={fichajeDays[toISODate(selectedDay)]}
-              adjustments={adjustments}
-              onAdjust={setAdjustingFichaje}
-              onClose={() => setSelectedDay(null)}
-            />
-          )}
+              {selectedDay ? (
+                <DayDetailPanel
+                  date={selectedDay}
+                  badgeLabel={selectedBadge?.label}
+                  badgeDetail={selectedBadge?.detail}
+                  stats={fichajeDays[toISODate(selectedDay)]}
+                  adjustments={adjustments}
+                  onAdjust={setAdjustingFichaje}
+                  onClose={() => setSelectedDay(null)}
+                />
+              ) : (
+                <div className="card p-5 flex items-center gap-4 animate-slide-up delay-300">
+                  <BlobIcon icon={<CalendarIcon size={22} />} color="#C9B6FF" size={56} />
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    <b className="text-ink dark:text-white">Toca un día</b> para ver tus fichajes, las horas y pedir un ajuste si algo no cuadra.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
 
           {adjustingFichaje && (
             <AdjustFichajeModal
@@ -430,88 +382,6 @@ export const CalendarPage: React.FC = () => {
               }}
             />
           )}
-
-          {/* Legend & Help Section */}
-          <div className="space-y-4">
-            {/* Expanded Legend */}
-            <div className="card p-4">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
-                <span className="text-lg">📖</span> Leyenda del Calendario
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs sm:text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm flex-shrink-0"></span>
-                  <span className="text-slate-700 dark:text-slate-300">✅ <b>Correcto:</b> Fichajes completos y a tiempo</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-amber-500 shadow-sm flex-shrink-0"></span>
-                  <span className="text-slate-700 dark:text-slate-300">⚠️ <b>Incidencia:</b> Llegada tarde o salida temprana</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-rose-500 shadow-sm flex-shrink-0"></span>
-                  <span className="text-slate-700 dark:text-slate-300">❌ <b>No fichado:</b> Sin registros de fichaje</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-blue-500 shadow-sm flex-shrink-0"></span>
-                  <span className="text-slate-700 dark:text-slate-300">🏖️ <b>Vacaciones:</b> Días de vacaciones aprobados</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-orange-500 border-2 border-orange-500 bg-white flex-shrink-0"></span>
-                  <span className="text-slate-700 dark:text-slate-300">🏥 <b>Horas Médicas:</b> Permisos médicos (horas)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-red-500 border-2 border-red-500 bg-white flex-shrink-0"></span>
-                  <span className="text-slate-700 dark:text-slate-300">😷 <b>Baja Médica:</b> Ausencia por enfermedad</span>
-                </div>
-              </div>
-            </div>
-
-            {/* How to Read Section */}
-            <div className="bg-lilac text-ink rounded-card border-thick border-ink dark:border-transparent p-5">
-              <h3 className="font-display font-black text-lg tracking-tight mb-3">
-                Cómo leer el calendario
-              </h3>
-              <div className="space-y-2 text-xs sm:text-sm text-ink/85">
-                <p><b>Haz clic en cualquier día</b> para ver los detalles completos de tus fichajes, horas trabajadas e incidencias.</p>
-                <p><b>Los puntos de colores</b> indican el estado de cada día. Verde = todo correcto, Ámbar = incidencias, Rojo = sin fichajes.</p>
-                <p><b>Las etiquetas</b> muestran información adicional como horas trabajadas o tipo de ausencia.</p>
-                <p><b>Los días con rango</b> (vacaciones) se muestran con una franja de color conectando los días.</p>
-              </div>
-            </div>
-
-            {/* Monthly Summary */}
-            <div className="card p-4">
-              <h3 className="font-display font-black text-lg tracking-tight text-ink dark:text-white mb-3">
-                Resumen del mes
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-lime text-ink rounded-[1.25rem] p-3.5">
-                  <div className="font-display font-black text-3xl leading-none tracking-tighter">
-                    {Object.values(fichajeDays).filter(s => s.isComplete && !s.isLate && !s.isEarlyDeparture).length}
-                  </div>
-                  <div className="text-ink/75 text-xs font-bold mt-1.5">Días OK</div>
-                </div>
-                <div className="bg-sun text-ink rounded-[1.25rem] p-3.5">
-                  <div className="font-display font-black text-3xl leading-none tracking-tighter">
-                    {Object.values(fichajeDays).filter(s => s.isLate || s.isEarlyDeparture).length}
-                  </div>
-                  <div className="text-ink/75 text-xs font-bold mt-1.5">Incidencias</div>
-                </div>
-                <div className="bg-blue-600 text-white rounded-[1.25rem] p-3.5">
-                  <div className="font-display font-black text-3xl leading-none tracking-tighter">
-                    {vacations.filter(v => v.status === 'APPROVED' && new Date(v.startDate).getMonth() === currentMonth.getMonth()).length}
-                  </div>
-                  <div className="text-white/80 text-xs font-bold mt-1.5">Vacaciones</div>
-                </div>
-                <div className="bg-lilac text-ink rounded-[1.25rem] p-3.5">
-                  <div className="font-display font-black text-3xl leading-none tracking-tighter">
-                    {Object.values(fichajeDays).reduce((acc, s) => acc + s.horasTrabajadas, 0).toFixed(1)}
-                  </div>
-                  <div className="text-ink/75 text-xs font-bold mt-1.5">Horas totales</div>
-                </div>
-              </div>
-            </div>
-          </div>
         </>
       )}
 

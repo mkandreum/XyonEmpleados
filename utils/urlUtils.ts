@@ -3,6 +3,9 @@
  */
 export const getAbsoluteUrl = (url: string | undefined): string => {
     if (!url) return '';
+    // Block script-capable schemes (javascript:, vbscript:, data:text/html…)
+    const scheme = /^\s*([a-z][a-z0-9+.-]*):/i.exec(url)?.[1]?.toLowerCase();
+    if (scheme && !['http', 'https', 'blob'].includes(scheme) && !/^data:image\//i.test(url.trim())) return '';
 
     // If already absolute, return as-is
     if (url.startsWith('http://') || url.startsWith('https://')) {

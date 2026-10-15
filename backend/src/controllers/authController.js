@@ -161,13 +161,15 @@ exports.register = async (req, res) => {
                 }
             });
 
-            await tx.invitationCode.update({
-                where: { id: validInvite.id },
+            // Atomic claim: only succeeds if nobody used the code in the meantime
+            const claimed = await tx.invitationCode.updateMany({
+                where: { id: validInvite.id, isUsed: false },
                 data: {
                     isUsed: true,
                     usedBy: newUser.email
                 }
             });
+            if (claimed.count !== 1) throw new Error('INVITE_INVALID');
 
             return newUser;
         });
@@ -220,6 +222,12 @@ exports.login = async (req, res) => {
     }
 };
 
+/** "daniel@empresa.com" -> "d***@empresa.com" (logs must not carry full addresses). */
+const maskEmail = (e) => {
+    const [user, domain] = String(e || '').split('@');
+    return domain ? `${user.slice(0, 1)}***@${domain}` : '***';
+};
+
 exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
@@ -229,7 +237,7 @@ exports.forgotPassword = async (req, res) => {
         const user = await prisma.user.findUnique({ where: { email } });
         const client = describeClient(req);
         console.log(
-            `🔐 [PASSWORD RESET REQUEST] email=${email} existe=${!!user && user.active !== false} ` +
+            `🔐 [PASSWORD RESET REQUEST] email=${maskEmail(email)} existe=${!!user && user.active !== false} ` +
             `ip=${client.ip} navegador="${client.browser}" so="${client.os}" dispositivo="${client.device}" ` +
             `tipo=${client.clientType} ua="${client.userAgent}"`
         );
@@ -245,7 +253,7 @@ exports.forgotPassword = async (req, res) => {
         const RESEND_COOLDOWN_MS = 10 * 60 * 1000;
         if (user.resetToken && user.resetTokenExpiry &&
             user.resetTokenExpiry.getTime() - Date.now() > RESET_TOKEN_TTL_MS - RESEND_COOLDOWN_MS) {
-            console.log(`⏳ [PASSWORD RESET COOLDOWN] email=${email} ip=${client.ip} — reenvio omitido, el enlace actual es reciente`);
+            console.log(`⏳ [PASSWORD RESET COOLDOWN] email=${maskEmail(email)} ip=${client.ip} — reenvio omitido, el enlace actual es reciente`);
             return res.json({ message: 'If the email exists, a reset link has been sent.' });
         }
 
@@ -315,7 +323,7 @@ exports.resetPassword = async (req, res) => {
 
         const client = describeClient(req);
         console.log(
-            `🔐 [PASSWORD RESET DONE] email=${email} ` +
+            `🔐 [PASSWORD RESET DONE] email=${maskEmail(email)} ` +
             `ip=${client.ip} navegador="${client.browser}" so="${client.os}" dispositivo="${client.device}" ` +
             `tipo=${client.clientType} ua="${client.userAgent}"`
         );

@@ -1,3 +1,5 @@
+import { BlobIcon } from '../../components/Shapes';
+import { Building2 } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { Clock, Users, Calendar, Download, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { fichajeService, adminService } from '../../services/api';
@@ -148,6 +150,14 @@ export const AdminFichajes: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {!selectedDepartment && (
+                <div className="card p-8 flex flex-col items-center text-center gap-3 animate-slide-up delay-100">
+                    <BlobIcon icon={<Building2 size={26} />} color="#C8F53C" size={72} />
+                    <p className="font-display font-black text-xl tracking-tight text-ink dark:text-white">Elige un departamento</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm">Verás los fichajes de su equipo por semana o mes, las incidencias y podrás exportar el informe.</p>
+                </div>
+            )}
 
             {selectedDepartment && (
                 <>
