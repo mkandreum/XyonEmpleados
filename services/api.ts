@@ -38,7 +38,7 @@ export function isTokenExpired(token: string): boolean {
 // Flag to prevent multiple simultaneous logouts
 let isLoggingOut = false;
 
-export async function forceLogout() {
+export async function forceLogout(reason: 'expired' | 'disabled' = 'expired') {
     if (isLoggingOut) return;
     isLoggingOut = true;
 
@@ -67,7 +67,7 @@ export async function forceLogout() {
     // 3. Force redirect to login
     const currentPath = window.location.pathname;
     if (!['/login', '/register', '/forgot-password', '/reset-password'].includes(currentPath)) {
-        window.location.href = '/login?expired=1';
+        window.location.href = `/login?${reason}=1`;
     } else {
         // If already on login but something is weird, just reload
         window.location.reload();
@@ -109,9 +109,13 @@ api.interceptors.response.use(
             requestUrl.includes('/auth/forgot-password') ||
             requestUrl.includes('/auth/reset-password');
 
-        if ((status === 401 || status === 403) && !isAuthRoute) {
+        // Only session problems end the session. A plain 403 means "not allowed to do this"
+        // (role/department checks) and must not log the user out.
+        const code = error.response?.data?.code;
+        const sessionInvalid = status === 401 || (status === 403 && (code === 'TOKEN_EXPIRED' || code === 'INVALID_TOKEN'));
+        if (sessionInvalid && !isAuthRoute) {
             console.warn(`Session expired or invalid (${status}) on ${requestUrl}. Logging out.`);
-            forceLogout();
+            forceLogout(code === 'ACCOUNT_DISABLED' ? 'disabled' : 'expired');
         }
 
         return Promise.reject(error);

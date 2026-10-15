@@ -1,91 +1,65 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { authService } from '../services/api';
-import { Mail, ArrowLeft } from 'lucide-react';
+import { Mail, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
+import { AuthShell, AuthField, PillButton } from '../components/AuthShell';
 
 export const ForgotPassword = () => {
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [message, setMessage] = useState('');
+    const [sent, setSent] = useState(false);
     const [error, setError] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        setMessage('');
         setError('');
 
         try {
             await authService.forgotPassword(email);
-            setMessage('Si existe una cuenta con este email, recibirás un enlace de recuperación.');
+            setSent(true);
             setEmail('');
-        } catch (err) {
-            setError('Error al procesar la solicitud. Inténtalo de nuevo.');
+        } catch (err: any) {
+            setError(err?.response?.status === 429
+                ? 'Demasiadas solicitudes. Espera unos minutos e inténtalo de nuevo.'
+                : 'No se pudo procesar la solicitud. Inténtalo de nuevo.');
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors">
-            <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white dark:bg-slate-900 py-8 px-4 shadow rounded-control sm:px-10 border border-slate-200 dark:border-slate-800">
-                    <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6">
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Recuperar Contraseña</h2>
-                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                            Ingresa tu email para recibir un enlace de recuperación.
-                        </p>
-                    </div>
-
-                    {message && (
-                        <div className="mb-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 p-3 rounded-control text-sm">
-                            {message}
-                        </div>
-                    )}
-                    {error && (
-                        <div className="mb-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-3 rounded-control text-sm">
-                            {error}
-                        </div>
-                    )}
-
-                    <form className="space-y-6" onSubmit={handleSubmit}>
-                        <div>
-                            <label htmlFor="email" className="label mb-0">
-                                Correo Electrónico
-                            </label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Mail className="h-5 w-5 text-slate-500 dark:text-slate-400" />
-                                </div>
-                                <input
-                                    id="email"
-                                    type="email"
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-control focus:ring-blue-500 focus:border-blue-500 p-2.5 bg-white dark:bg-slate-900 dark:bg-slate-800 text-slate-900 dark:text-white"
-                                    placeholder="tu@email.com"
-                                />
-                            </div>
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-control shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
-                        >
-                            {isLoading ? 'Enviando...' : 'Enviar Enlace'}
-                        </button>
-                    </form>
-
-                    <div className="mt-6 text-center">
-                        <Link to="/login" className="flex items-center justify-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
-                            <ArrowLeft size={16} />
-                            Volver al Login
-                        </Link>
-                    </div>
+        <AuthShell
+            headline={'¿Sin\ncontraseña?'}
+            tagline="Te enviamos un enlace para crear una nueva en menos de un minuto."
+            title="Recuperar acceso"
+            subtitle="Escribe el email de tu cuenta."
+            footer={
+                <Link to="/login" className="inline-flex items-center gap-2 font-extrabold text-blue-600 dark:text-blue-400 underline-offset-4 hover:underline">
+                    <ArrowLeft size={16} aria-hidden="true" />
+                    Volver a iniciar sesión
+                </Link>
+            }
+        >
+            {sent ? (
+                <div role="status" className="flex items-start gap-3 rounded-[1.375rem] bg-lime p-4 text-ink font-semibold animate-pop">
+                    <CheckCircle2 className="h-6 w-6 shrink-0" aria-hidden="true" />
+                    <span>Si existe una cuenta con ese email, recibirás un enlace de recuperación. Revisa también la carpeta de spam.</span>
                 </div>
-            </div>
-        </div>
+            ) : (
+                <form className="space-y-5" onSubmit={handleSubmit}>
+                    <AuthField id="email" type="email" autoComplete="email" required label="Correo electrónico"
+                        icon={<Mail size={20} />} value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }} placeholder="tu@empresa.com" />
+
+                    {error && (
+                        <p role="alert" className="flex items-center gap-2 rounded-full bg-coral/15 px-4 py-2.5 text-sm font-bold text-coral-ink dark:text-coral">
+                            <AlertCircle size={16} aria-hidden="true" />{error}
+                        </p>
+                    )}
+
+                    <PillButton type="submit" loading={isLoading} loadingText="Enviando…">Enviar enlace</PillButton>
+                </form>
+            )}
+        </AuthShell>
     );
 };

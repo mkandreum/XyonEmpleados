@@ -268,7 +268,7 @@ exports.resetPassword = async (req, res) => {
             return res.status(400).json({ error: 'Invalid request' });
         }
         if (newPassword.length < 12 || !/[a-z]/.test(newPassword) || !/[A-Z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
-            return res.status(400).json({ error: 'La contrasena debe tener al menos 12 caracteres, mayuscula, minuscula, numero y simbolo' });
+            return res.status(400).json({ error: 'La contraseña debe tener al menos 12 caracteres, con mayúsculas, minúsculas, un número y un símbolo' });
         }
 
         const user = await prisma.user.findUnique({ where: { email } });

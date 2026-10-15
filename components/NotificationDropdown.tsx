@@ -12,7 +12,15 @@ interface Notification {
     date: string;
 }
 
-export const NotificationDropdown: React.FC = () => {
+interface NotificationDropdownProps {
+    /** 'down' opens below the bell (top bar); 'side' opens to the right, anchored to the bottom (sidebar). */
+    placement?: 'down' | 'side';
+    /** Optional text shown next to the bell (expanded sidebar). */
+    label?: string;
+    buttonClassName?: string;
+}
+
+export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ placement = 'down', label, buttonClassName }) => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
@@ -122,19 +130,23 @@ export const NotificationDropdown: React.FC = () => {
 
     return (
         <div className="relative" ref={dropdownRef}>
-            <button aria-label="Notificaciones"
+            <button aria-label={unreadCount > 0 ? `Notificaciones (${unreadCount} sin leer)` : 'Notificaciones'}
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                aria-expanded={isOpen}
+                className={buttonClassName ?? 'relative p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors press'}
                 title="Notificaciones"
             >
-                <Bell size={20} />
-                {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-slate-900 animate-pulse"></span>
-                )}
+                <span className="relative inline-flex">
+                    <Bell size={20} aria-hidden="true" />
+                    {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-coral rounded-full ring-2 ring-white dark:ring-slate-900 animate-pulse" aria-hidden="true"></span>
+                    )}
+                </span>
+                {label && <span className="truncate">{label}</span>}
             </button>
 
             {isOpen && (
-                <div className="card absolute right-0 mt-2 w-80 shadow-xl overflow-hidden z-50 animate-fadeIn">
+                <div className={`card absolute w-80 max-w-[calc(100vw-2rem)] shadow-float overflow-hidden z-popover animate-pop ${placement === 'side' ? 'left-full bottom-0 ml-3' : 'right-0 mt-2'}`}>
                     <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
                         <div className="flex items-center gap-2">
                             <h3 className="font-semibold text-slate-900 dark:text-white text-sm">Notificaciones</h3>

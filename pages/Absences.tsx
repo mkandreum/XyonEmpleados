@@ -9,15 +9,17 @@ import { LoadingState, EmptyState } from '../components/PageState';
 import { Modal } from '../components/Modal';
 import { useModal } from '../hooks/useModal';
 import { useRowJustificationUpload } from '../hooks/useJustificationUpload';
+import { AnimatedNumber } from '../components/Shapes';
 
 const todayIso = () => new Date().toISOString().split('T')[0];
 const initialForm = () => ({ startDate: todayIso(), endDate: todayIso(), type: 'VACATION', justificationUrl: '' });
 
+// Flat saturated tiles, same palette as the native app's StatPill
 const TILE_TONES = {
-    blue: { bg: 'from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800', sub: 'text-blue-100' },
-    purple: { bg: 'from-purple-600 to-purple-700 dark:from-purple-700 dark:to-purple-800', sub: 'text-purple-100' },
-    red: { bg: 'from-red-600 to-red-700 dark:from-red-700 dark:to-red-800', sub: 'text-red-100' },
-    amber: { bg: 'from-amber-700 to-amber-800 dark:from-amber-700 dark:to-amber-900', sub: 'text-amber-100' },
+    blue: { bg: 'bg-blue-600 text-white', sub: 'text-white/80', chip: 'bg-white/15' },
+    purple: { bg: 'bg-lilac text-ink', sub: 'text-ink/75', chip: 'bg-ink/10' },
+    red: { bg: 'bg-coral text-ink', sub: 'text-ink/75', chip: 'bg-ink/10' },
+    amber: { bg: 'bg-sun text-ink', sub: 'text-ink/75', chip: 'bg-ink/10' },
 };
 
 interface BenefitTileProps {
@@ -30,12 +32,12 @@ interface BenefitTileProps {
 }
 
 const BenefitTile: React.FC<BenefitTileProps> = ({ tone, icon, value, title, caption, delay }) => (
-    <div className={`bg-gradient-to-br ${TILE_TONES[tone].bg} text-white p-6 rounded-card shadow-card animate-slide-up ${delay}`}>
+    <div className={`${TILE_TONES[tone].bg} p-5 rounded-card border-thick border-ink dark:border-transparent animate-slide-up ${delay}`}>
         <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-white/20 rounded-control" aria-hidden="true">{icon}</div>
-            <span className="text-3xl font-bold">{value}</span>
+            <div className={`w-11 h-11 grid place-items-center rounded-full ${TILE_TONES[tone].chip}`} aria-hidden="true">{icon}</div>
+            <AnimatedNumber value={value} className="font-display font-black text-[2.25rem] leading-none tracking-tighter" />
         </div>
-        <h3 className="font-semibold mb-1">{title}</h3>
+        <h3 className="font-extrabold mb-0.5">{title}</h3>
         <p className={`${TILE_TONES[tone].sub} text-sm`}>{caption}</p>
     </div>
 );

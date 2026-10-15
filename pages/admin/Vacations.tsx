@@ -181,17 +181,17 @@ export const AdminVacations: React.FC = () => {
 
             {/* Pending Requests Section */}
             {pendingRequests.length > 0 && (
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border-2 border-amber-200 dark:border-amber-800/50 rounded-control p-4 md:p-6 transition-colors font-sans animate-slide-up delay-150">
+                <div className="bg-sun text-ink border-thick border-ink dark:border-transparent rounded-card p-4 md:p-6 animate-slide-up delay-150">
                     <div className="flex items-center gap-2 mb-4">
-                        <AlertCircle className="text-amber-700 dark:text-amber-400" size={24} />
-                        <h2 className="text-lg md:text-xl font-bold text-amber-900 dark:text-amber-100">
+                        <AlertCircle size={24} aria-hidden="true" />
+                        <h2 className="font-display font-black text-xl md:text-2xl tracking-tight">
                             Solicitudes Pendientes ({pendingRequests.length})
                         </h2>
                     </div>
 
                     <div className="space-y-3">
                         {pendingRequests.map(request => (
-                            <div key={request.id} className="bg-white dark:bg-slate-900 rounded-control p-3 md:p-4 shadow-sm border border-amber-100 dark:border-amber-800/30 transition-colors">
+                            <div key={request.id} className="bg-white dark:bg-slate-900 rounded-[1.375rem] p-3 md:p-4 transition-colors">
                                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                                     <div className="flex-1">
                                         <div className="flex flex-wrap items-center gap-2 mb-2">

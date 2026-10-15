@@ -17,7 +17,8 @@ interface Payroll {
   status: string;
 }
 
-const formatAmount = (amount: number) => `${amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€`;
+const formatAmount = (amount: number | null | undefined) =>
+  typeof amount === 'number' ? `${amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€` : '—';
 
 const PayrollStatus: React.FC<{ status: string }> = ({ status }) => (
   <span className={`px-2 py-1 text-xs font-medium rounded-full ${status === 'PAID'
@@ -205,7 +206,7 @@ export const PayrollPage: React.FC = () => {
             icon={DollarSign}
             iconClass="bg-success-soft dark:bg-green-900/20 text-success dark:text-green-400"
             label="Última nómina"
-            value={`${lastPayroll.amount.toLocaleString('es-ES')}€`}
+            value={formatAmount(lastPayroll.amount)}
             caption={`${lastPayroll.month} ${lastPayroll.year}`}
             delay="delay-75"
           />

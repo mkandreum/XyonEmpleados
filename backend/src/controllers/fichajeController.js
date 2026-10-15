@@ -422,10 +422,14 @@ exports.getMonth = async (req, res) => {
             }
         }
 
-        // Obtener inicio y fin del mes actual
+        // Mes pedido (?year=YYYY&month=1-12) o, por defecto, el actual
         const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        const qYear = parseInt(req.query.year, 10);
+        const qMonth = parseInt(req.query.month, 10);
+        const year = Number.isInteger(qYear) && qYear >= 2000 && qYear <= 2100 ? qYear : now.getFullYear();
+        const monthIdx = Number.isInteger(qMonth) && qMonth >= 1 && qMonth <= 12 ? qMonth - 1 : now.getMonth();
+        const startOfMonth = new Date(year, monthIdx, 1);
+        const endOfMonth = new Date(year, monthIdx + 1, 0, 23, 59, 59, 999);
 
         const fichajes = await prisma.fichaje.findMany({
             where: {

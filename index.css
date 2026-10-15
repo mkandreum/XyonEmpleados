@@ -13,8 +13,19 @@
 body {
   font-family: theme('fontFamily.sans');
   -webkit-font-smoothing: antialiased;
-  @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300;
+  @apply bg-slate-50 text-ink dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300;
   min-height: 100vh;
+}
+
+/* Headings use the heavy, tight display face (app: FontWeight.Black, negative tracking) */
+h1, h2, h3 {
+  font-family: theme('fontFamily.display');
+  letter-spacing: -0.025em;
+}
+
+::selection {
+  background: theme('colors.lime.DEFAULT');
+  color: theme('colors.ink');
 }
 
 :root {
@@ -133,7 +144,8 @@ textarea:focus-visible {
     transition-duration: 0.01ms !important;
   }
 
-  .animate-slide-up {
+  .animate-slide-up,
+  .stagger > * {
     opacity: 1;
   }
 }
@@ -175,15 +187,16 @@ textarea:focus-visible {
   }
 }
 
+/* Staggered spring entrance (app Modifier.staggered: rise + slight counter-rotation) */
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(40px) rotate(-1.5deg);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) rotate(0);
   }
 }
 
@@ -205,8 +218,21 @@ textarea:focus-visible {
 
 .animate-slide-up {
   opacity: 0;
-  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUp 0.7s cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
 }
+
+/* Auto-stagger direct children: <div className="stagger"> */
+.stagger > * {
+  opacity: 0;
+  animation: slideUp 0.7s cubic-bezier(0.34, 1.3, 0.64, 1) forwards;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 300ms; }
+.stagger > *:nth-child(n+7) { animation-delay: 360ms; }
 
 .animate-scale-in {
   animation: scaleIn 0.3s ease-out forwards;
@@ -268,50 +294,72 @@ textarea:focus-visible {
   animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
 }
 /* ------------------------------------------------------------------
-   Design system primitives (radii: control 12 / card 16 / modal 24)
-   Use these instead of re-typing long class strings.
+   Design system primitives — same language as the native app:
+   flat fills, 1.5px ink outlines, big pills, springy press.
+   Radii: control 16 / card 28 / modal 32.
 ------------------------------------------------------------------- */
 @layer components {
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 min-h-[2.5rem] px-4 py-2 rounded-control text-sm font-semibold
-      transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  /* Springy press feedback (app: scale .95/.89 with MediumBouncy spring) */
+  .press {
+    @apply transition-transform duration-300 ease-spring active:scale-[0.95];
   }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 min-h-[2.75rem] px-5 py-2 rounded-full text-sm font-extrabold
+      tracking-tight transition-[transform,background-color,color] duration-300 ease-spring active:scale-[0.95]
+      disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100;
+  }
+  /* Ink pill — the app's default XyonButton */
   .btn-primary {
-    @apply btn bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800;
+    @apply btn bg-ink text-paper hover:bg-slate-700 dark:bg-paper dark:text-ink dark:hover:bg-white;
+  }
+  .btn-blue {
+    @apply btn bg-blue-600 text-white hover:bg-blue-700;
+  }
+  .btn-lime {
+    @apply btn bg-lime text-ink hover:brightness-95;
   }
   .btn-secondary {
-    @apply btn bg-white text-slate-700 border border-slate-300 hover:bg-slate-50
-      dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700;
+    @apply btn bg-white text-ink border-thick border-ink hover:bg-slate-50
+      dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-slate-700;
   }
   .btn-ghost {
     @apply btn text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800;
   }
   .btn-danger {
-    @apply btn bg-danger text-white hover:bg-red-700;
+    @apply btn bg-coral text-ink hover:brightness-95;
   }
   .field {
-    @apply w-full min-h-[2.5rem] px-3 py-2 rounded-control text-sm border border-slate-300 bg-white text-slate-900
-      placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+    @apply w-full min-h-[2.75rem] px-4 py-2 rounded-control text-sm border-thick border-slate-300 bg-white text-ink
+      placeholder:text-slate-500 focus:outline-none focus:ring-0 focus:border-blue-600
       disabled:bg-slate-100 disabled:text-slate-500 transition-colors
-      dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400
+      dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400 dark:focus:border-blue-400
       dark:disabled:bg-slate-800/50 dark:disabled:text-slate-400;
   }
   .label {
-    @apply block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1;
+    @apply block text-sm font-bold text-ink dark:text-slate-200 mb-1.5;
   }
+  /* XyonCard: flat fill + thick outline, no shadow */
   .card {
-    @apply bg-white dark:bg-slate-900 rounded-card border border-slate-200 dark:border-slate-800 shadow-soft;
+    @apply bg-white dark:bg-slate-900 rounded-card border-thick border-ink dark:border-slate-700;
+  }
+  .card-blue {
+    @apply relative overflow-hidden rounded-card bg-blue-600 text-white;
   }
   .modal-panel {
-    @apply bg-white dark:bg-slate-900 rounded-modal shadow-float border border-slate-200 dark:border-slate-800 w-full;
+    @apply bg-white dark:bg-slate-900 rounded-modal shadow-float border-thick border-ink dark:border-slate-700 w-full animate-pop;
   }
   .modal-backdrop {
-    @apply fixed inset-0 z-modal flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm animate-fade-in;
+    @apply fixed inset-0 z-modal flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm animate-fade-in;
   }
   .page-title {
-    @apply text-2xl font-bold tracking-tight text-slate-900 dark:text-white;
+    @apply font-display text-[2rem] sm:text-headline font-black tracking-tighter leading-none text-ink dark:text-white;
   }
   .page-subtitle {
-    @apply text-sm text-slate-500 dark:text-slate-400;
+    @apply text-sm text-slate-500 dark:text-slate-400 mt-1.5;
+  }
+  /* Flat pill chip (app StatusChip) */
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-2xs font-extrabold leading-none;
   }
 }

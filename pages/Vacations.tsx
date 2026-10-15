@@ -11,6 +11,7 @@ import { StatusBadge } from '../components/StatusBadge';
 import { JustificationCell } from '../components/JustificationCell';
 import { VacationRequestForm } from '../components/VacationRequestForm';
 import { LoadingState, EmptyState } from '../components/PageState';
+import { AnimatedNumber } from '../components/Shapes';
 
 const PENDING_STATUSES: string[] = [VacationStatus.PENDING, VacationStatus.PENDING_MANAGER, VacationStatus.PENDING_ADMIN];
 
@@ -23,12 +24,12 @@ interface BalanceCardProps {
 }
 
 const BalanceCard: React.FC<BalanceCardProps> = ({ icon, iconClass, title, value, caption }) => (
-    <div className="card p-4">
-        <div className="flex items-center gap-2 mb-2">
-            <span className={`p-1.5 rounded-control ${iconClass}`} aria-hidden="true">{icon}</span>
-            <h3 className="font-semibold text-slate-700 dark:text-slate-300 text-sm">{title}</h3>
+    <div className="card p-4 animate-slide-up">
+        <div className="flex items-center gap-2 mb-3">
+            <span className={`w-9 h-9 grid place-items-center rounded-full ${iconClass}`} aria-hidden="true">{icon}</span>
+            <h3 className="font-bold text-ink dark:text-slate-200 text-sm">{title}</h3>
         </div>
-        <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
+        <AnimatedNumber value={value} className="block font-display font-black text-3xl leading-none tracking-tighter text-ink dark:text-white" />
         <p className="text-xs text-slate-500 dark:text-slate-400">{caption}</p>
     </div>
 );

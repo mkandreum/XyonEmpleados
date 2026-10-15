@@ -462,7 +462,7 @@ export const TeamCalendar: React.FC = () => {
                         <div key={member.id} className="card p-4 group transition-all hover:shadow-md">
                             <div className="flex items-center justify-between mb-3 border-b border-slate-50 dark:border-slate-800 pb-2 transition-colors">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center font-bold shadow-sm">
+                                    <div className="w-10 h-10 rounded-full bg-lime text-ink flex items-center justify-center font-black">
                                         {member.name?.charAt(0) || 'U'}
                                     </div>
                                     <div>

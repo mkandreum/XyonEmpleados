@@ -18,53 +18,53 @@ const validate = (schema) => {
 // Authentication Schemas
 const loginSchema = Joi.object({
     email: Joi.string().email().required().messages({
-        'string.email': 'Invalid email format',
-        'any.required': 'Email is required'
+        'string.email': 'El formato del email no es válido',
+        'any.required': 'El email es obligatorio'
     }),
     password: Joi.string().min(8).required().messages({
-        'string.min': 'Password must be at least 8 characters',
-        'any.required': 'Password is required'
+        'string.min': 'La contraseña debe tener al menos 8 caracteres',
+        'any.required': 'La contraseña es obligatoria'
     })
 });
 
 const registerSchema = Joi.object({
     name: Joi.string().min(2).max(100).required().messages({
-        'string.min': 'Name must be at least 2 characters',
-        'string.max': 'Name must not exceed 100 characters',
-        'any.required': 'Name is required'
+        'string.min': 'El nombre debe tener al menos 2 caracteres',
+        'string.max': 'El nombre no puede superar los 100 caracteres',
+        'any.required': 'El nombre es obligatorio'
     }),
     email: Joi.string().email().required().messages({
-        'string.email': 'Invalid email format',
-        'any.required': 'Email is required'
+        'string.email': 'El formato del email no es válido',
+        'any.required': 'El email es obligatorio'
     }),
     password: Joi.string()
         .min(12)
-        .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+        .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/)
         .required()
         .messages({
-            'string.min': 'Password must be at least 12 characters',
-            'string.pattern.base': 'Password must contain uppercase, lowercase, number and special character (@$!%*?&)',
-            'any.required': 'Password is required'
+            'string.min': 'La contraseña debe tener al menos 12 caracteres',
+            'string.pattern.base': 'La contraseña debe incluir mayúsculas, minúsculas, un número y un símbolo',
+            'any.required': 'La contraseña es obligatoria'
         }),
     department: Joi.string().max(100).optional(),
     position: Joi.string().max(100).optional(),
     invitationCode: Joi.string().required().messages({
-        'any.required': 'Invitation code is required'
+        'any.required': 'El código de invitación es obligatorio'
     })
 });
 
 const changePasswordSchema = Joi.object({
     currentPassword: Joi.string().required().messages({
-        'any.required': 'Current password is required'
+        'any.required': 'La contraseña actual es obligatoria'
     }),
     newPassword: Joi.string()
         .min(12)
-        .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+        .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])/)
         .required()
         .messages({
-            'string.min': 'New password must be at least 12 characters',
-            'string.pattern.base': 'Password must contain uppercase, lowercase, number and special character (@$!%*?&)',
-            'any.required': 'New password is required'
+            'string.min': 'La nueva contraseña debe tener al menos 12 caracteres',
+            'string.pattern.base': 'La contraseña debe incluir mayúsculas, minúsculas, un número y un símbolo',
+            'any.required': 'La nueva contraseña es obligatoria'
         })
 });
 

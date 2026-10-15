@@ -1,326 +1,106 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import {
-    LayoutDashboard,
-    FileText,
-    CalendarDays,
-    Calendar,
-    Newspaper,
-    UserCircle,
-    Users,
-    Settings,
-    Clock,
-    AlertCircle,
-    MoreHorizontal
-} from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import {
-    notificationService,
-} from '../services/api';
+import { MoreHorizontal } from 'lucide-react';
 import { haptic } from '../utils/haptics';
+import { useNavItems } from '../hooks/useNavItems';
 
-interface NavItem {
-    path: string;
-    label: string;
-    icon: any;
-}
+const ITEM = 56; // px, matches the app's 58dp capsule slots
+const MAX_VISIBLE = 4;
 
+/**
+ * Mobile/tablet navigation (< lg): floating dark capsule, icon-only, with a lime
+ * highlight that springs between tabs — same as the native app's BottomBar.
+ * On desktop the left Sidebar takes over.
+ */
 export const FloatingNavbar: React.FC = () => {
-    const { user } = useAuth() as any;
     const location = useLocation();
+    const { items, pendingDots, markSectionAsRead } = useNavItems();
     const [showMore, setShowMore] = useState(false);
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-    const [pendingDots, setPendingDots] = useState<Set<string>>(new Set());
-    const [unreadNotifications, setUnreadNotifications] = useState<any[]>([]);
 
-    useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 768);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    // Define all possible sections
-    const employeeItems: NavItem[] = [
-        { path: '/', label: 'Inicio', icon: LayoutDashboard },
-        { path: '/payroll', label: 'Nómina', icon: FileText },
-        { path: '/calendar', label: 'Calendario', icon: Calendar },
-        { path: '/vacations', label: 'Ausencias', icon: CalendarDays },
-        { path: '/news', label: 'Comunicados', icon: Newspaper },
-    ];
-
-    const managerItems: NavItem[] = [
-        { path: '/manager/team', label: 'Equipo', icon: UserCircle },
-        { path: '/manager/fichajes', label: 'Fichajes', icon: Clock },
-    ];
-
-    const adminItems: NavItem[] = [
-        { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-        { path: '/admin/users', label: 'Usuarios', icon: Users },
-        { path: '/admin/fichajes', label: 'Fichajes', icon: Clock },
-        { path: '/admin/vacations', label: 'Solicitudes', icon: Calendar },
-        { path: '/admin/payrolls', label: 'Nóminas', icon: FileText },
-        { path: '/admin/news', label: 'Noticias', icon: Newspaper },
-        { path: '/admin/settings', label: 'Ajustes', icon: Settings },
-    ];
-
-    const mapUnreadToPaths = (title: string, message: string, role: string) => {
-        const normalizedTitle = (title || '').trim().toLowerCase();
-        const text = `${title} ${message}`.toLowerCase();
-        const paths: string[] = [];
-
-        const vacationTitles = new Set([
-            'solicitud aprobada',
-            'solicitud rechazada',
-            'nueva solicitud pendiente',
-            'solicitud requiere aprobación final',
-        ]);
-
-        const fichajeTitles = new Set([
-            'aviso de llegada tarde',
-            'aviso de fichaje',
-            'ajuste de fichaje aprobado',
-            'ajuste de fichaje rechazado',
-            'recordatorio de fichaje',
-        ]);
-
-        if (vacationTitles.has(normalizedTitle)) {
-            if (role === 'ADMIN') paths.push('/admin/vacations');
-            else if (role === 'MANAGER') paths.push('/manager/team');
-            else paths.push('/vacations');
-            return paths;
-        }
-
-        if (fichajeTitles.has(normalizedTitle)) {
-            if (role === 'ADMIN') paths.push('/admin/fichajes');
-            else if (role === 'MANAGER') paths.push('/manager/fichajes');
-            else paths.push('/news');
-            return paths;
-        }
-
-        if (text.includes('vacacion') || text.includes('ausenc') || text.includes('permiso') || text.includes('solicitud')) {
-            if (role === 'ADMIN') paths.push('/admin/vacations');
-            else if (role === 'MANAGER') paths.push('/manager/team');
-            else paths.push('/vacations');
-        }
-
-        if (text.includes('fichaje') || text.includes('tarde') || text.includes('ajuste') || text.includes('justific')) {
-            if (role === 'ADMIN') paths.push('/admin/fichajes');
-            else if (role === 'MANAGER') paths.push('/manager/fichajes');
-            else paths.push('/news');
-        }
-
-        if (text.includes('nomina') || text.includes('nómina') || text.includes('payroll')) {
-            if (role === 'ADMIN') paths.push('/admin/payrolls');
-            else paths.push('/payroll');
-        }
-
-        if (text.includes('noticia') || text.includes('comunicado') || text.includes('evento')) {
-            if (role === 'ADMIN') paths.push('/admin/news');
-            else paths.push('/news');
-        }
-
-        return paths;
-    };
-
-    useEffect(() => {
-        if (!user?.role) {
-            setPendingDots(new Set());
-            setUnreadNotifications([]);
-            return;
-        }
-
-        let mounted = true;
-
-        const fetchPendingDots = async () => {
-            const nextDots = new Set<string>();
-
-            try {
-                const notifications = await notificationService.getAll();
-                const unread = notifications.filter((n: any) => !n.read);
-                setUnreadNotifications(unread);
-
-                unread
-                    .forEach((n: any) => {
-                        mapUnreadToPaths(n.title || '', n.message || '', user.role).forEach((path) => nextDots.add(path));
-                    });
-            } catch (error) {
-                console.warn('Error loading unread notifications for navbar dots:', error);
-            }
-
-            if (mounted) setPendingDots(nextDots);
-        };
-
-        fetchPendingDots();
-        const interval = setInterval(fetchPendingDots, 30000);
-
-        return () => {
-            mounted = false;
-            clearInterval(interval);
-        };
-    }, [user?.role]);
-
-    // Determine items based on role
-    let items: NavItem[] = [];
-    if (user?.role === 'ADMIN') {
-        items = adminItems;
-    } else {
-        items = [...employeeItems];
-        if (user?.role === 'MANAGER') {
-            items = [...items, ...managerItems];
-        }
-        // User requested removing Profile button from here as it's repetitive
-    }
-
-    // Collapse logic: On mobile, limit to 4 items + "More". On Desktop, show all.
-    const MAX_VISIBLE = isMobile ? 4 : 20;
-    const visibleItems = items.slice(0, MAX_VISIBLE);
-    const hiddenItems = items.slice(MAX_VISIBLE);
-    const hasMore = hiddenItems.length > 0;
-
-    // Find active index for sliding effect
+    const needsMore = items.length > MAX_VISIBLE + 1;
+    const visibleItems = needsMore ? items.slice(0, MAX_VISIBLE) : items;
+    const hiddenItems = needsMore ? items.slice(MAX_VISIBLE) : [];
     const activeIndex = visibleItems.findIndex(item => item.path === location.pathname);
+    const hiddenActive = hiddenItems.some(item => item.path === location.pathname);
+    const sliderIndex = activeIndex !== -1 ? activeIndex : hiddenActive ? visibleItems.length : -1;
 
-    // If active item is hidden (in "More" menu), we don't show sliding pill on main bar
-    const showSlider = activeIndex !== -1;
-
-    const markSectionAsRead = async (path: string) => {
-        const relatedUnread = unreadNotifications.filter((n: any) => {
-            const mapped = mapUnreadToPaths(n.title || '', n.message || '', user?.role || '');
-            return mapped.includes(path);
-        });
-
-        if (relatedUnread.length === 0) return;
-
-        try {
-            await Promise.all(relatedUnread.map((n: any) => notificationService.markAsRead(n.id)));
-            setUnreadNotifications((prev) => prev.filter((n: any) => !relatedUnread.some((r: any) => r.id === n.id)));
-            setPendingDots((prev) => {
-                const updated = new Set(prev);
-                updated.delete(path);
-                return updated;
-            });
-        } catch (error) {
-            console.warn('Error marking section notifications as read:', error);
-        }
-    };
-
-    // Helper to handle click: mark section notifications as read, close menu and scroll top
     const handleNavClick = async (path: string) => {
         haptic('light');
-        await markSectionAsRead(path);
         setShowMore(false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        await markSectionAsRead(path);
     };
 
     return (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-[95vw] sm:max-w-fit transition-all duration-300">
-            {/* Glass Container */}
-            <div className="
-                relative flex items-center p-1
-                rounded-full
-                bg-slate-100/90 dark:bg-slate-900/90 border border-blue-200/50 dark:border-blue-800/50
-                backdrop-blur-[3px]
-                shadow-[0_6px_6px_rgba(0,0,0,0.2),0_0_20px_rgba(0,0,0,0.1),inset_2px_2px_1px_0_rgba(255,255,255,0.5),inset_-1px_-1px_1px_1px_rgba(255,255,255,0.5)]
-                transition-all duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]
-            ">
-
-                {/* Sliding Active Indicator (The "Pill") */}
-                {showSlider && (
-                    <div
-                        className="absolute top-1 bottom-1 bg-blue-600/90 dark:bg-blue-500/90 rounded-full shadow-sm transition-all duration-300 ease-[cubic-bezier(0.25,0.8,0.25,1)] pointer-events-none"
-                        style={{
-                            left: `calc(4px + ${activeIndex * (isMobile ? 64 : 96)}px)`,
-                            width: isMobile ? '64px' : '96px'
-                        }}
+        <>
+        {/* Click-away layer; kept outside the translated <nav> so `fixed` covers the viewport */}
+        {showMore && <div className="lg:hidden fixed inset-0 z-nav" onClick={() => setShowMore(false)} aria-hidden="true" />}
+        <nav aria-label="Navegación principal" className="lg:hidden fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-nav">
+            <div className="relative flex items-center p-[7px] rounded-full bg-ink dark:bg-[#1E1E2A] dark:border-thick dark:border-slate-700 shadow-float">
+                {sliderIndex !== -1 && (
+                    <span
+                        aria-hidden="true"
+                        className="absolute top-[7px] left-[7px] rounded-full bg-lime transition-transform duration-500 ease-spring"
+                        style={{ width: ITEM, height: ITEM, transform: `translateX(${sliderIndex * ITEM}px)` }}
                     />
                 )}
 
-                {/* Navigation Items */}
                 {visibleItems.map((item) => {
                     const isActive = location.pathname === item.path;
                     const Icon = item.icon;
-                    const hasPending = pendingDots.has(item.path);
-
                     return (
                         <Link
                             key={item.path}
                             to={item.path}
+                            aria-label={item.label}
+                            aria-current={isActive ? 'page' : undefined}
+                            title={item.label}
                             onClick={() => { void handleNavClick(item.path); }}
-                            className={`
-                                relative z-10 flex flex-col items-center justify-center gap-1
-                                h-14 sm:h-16
-                                ${isMobile ? 'w-16' : 'w-24'}
-                                rounded-full transition-colors duration-200
-                                ${isActive
-                                    ? 'text-white'
-                                    : 'text-blue-700 dark:text-blue-400 hover:bg-white/20 dark:hover:bg-slate-800/30 hover:text-blue-800 dark:hover:text-blue-300'}
-                            `}
+                            className={`relative z-10 flex items-center justify-center rounded-full transition-colors duration-300 ${isActive ? 'text-ink' : 'text-white/60 hover:text-white'}`}
+                            style={{ width: ITEM, height: ITEM }}
                         >
-                            <Icon size={isMobile ? 20 : 22} strokeWidth={isActive ? 3 : 2} className="transition-transform duration-200" />
-                            {hasPending && (
-                                <span className="absolute top-2 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border border-white dark:border-slate-900" />
+                            <Icon size={22} strokeWidth={isActive ? 2.6 : 2} className={`transition-transform duration-500 ease-spring ${isActive ? 'scale-[1.15]' : ''}`} aria-hidden="true" />
+                            {pendingDots.has(item.path) && (
+                                <span className="absolute top-3 right-3.5 w-2.5 h-2.5 bg-coral rounded-full ring-2 ring-ink" aria-hidden="true" />
                             )}
-
-                            <span className={`text-2xs sm:text-xs font-semibold leading-none ${isActive ? 'text-white font-bold' : 'transition-colors'}`}>
-                                {item.label}
-                            </span>
                         </Link>
                     );
                 })}
 
-                {/* 'More' Button if needed */}
-                {hasMore && (
+                {needsMore && (
                     <div className="relative z-10">
                         <button
                             onClick={() => setShowMore(!showMore)}
-                            className={`
-                                flex flex-col items-center justify-center gap-1
-                                h-14 sm:h-16
-                                ${isMobile ? 'w-16' : 'w-24'}
-                                rounded-full transition-colors duration-200
-                                ${showMore
-                                    ? 'text-blue-700 dark:text-blue-400 bg-white/50 dark:bg-slate-800/50'
-                                    : 'text-blue-700 dark:text-blue-400 hover:bg-white/20 dark:hover:bg-slate-800/30 hover:text-blue-800 dark:hover:text-blue-300'}
-                            `}
+                            aria-label="Más secciones"
+                            aria-expanded={showMore}
+                            className={`flex items-center justify-center rounded-full transition-colors duration-300 ${hiddenActive ? 'text-ink' : 'text-white/60 hover:text-white'}`}
+                            style={{ width: ITEM, height: ITEM }}
                         >
-                            <MoreHorizontal size={22} />
-                            <span className="text-2xs sm:text-xs font-medium leading-none">Más</span>
+                            <MoreHorizontal size={22} aria-hidden="true" />
                         </button>
 
-                        {/* Popup Menu for Hidden Items */}
                         {showMore && (
-                            <div className="
-                                absolute bottom-full right-0 mb-4 
-                                flex flex-col gap-2 p-2 
-                                bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl 
-                                border border-white/40 dark:border-slate-700
-                                shadow-xl rounded-card
-                                min-w-[160px]
-                                animate-slide-up origin-bottom-right
-                            ">
+                            <div className="card absolute bottom-full right-0 mb-4 flex flex-col gap-1 p-2 min-w-[190px] shadow-float animate-pop origin-bottom-right">
                                 {hiddenItems.map((item) => {
                                     const isActive = location.pathname === item.path;
                                     const Icon = item.icon;
-                                    const hasPending = pendingDots.has(item.path);
                                     return (
                                         <Link
                                             key={item.path}
                                             to={item.path}
+                                            aria-current={isActive ? 'page' : undefined}
                                             onClick={() => { void handleNavClick(item.path); }}
-                                            className={`
-                                                flex items-center gap-3 px-4 py-3 rounded-control transition-colors
-                                                ${isActive
-                                                    ? 'bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400'
-                                                    : 'text-blue-700 dark:text-blue-400 hover:bg-white/50 dark:hover:bg-slate-800/50'}
-                                            `}
+                                            className={`flex items-center gap-3 px-4 py-3 rounded-full font-bold text-sm transition-colors ${isActive
+                                                ? 'bg-lime text-ink'
+                                                : 'text-ink dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                                         >
-                                            <div className="relative">
-                                                <Icon size={18} />
-                                                {hasPending && (
-                                                    <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border border-white dark:border-slate-900" />
+                                            <span className="relative">
+                                                <Icon size={18} aria-hidden="true" />
+                                                {pendingDots.has(item.path) && (
+                                                    <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-coral rounded-full ring-2 ring-white dark:ring-slate-900" aria-hidden="true" />
                                                 )}
-                                            </div>
-                                            <span className="text-sm font-medium">{item.label}</span>
+                                            </span>
+                                            {item.label}
                                         </Link>
                                     );
                                 })}
@@ -329,6 +109,7 @@ export const FloatingNavbar: React.FC = () => {
                     </div>
                 )}
             </div>
-        </div>
+        </nav>
+        </>
     );
 };

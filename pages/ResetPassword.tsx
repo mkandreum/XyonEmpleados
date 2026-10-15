@@ -1,138 +1,93 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { authService } from '../services/api';
-import { Lock } from 'lucide-react';
+import { Lock, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { AuthShell, AuthField, PillButton } from '../components/AuthShell';
 
 export const ResetPassword = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
-    const [message, setMessage] = useState('');
+    const [done, setDone] = useState(false);
     const [error, setError] = useState('');
-
-    const [formData, setFormData] = useState({
-        newPassword: '',
-        confirmPassword: ''
-    });
+    const [formData, setFormData] = useState({ newPassword: '', confirmPassword: '' });
 
     const token = searchParams.get('token');
     const email = searchParams.get('email');
-
-    useEffect(() => {
-        if (!token || !email) {
-            setError('Enlace inválido o incompleto.');
-        }
-    }, [token, email]);
+    const linkValid = !!token && !!email;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (formData.newPassword !== formData.confirmPassword) {
-            setError('Las contraseñas no coinciden');
+            setError('Las contraseñas no coinciden.');
             return;
         }
 
         setIsLoading(true);
-        setMessage('');
         setError('');
-
         try {
-            await authService.resetPassword({
-                token,
-                email,
-                newPassword: formData.newPassword
-            });
-            setMessage('Contraseña actualizada correctamente. Redirigiendo al login...');
+            await authService.resetPassword({ token, email, newPassword: formData.newPassword });
+            setDone(true);
             setTimeout(() => navigate('/login'), 3000);
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Error al restablecer la contraseña');
+            const details = err.response?.data?.details;
+            setError(Array.isArray(details) ? details.join(', ') : (err.response?.data?.error || 'No se pudo restablecer la contraseña. El enlace puede haber caducado.'));
         } finally {
             setIsLoading(false);
         }
     };
 
-    if (!token || !email) {
+    const backLink = (
+        <Link to="/login" className="inline-flex items-center gap-2 font-extrabold text-blue-600 dark:text-blue-400 underline-offset-4 hover:underline">
+            <ArrowLeft size={16} aria-hidden="true" />
+            Volver a iniciar sesión
+        </Link>
+    );
+
+    if (!linkValid) {
         return (
-            <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex flex-col justify-center items-center p-4">
-                <div className="card p-8 shadow-lg text-center max-w-md w-full">
-                    <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">Enlace Inválido</h2>
-                    <p className="text-slate-600 dark:text-slate-400 mb-6">Faltan parámetros requeridos en el enlace de recuperación.</p>
-                    <Link to="/login" className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium">Volver al Inicio</Link>
-                </div>
-            </div>
+            <AuthShell headline={'Enlace\nroto.'} title="Enlace no válido" subtitle="Faltan datos en el enlace de recuperación. Pide uno nuevo."
+                footer={backLink}>
+                <Link to="/forgot-password" className="btn-primary w-full !min-h-[3.25rem]">Pedir un enlace nuevo</Link>
+            </AuthShell>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors">
-            <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white dark:bg-slate-900 py-8 px-4 shadow rounded-control sm:px-10 border border-slate-200 dark:border-slate-800">
-                    <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6">
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Nueva Contraseña</h2>
-                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                            Introduce tu nueva contraseña.
-                        </p>
-                    </div>
-
-                    {message && (
-                        <div className="mb-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 p-3 rounded-control text-sm">
-                            {message}
-                        </div>
-                    )}
-                    {error && (
-                        <div className="mb-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-3 rounded-control text-sm">
-                            {error}
-                        </div>
-                    )}
-
-                    <form className="space-y-6" onSubmit={handleSubmit}>
-                        <div>
-                            <label className="label mb-0">
-                                Nueva Contraseña
-                            </label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Lock className="h-5 w-5 text-slate-500 dark:text-slate-400" />
-                                </div>
-                                <input
-                                    type="password"
-                                    required
-                                    value={formData.newPassword}
-                                    onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
-                                    className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-control focus:ring-blue-500 focus:border-blue-500 p-2.5 bg-white dark:bg-slate-900 dark:bg-slate-800 text-slate-900 dark:text-white"
-                                    placeholder="••••••••"
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="label mb-0">
-                                Confirmar Contraseña
-                            </label>
-                            <div className="mt-1 relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <Lock className="h-5 w-5 text-slate-500 dark:text-slate-400" />
-                                </div>
-                                <input
-                                    type="password"
-                                    required
-                                    value={formData.confirmPassword}
-                                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                    className="block w-full pl-10 sm:text-sm border-slate-300 dark:border-slate-700 rounded-control focus:ring-blue-500 focus:border-blue-500 p-2.5 bg-white dark:bg-slate-900 dark:bg-slate-800 text-slate-900 dark:text-white"
-                                    placeholder="••••••••"
-                                />
-                            </div>
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className={`w-full flex justify-center py-2.5 px-4 border border-transparent rounded-control shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
-                        >
-                            {isLoading ? 'Actualizar Contraseña' : 'Cambiar Contraseña'}
-                        </button>
-                    </form>
+        <AuthShell
+            headline={'Empieza\nde nuevo.'}
+            tagline="Elige una contraseña que no uses en otros sitios."
+            title="Nueva contraseña"
+            subtitle={email ?? undefined}
+            footer={backLink}
+        >
+            {done ? (
+                <div role="status" className="flex items-start gap-3 rounded-[1.375rem] bg-lime p-4 text-ink font-semibold animate-pop">
+                    <CheckCircle2 className="h-6 w-6 shrink-0" aria-hidden="true" />
+                    <span>Contraseña actualizada. Te llevamos al inicio de sesión…</span>
                 </div>
-            </div>
-        </div>
+            ) : (
+                <form className="space-y-5" onSubmit={handleSubmit}>
+                    <div>
+                        <AuthField id="newPassword" type="password" autoComplete="new-password" required minLength={12} label="Nueva contraseña"
+                            icon={<Lock size={20} />} value={formData.newPassword} placeholder="••••••••" aria-describedby="pw-hint"
+                            onChange={(e) => { setFormData({ ...formData, newPassword: e.target.value }); setError(''); }} />
+                        <p id="pw-hint" className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Mínimo 12 caracteres, con mayúsculas, minúsculas, un número y un símbolo.</p>
+                    </div>
+                    <AuthField id="confirmPassword" type="password" autoComplete="new-password" required label="Confirmar contraseña"
+                        icon={<Lock size={20} />} value={formData.confirmPassword} placeholder="••••••••"
+                        error={!!formData.confirmPassword && formData.confirmPassword !== formData.newPassword}
+                        onChange={(e) => { setFormData({ ...formData, confirmPassword: e.target.value }); setError(''); }} />
+
+                    {error && (
+                        <p role="alert" className="flex items-start gap-2 rounded-[1.375rem] bg-coral/15 px-4 py-3 text-sm font-bold text-coral-ink dark:text-coral">
+                            <AlertCircle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />{error}
+                        </p>
+                    )}
+
+                    <PillButton type="submit" loading={isLoading} loadingText="Guardando…">Cambiar contraseña</PillButton>
+                </form>
+            )}
+        </AuthShell>
     );
 };

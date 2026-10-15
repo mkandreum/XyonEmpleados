@@ -57,3 +57,38 @@
 - Revisión a fondo de `ScheduleSettings`, `ProfileModal`, `EmailTemplateEditor`, `VacationGanttChart`, `DateRangePicker`, `FloatingNavbar`, `NotificationDropdown`, `admin/{Users,Vacations,Events,News,Payrolls,Fichajes,Benefits,Dashboard}`, `manager/TeamRequests`, `News`, `Profile`: solo recibieron los codemods transversales (radios, contraste, `.field/.card/.btn`, aria), sin refactor estructural.
 - `utils/dateUtils.ts` no se importa en ningún sitio (fuera de mi alcance; se deja).
 - Sin pruebas visuales automatizadas de las pantallas autenticadas (requieren backend); comprobado solo Login en 360 px claro/oscuro y `tsc --noEmit` + `vite build`.
+
+## Rediseño "abstracto" alineado con la app nativa (octubre 2026)
+
+La web adopta el mismo lenguaje visual que la app Android (`XyonEmpleadosApp`, `ui/theme/Theme.kt` y `ui/Components.kt`).
+
+**Tokens** (`tailwind.config.js`)
+- Paleta: azul Xyon `#2563EB` como ancla + lima `#C8F53C`, lila `#C9B6FF`, sol `#FFD84A`, coral `#FF6B4A`, papel `#F4F2EA`, tinta `#0C0C12`.
+- La escala `slate` se sustituye por neutros cálidos: fondo papel en claro y tinta casi negra en oscuro. Así todas las páginas heredan el estilo sin tocar cada una.
+- Tipografía: Inter + Inter Tight (titulares negros y apretados). Radios: control 16, tarjeta 28, modal 32. Borde `border-thick` (1.5px).
+- Animaciones: curva `ease-spring`, `animate-pop`, `animate-bob`, `animate-burst` y entrada escalonada `.stagger`. Todas respetan `prefers-reduced-motion`.
+
+**Primitivas** (`index.css`): `.btn-primary` (píldora tinta), `.btn-blue`, `.btn-lime`, `.btn-secondary`, `.btn-danger` (coral), `.card` (relleno plano + contorno tinta), `.card-blue`, `.field`, `.chip`, `.press` (rebote al pulsar), `.page-title`.
+
+**Componentes nuevos**
+- `Shapes.tsx`: manchas, destellos, estrellas y garabatos vectoriales (`BlueField`, `AuroraBackdrop`, `BlobIcon`, `AnimatedNumber`).
+- `AuthShell.tsx`: pantallas de acceso con campo azul animado y panel papel.
+- `Sidebar.tsx`: barra lateral de escritorio (≥ lg) con resaltado lima deslizante; se pliega a iconos y recuerda la preferencia.
+- `FloatingNavbar.tsx`: en móvil, cápsula oscura solo iconos, idéntica a la app.
+- `CommandPalette.tsx`: Ctrl/⌘+K para saltar a cualquier sección.
+- `Avatar.tsx` (iniciales de color si no hay foto) y `ErrorBoundary.tsx` (una pantalla rota ya no deja la web en blanco).
+- `hooks/useNavItems.ts`: items por rol y puntos de avisos, compartidos por la barra lateral y la cápsula.
+
+**Pantallas**
+- Inicio: tarjeta azul con el botón de fichaje que cambia de forma (lima fuera / coral dentro), estallido de destellos, contador de jornada y fichas de color.
+- Panel de admin: fichas de color y un panel con todas las herramientas.
+- Acceso: login, registro, recuperar y restablecer contraseña.
+
+**Fallos corregidos**
+- Cualquier 403 cerraba la sesión; ahora solo lo hacen los 401 y los tokens caducados o inválidos. Un "no tienes permiso" ya no te expulsa.
+- Una cuenta desactivada muestra un aviso claro en el login.
+- El registro volvía al login en vez de entrar; ahora entra.
+- Los requisitos de contraseña mostrados no coincidían con el backend; el backend ahora acepta cualquier símbolo de forma coherente y responde en español.
+- Eventos, Beneficios y Diseño del inicio no eran accesibles desde la interfaz; ahora están en el panel de admin y en la paleta.
+- Se quitó el bloque falso de "Actividad reciente" del panel de admin, y los errores de estadísticas se muestran en vez de enseñar ceros.
+- El formateo de importes de nómina ya no puede romper la página.

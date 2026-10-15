@@ -4,19 +4,36 @@ import { useSettings } from '../hooks/useSettings';
 import { useTheme } from '../context/ThemeContext';
 import { NotificationDropdown } from './NotificationDropdown';
 import { FloatingNavbar } from './FloatingNavbar';
+import { Sidebar } from './Sidebar';
 import { ProfileModal } from './ProfileModal';
-import { Link, useNavigate } from 'react-router-dom';
+import { AuroraBackdrop } from './Shapes';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { ErrorBoundary } from './ErrorBoundary';
+import { Avatar } from './Avatar';
+import { CommandPalette } from './CommandPalette';
 import { LogOut, User, Moon, Sun } from 'lucide-react';
-import { getAbsoluteUrl } from '../utils/urlUtils';
 
+const COLLAPSE_KEY = 'xyon.sidebarCollapsed';
+
+const readCollapsed = (): boolean => {
+    try { return localStorage.getItem(COLLAPSE_KEY) === '1'; } catch { return false; }
+};
+
+/**
+ * App shell.
+ *  - Desktop (>= lg): left floating Sidebar, content offset to its width.
+ *  - Mobile/tablet: slim top bar + floating dark capsule nav at the bottom (like the native app).
+ */
 export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user, logout } = useAuth();
     const { settings } = useSettings();
     const { isDark, toggleTheme } = useTheme();
     const navigate = useNavigate();
+    const location = useLocation();
     const [logoError, setLogoError] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
+    const [collapsed, setCollapsed] = useState(readCollapsed);
 
     const companyName = settings.companyName || 'XyonEmpleados';
     const logoUrl = settings.logoUrl;
@@ -26,84 +43,87 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
         navigate('/login');
     };
 
-    return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans transition-colors duration-300 animate-fade-in">
-            {/* Top Bar - Minimal */}
-            <header className="fixed top-0 left-0 right-0 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-white/20 dark:border-slate-800 shadow-sm z-40 px-4 sm:px-8 flex items-center justify-between transition-colors duration-300">
+    const toggleCollapsed = () => {
+        setCollapsed(prev => {
+            const next = !prev;
+            try { localStorage.setItem(COLLAPSE_KEY, next ? '1' : '0'); } catch { /* storage unavailable */ }
+            return next;
+        });
+    };
 
-                {/* Brand / Logo */}
-                <Link to="/" className="flex items-center gap-3">
+    return (
+        <div className="relative min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors duration-300">
+            <AuroraBackdrop />
+
+            <Sidebar
+                collapsed={collapsed}
+                onToggleCollapsed={toggleCollapsed}
+                companyName={companyName}
+                logoUrl={logoUrl}
+                user={user as any}
+                onOpenProfile={() => setShowProfileModal(true)}
+                onLogout={handleLogout}
+            />
+
+            {/* Mobile / tablet top bar */}
+            <header className="lg:hidden fixed top-0 left-0 right-0 h-16 z-header px-4 sm:px-6 flex items-center justify-between bg-slate-50/85 dark:bg-slate-950/85 backdrop-blur-md">
+                <Link to="/" className="flex items-center gap-2 min-w-0" aria-label={`${companyName} — inicio`}>
                     {logoUrl && !logoError ? (
-                        <img
-                            src={logoUrl}
-                            alt={companyName}
-                            className="h-16 w-auto object-contain"
-                            onError={() => setLogoError(true)}
-                        />
+                        <img src={logoUrl} alt={companyName} className="h-10 w-auto max-w-[10rem] object-contain" onError={() => setLogoError(true)} />
                     ) : (
-                        <div className="flex flex-col">
-                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-                                {companyName}<span className="text-blue-600 dark:text-blue-400">Portal</span>
-                            </h1>
-                        </div>
+                        <>
+                            <span className="w-9 h-9 shrink-0 rounded-full bg-lime text-ink grid place-items-center font-display font-black text-lg">
+                                {companyName.charAt(0).toUpperCase()}
+                            </span>
+                            <span className="font-display font-black text-xl tracking-tighter text-ink dark:text-white truncate">{companyName}</span>
+                        </>
                     )}
                 </Link>
 
-                {/* Right Actions */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
                     <button
-                        onClick={() => {
-                            console.log('[UnifiedLayout] Mode selector clicked. Current isDark:', isDark);
-                            toggleTheme();
-                        }}
-                        className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-control transition-colors"
-                        title={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-                        aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+                        onClick={toggleTheme}
+                        className="press p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                        aria-label={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                        title={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
                     >
-                        {isDark ? <Sun size={20} /> : <Moon size={20} />}
+                        {isDark ? <Sun size={20} aria-hidden="true" /> : <Moon size={20} aria-hidden="true" />}
                     </button>
 
                     <NotificationDropdown />
 
-                    {/* User Profile Trigger */}
                     <div className="relative">
                         <button
                             onClick={() => setShowProfileMenu(!showProfileMenu)}
                             aria-label="Menú de usuario"
                             aria-haspopup="menu"
                             aria-expanded={showProfileMenu}
-                            className="flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-800 p-1 rounded-full transition-colors"
+                            className="press flex items-center p-0.5 rounded-full"
                         >
-                            <img
-                                src={getAbsoluteUrl(user?.avatarUrl)}
-                                alt="Profile"
-                                className="w-9 h-9 rounded-full object-cover ring-2 ring-white dark:ring-slate-700 shadow-sm"
-                            />
+                            <Avatar name={user?.name} url={user?.avatarUrl} size={36} className="ring-2 ring-ink dark:ring-lime" />
                         </button>
 
-                        {/* Dropdown Menu */}
                         {showProfileMenu && (
-                            <div className="absolute top-12 right-0 w-56 bg-white dark:bg-slate-900 rounded-control shadow-float border border-slate-200 dark:border-slate-800 py-2 animate-fade-in z-50">
-                                <div className="px-4 py-3 border-b border-slate-50 dark:border-slate-800">
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{user?.name}</p>
+                            <div role="menu" className="card absolute top-12 right-0 w-60 shadow-float py-2 animate-pop origin-top-right z-popover">
+                                <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+                                    <p className="text-sm font-extrabold text-ink dark:text-white truncate">{user?.name}</p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
                                 </div>
                                 <button
-                                    onClick={() => {
-                                        setShowProfileMenu(false);
-                                        setShowProfileModal(true);
-                                    }}
-                                    className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                                    role="menuitem"
+                                    onClick={() => { setShowProfileMenu(false); setShowProfileModal(true); }}
+                                    className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-ink dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                                 >
-                                    <User size={16} />
-                                    Mi Perfil
+                                    <User size={16} aria-hidden="true" />
+                                    Mi perfil
                                 </button>
                                 <button
+                                    role="menuitem"
                                     onClick={handleLogout}
-                                    className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-danger dark:text-red-400 hover:bg-danger-soft dark:hover:bg-red-900/20 transition-colors"
+                                    className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-coral-ink dark:text-coral hover:bg-coral-soft dark:hover:bg-coral/10 transition-colors"
                                 >
-                                    <LogOut size={16} />
-                                    Cerrar Sesión
+                                    <LogOut size={16} aria-hidden="true" />
+                                    Cerrar sesión
                                 </button>
                             </div>
                         )}
@@ -111,24 +131,23 @@ export const UnifiedLayout: React.FC<{ children: React.ReactNode }> = ({ childre
                 </div>
             </header>
 
-            {/* Main Content Area */}
-            {/* Added pb-32 to account for floating header and bottom bar */}
-            <main className="flex-1 pt-24 pb-32 px-4 sm:px-8 max-w-7xl mx-auto w-full text-slate-900 dark:text-slate-100">
-                {children}
-            </main>
-
-            {/* Floating Navigation */}
-            <FloatingNavbar />
-
-            {/* Mobile Overlay for Profile Menu closure if needed */}
             {showProfileMenu && (
-                <div
-                    className="fixed inset-0 z-30 bg-transparent"
-                    onClick={() => setShowProfileMenu(false)}
-                />
+                <div className="lg:hidden fixed inset-0 z-30" onClick={() => setShowProfileMenu(false)} aria-hidden="true" />
             )}
 
-            {/* Profile Modal */}
+            {/* Content: offset by the sidebar on desktop, by the top bar + capsule on mobile */}
+            <main
+                className={`relative z-10 pt-20 pb-32 px-4 sm:px-6 lg:pt-10 lg:pb-12 lg:pr-10 text-ink dark:text-slate-100 transition-[padding] duration-500 ease-out-expo
+                    ${collapsed ? 'lg:pl-[7.5rem]' : 'lg:pl-[19.5rem]'}`}
+            >
+                <div className="max-w-7xl mx-auto w-full animate-fade-in">
+                    <ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary>
+                </div>
+            </main>
+
+            <FloatingNavbar />
+            <CommandPalette />
+
             <ProfileModal
                 isOpen={showProfileModal}
                 onClose={() => setShowProfileModal(false)}

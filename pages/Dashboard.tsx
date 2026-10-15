@@ -2,8 +2,8 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout, DashboardWidgetType } from '../types';
-import { Calendar, Clock, Briefcase, FileText, Download, ChevronRight, Plane, AlertTriangle } from 'lucide-react';
-import { DigitalClock } from '../components/DigitalClock';
+import { Calendar, Clock, FileText, Download, ChevronRight, Plane, AlertTriangle, Hourglass, Wallet } from 'lucide-react';
+import { Sparkle, Star, BlobIcon } from '../components/Shapes';
 import { FichajeButton } from '../components/FichajeButton';
 import { openProtectedFile } from '../utils/fileUtils';
 import { LoadingState, ErrorState, EmptyState } from '../components/PageState';
@@ -27,25 +27,13 @@ const widgetHidden = (layout: DashboardLayout | null, type: DashboardWidgetType)
 };
 
 const TONES = {
-  info: {
-    box: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900/50',
-    ghost: 'text-blue-600',
-    title: 'text-blue-800 dark:text-blue-300',
-    body: 'text-blue-700 dark:text-blue-300',
-    button: 'bg-blue-600 hover:bg-blue-700',
-  },
-  danger: {
-    box: 'bg-danger-soft dark:bg-red-900/20 border-red-200 dark:border-red-900/50',
-    ghost: 'text-red-600',
-    title: 'text-danger-ink dark:text-red-300',
-    body: 'text-danger-ink dark:text-red-300',
-    button: 'bg-danger hover:bg-red-700',
-  },
+  info: { box: 'bg-lilac text-ink', ghost: 'text-ink' },
+  danger: { box: 'bg-coral text-ink', ghost: 'text-ink' },
 };
 
 interface AlertBannerProps {
   tone: keyof typeof TONES;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
   title: string;
   actionLabel: string;
   onAction: () => void;
@@ -57,25 +45,20 @@ interface AlertBannerProps {
 const AlertBanner: React.FC<AlertBannerProps> = ({ tone, icon: Icon, title, actionLabel, onAction, order, hidden, children }) => {
   const t = TONES[tone];
   return (
-    <div className={`${t.box} border rounded-card p-6 relative overflow-hidden animate-slide-up delay-75 ${hidden ? 'hidden' : ''}`} style={{ order }}>
-      <div className="absolute top-0 right-0 p-4 opacity-10" aria-hidden="true">
-        <Icon size={100} className={t.ghost} />
-      </div>
+    <section className={`lg:col-span-12 ${t.box} border-thick border-ink rounded-card p-6 relative overflow-hidden animate-slide-up delay-75 ${hidden ? 'hidden' : ''}`} style={{ order }}>
+      <Sparkle size={90} color="#ffffff" className="absolute -right-4 -top-4 opacity-60 animate-spin-slow" />
       <div className="relative z-10">
-        <h2 className={`${t.title} font-bold text-lg flex items-center gap-2`}>
-          <Icon size={20} />
+        <h2 className="font-display font-black text-xl tracking-tight flex items-center gap-2">
+          <Icon size={22} strokeWidth={2.5} />
           {title}
         </h2>
         {children}
-        <button
-          onClick={onAction}
-          className={`mt-4 ${t.button} text-white px-6 py-2 rounded-control text-sm font-semibold transition-colors shadow-soft flex items-center gap-2`}
-        >
+        <button onClick={onAction} className="btn-primary mt-4 !pr-2">
           {actionLabel}
-          <ChevronRight size={16} aria-hidden="true" />
+          <span className="w-7 h-7 rounded-full bg-lime text-ink grid place-items-center" aria-hidden="true"><ChevronRight size={16} /></span>
         </button>
       </div>
-    </div>
+    </section>
   );
 };
 
@@ -107,27 +90,31 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  const firstName = user?.name?.split(' ')[0] || '';
+
   return (
-    <div className="flex flex-col gap-6">
-      <div className="animate-slide-up" style={{ order: 1 }}>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Hola, {user?.name?.split(' ')[0]}</h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1 capitalize">
-          {now.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
+      <header className="lg:col-span-12 animate-slide-up" style={{ order: 1 }}>
+        <p className="text-slate-500 dark:text-slate-400 font-semibold first-letter:uppercase">
+          {now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
-      </div>
+        <h1 className="font-display font-black text-[2.75rem] sm:text-display leading-[0.95] tracking-[-0.045em] text-ink dark:text-white mt-1">
+          Hola, {firstName}<span className="text-blue-600 dark:text-blue-400">.</span>
+        </h1>
+      </header>
 
       {pendingAdjustments.length > 0 && (
         <AlertBanner
           tone="info"
           icon={Clock}
-          title="Solicitudes de ajuste pendientes"
+          title="Ajustes de fichaje pendientes"
           actionLabel="Gestionar ajustes"
           onAction={() => navigate('/manager/adjustments')}
           order={order('ADJUSTMENTS')}
           hidden={hidden('ADJUSTMENTS')}
         >
-          <p className="text-sm mt-2 text-blue-700 dark:text-blue-300">
-            Hay {pendingAdjustments.length} {pendingAdjustments.length === 1 ? 'solicitud' : 'solicitudes'} de ajuste de fichaje esperando revisión.
+          <p className="text-sm mt-2 font-medium">
+            Hay {pendingAdjustments.length} {pendingAdjustments.length === 1 ? 'solicitud' : 'solicitudes'} de ajuste esperando revisión.
           </p>
         </AlertBanner>
       )}
@@ -142,115 +129,115 @@ export const Dashboard: React.FC = () => {
           order={order('ALERTS')}
           hidden={hidden('ALERTS')}
         >
-          <div className="space-y-3 mt-4">
-            {pendingWarnings.slice(0, 2).map((warning) => (
-              <div key={warning.id} className="bg-white/60 dark:bg-slate-800/60 p-3 rounded-control border border-red-100 dark:border-red-900/30 backdrop-blur-sm">
-                <p className="text-sm font-semibold text-danger-ink dark:text-red-200 capitalize">
-                  {new Date(warning.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
-                </p>
-                <p className="text-xs text-danger-ink dark:text-red-300">
-                  Reclamado por: {warning.manager?.name || 'Manager'}
-                </p>
-              </div>
+          <ul className="flex flex-wrap gap-2 mt-3">
+            {pendingWarnings.slice(0, 3).map((warning) => (
+              <li key={warning.id} className="rounded-full bg-white/60 px-3.5 py-1.5 text-sm font-bold capitalize">
+                {new Date(warning.fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
+                <span className="font-medium normal-case"> · {warning.manager?.name || 'Responsable'}</span>
+              </li>
             ))}
-            {pendingWarnings.length > 2 && (
-              <p className="text-xs text-danger-ink dark:text-red-300 font-medium pl-1">
-                … y {pendingWarnings.length - 2} más.
-              </p>
+            {pendingWarnings.length > 3 && (
+              <li className="rounded-full bg-white/60 px-3.5 py-1.5 text-sm font-bold">+{pendingWarnings.length - 3}</li>
             )}
-          </div>
+          </ul>
         </AlertBanner>
       )}
 
-      <div
-        className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${hidden('VACATIONS') && hidden('PAYROLL') ? 'hidden' : ''}`}
-        style={{ order: Math.min(order('VACATIONS'), order('PAYROLL')) }}
-      >
-        <StatCard icon={Briefcase} iconClass="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" label="Días de vacaciones" value={remainingVacations} delay="delay-150" />
-        <StatCard icon={Clock} iconClass="bg-warning-soft dark:bg-amber-900/20 text-warning dark:text-amber-400" label="Solicitudes pendientes" value={pendingVacations.length} delay="delay-200" />
-        <StatCard icon={Clock} iconClass="bg-warning-soft dark:bg-amber-900/20 text-warning dark:text-amber-400" label="Próxima nómina" value={<span className="text-lg">{nextPayrollStr}</span>} delay="delay-300" />
-      </div>
-
-      <div
-        className={`bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 p-6 rounded-card shadow-soft border border-blue-100 dark:border-slate-700 transition-colors animate-slide-up delay-300 ${hidden('FICHAJE') ? 'hidden' : ''}`}
+      {/* Hero: clock-in/out on a blue field (app home) */}
+      <section
+        aria-label="Control de asistencia"
+        className={`lg:col-span-7 lg:row-span-2 card-blue border-thick border-ink dark:border-blue-600 p-6 sm:p-8 animate-slide-up delay-100 ${hidden('FICHAJE') ? 'hidden' : ''}`}
         style={{ order: order('FICHAJE') }}
       >
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Control de asistencia</h2>
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <DigitalClock />
+        <Sparkle size={44} color="#C8F53C" className="absolute right-6 top-16 animate-bob" />
+        <Star size={26} color="#FFD84A" className="absolute left-6 bottom-8 animate-spin-slow" />
+        <div className="relative flex items-center justify-between gap-4">
+          <h2 className="font-display font-black text-2xl tracking-tight">Tu jornada</h2>
+          <LiveClock />
+        </div>
+        <div className="relative mt-2">
           <FichajeButton />
         </div>
+      </section>
+
+      {/* Stat tiles (app StatPill row) */}
+      <div
+        className={`lg:col-span-5 grid grid-cols-3 gap-3 lg:gap-4 ${hidden('VACATIONS') && hidden('PAYROLL') ? 'hidden' : ''}`}
+        style={{ order: Math.min(order('VACATIONS'), order('PAYROLL')) }}
+      >
+        <StatCard icon={Plane} tone="lime" label="Días libres" value={remainingVacations} delay="delay-150" />
+        <StatCard icon={Hourglass} tone="lilac" label="Pendientes" value={pendingVacations.length} delay="delay-200" />
+        <StatCard icon={Wallet} tone="sun" label="Próx. nómina" value={<span className="text-lg sm:text-2xl leading-tight block">{nextPayrollStr}</span>} delay="delay-300" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{ order: Math.min(order('PAYROLL'), order('EVENTS')) + 1 }}>
-        <div className="lg:col-span-2 space-y-6">
-          <button
-            onClick={() => navigate('/vacations')}
-            className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white rounded-card p-6 shadow-card transition-all hover:-translate-y-0.5 flex items-center justify-between gap-4 group animate-slide-up delay-400"
-          >
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="p-3 bg-white/20 rounded-control shrink-0">
-                <Plane size={32} className="text-white" aria-hidden="true" />
-              </div>
-              <div className="text-left min-w-0">
-                <h3 className="text-lg sm:text-xl font-bold">Vacaciones y ausencias</h3>
-                <p className="text-blue-100 text-sm">Solicita días libres, bajas o consulta tu histórico</p>
-              </div>
-            </div>
-            <div className="bg-white/20 p-2 rounded-full group-hover:bg-white/30 transition-colors shrink-0">
-              <ChevronRight size={24} aria-hidden="true" />
-            </div>
-          </button>
+      {/* Quick actions + payroll */}
+      <div className="lg:col-span-5 flex flex-col gap-4" style={{ order: Math.min(order('VACATIONS'), order('PAYROLL')) + 1 }}>
+        <button
+          onClick={() => navigate('/vacations')}
+          className="press group relative overflow-hidden w-full rounded-card bg-ink text-white dark:bg-slate-900 dark:border-thick dark:border-slate-700 p-5 flex items-center gap-4 text-left animate-slide-up delay-300"
+        >
+          <BlobIcon icon={<Plane size={24} />} color="#C8F53C" size={60} />
+          <span className="flex-1 min-w-0">
+            <span className="block font-display font-black text-xl tracking-tight">Vacaciones y ausencias</span>
+            <span className="block text-sm text-white/70">Pide días libres o consulta tu histórico</span>
+          </span>
+          <span className="w-11 h-11 shrink-0 rounded-full bg-lime text-ink grid place-items-center transition-transform duration-300 ease-spring group-hover:-rotate-12" aria-hidden="true">
+            <ChevronRight size={22} />
+          </span>
+        </button>
 
-          <div className="card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors animate-slide-up delay-500">
-            <div className="flex items-center gap-4 min-w-0">
-              <div className="p-3 bg-success-soft dark:bg-green-900/20 text-success dark:text-green-400 rounded-control border border-green-100 dark:border-green-900/30 shrink-0">
-                <FileText size={28} aria-hidden="true" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-bold text-slate-900 dark:text-white text-lg">Última nómina disponible</h3>
-                <p className="text-slate-500 dark:text-slate-400 text-sm capitalize">
-                  {lastPayroll ? `${lastPayroll.month} ${lastPayroll.year}` : 'No hay nóminas disponibles'}
-                </p>
-              </div>
-            </div>
-            {lastPayroll && (
-              <button
-                onClick={openLastPayroll}
-                className="flex items-center justify-center gap-2 bg-slate-900 dark:bg-slate-800 text-white px-5 py-3 rounded-control hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors font-medium shadow-soft"
-              >
-                <Download size={18} aria-hidden="true" />
-                Descargar PDF
-              </button>
-            )}
+        <div className={`card p-5 flex items-center gap-4 animate-slide-up delay-400 ${hidden('PAYROLL') ? 'hidden' : ''}`}>
+          <BlobIcon icon={<FileText size={22} />} color="#C9B6FF" size={56} />
+          <div className="flex-1 min-w-0">
+            <h3 className="font-display font-black text-lg tracking-tight text-ink dark:text-white">Última nómina</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-sm capitalize truncate">
+              {lastPayroll ? `${lastPayroll.month} ${lastPayroll.year}` : 'Aún no hay nóminas'}
+            </p>
           </div>
-        </div>
-
-        <div className="card p-6 h-full transition-colors animate-slide-up delay-500">
-          <h2 className="font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            <Calendar size={18} className="text-slate-500" aria-hidden="true" />
-            Próximos eventos
-          </h2>
-          {events.length > 0 ? (
-            <ul className="space-y-3">
-              {events.slice(0, 3).map(event => (
-                <li key={event.id} className="flex gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-control border border-slate-100 dark:border-slate-800">
-                  <div className="shrink-0 w-12 h-12 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-control flex flex-col items-center justify-center">
-                    <span className="text-2xs text-slate-500 dark:text-slate-400 font-semibold">{new Date(event.date).toLocaleDateString('es-ES', { month: 'short' })}</span>
-                    <span className="text-lg font-bold text-slate-900 dark:text-white">{new Date(event.date).getDate()}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-slate-900 dark:text-white text-sm truncate">{event.title}</h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{event.location || 'Ubicación pendiente'}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyState icon={<Calendar size={32} />} title="No hay eventos próximos" hint="Cuando se publique uno, aparecerá aquí." />
+          {lastPayroll && (
+            <button onClick={openLastPayroll} className="btn-primary shrink-0" aria-label="Descargar última nómina en PDF">
+              <Download size={18} aria-hidden="true" />
+              <span className="hidden sm:inline">PDF</span>
+            </button>
           )}
         </div>
       </div>
+
+      <section className={`lg:col-span-12 card p-6 animate-slide-up delay-500 ${hidden('EVENTS') ? 'hidden' : ''}`} style={{ order: order('EVENTS') }}>
+        <h2 className="font-display font-black text-2xl tracking-tight text-ink dark:text-white mb-4">Próximos eventos</h2>
+        {events.length > 0 ? (
+          <ul className="grid grid-cols-1 md:grid-cols-3 gap-3 stagger">
+            {events.slice(0, 3).map((event, i) => (
+              <li key={event.id} className="flex gap-3 p-3 rounded-[1.375rem] bg-slate-50 dark:bg-slate-800/60">
+                <div className={`shrink-0 w-14 h-14 rounded-[1.125rem] flex flex-col items-center justify-center text-ink ${['bg-lime', 'bg-lilac', 'bg-sun'][i % 3]}`}>
+                  <span className="text-2xs font-black uppercase leading-none">{new Date(event.date).toLocaleDateString('es-ES', { month: 'short' })}</span>
+                  <span className="font-display text-2xl font-black leading-none">{new Date(event.date).getDate()}</span>
+                </div>
+                <div className="flex-1 min-w-0 self-center">
+                  <h4 className="font-bold text-ink dark:text-white text-sm truncate">{event.title}</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{event.location || 'Ubicación pendiente'}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <EmptyState icon={<Calendar size={32} />} title="No hay eventos próximos" hint="Cuando se publique uno, aparecerá aquí." />
+        )}
+      </section>
     </div>
+  );
+};
+
+/** Compact live clock for the hero card. */
+const LiveClock: React.FC = () => {
+  const [time, setTime] = React.useState(() => new Date());
+  React.useEffect(() => {
+    const id = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <time className="rounded-full bg-white/15 px-4 py-1.5 font-display font-black text-lg tabular-nums tracking-tight" dateTime={time.toISOString()}>
+      {time.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+    </time>
   );
 };
